@@ -1,0 +1,24 @@
+{
+  "name": "aldi-meal-planning-scraper",
+  "version": "1.0.0",
+  "description": "Web scraping system for Aldi pricing and budget recipes",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "scrape:prices": "node src/scrapers/pricesScraper.js",
+    "scrape:recipes": "node src/scrapers/recipesScraper.js",
+    "sync:notion": "node src/notion/syncToNotion.js",
+    "scrape:all": "npm run scrape:prices && npm run scrape:recipes",
+    "pipeline": "npm run scrape:all && npm run sync:notion"
+  },
+  "keywords": ["aldi", "scraping", "meal-planning", "notion"],
+  "author": "Beth Cartrette",
+  "license": "MIT",
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "axios": "^1.7.2",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.5",
+    "puppeteer": "^22.0.0"
+  }
+}

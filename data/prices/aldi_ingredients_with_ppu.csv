@@ -1,0 +1,199 @@
+Item,Price per Package ($),Package Size,Package Unit,Base Unit,Grocery Category,Price per Base Unit ($)
+American cheese,1.45,8.0,oz,oz,Dairy,0.181250
+apple juice,1.09,16.0,oz,fl oz,Produce (Fruit/Vegetable),0.068125
+apple sauce,1.95,24.0,oz,fl oz,Produce (Fruit/Vegetable),0.081250
+apples,2.89,1.0,each,each,Produce (Fruit/Vegetable),2.890000
+asparagus,1.99,1.0,each,each,Produce (Fruit/Vegetable),1.990000
+avocados,1.09,1.0,each,each,Produce (Fruit/Vegetable),1.090000
+baby carrots,0.89,1.0,each,each,Produce (Fruit/Vegetable),0.890000
+bacon,3.49,1.5,lb,lb,Meat,2.326667
+bagels,1.49,1.0,each,each,Bakery,1.490000
+baking powder,0.99,1.0,each,each,Pantry Staple,0.990000
+baking soda,0.50,1.0,each,each,Pantry Staple,0.500000
+"bananas, per lb",0.44,1.0,lb,lb,Produce (Fruit/Vegetable),0.440000
+basil (dried),1.09,0.7,oz,oz,Other,1.557143
+bbq sauce,0.99,24.0,oz,fl oz,Condiments,0.041250
+bean/carrot medley,1.39,15.0,oz,oz,Produce (Fruit/Vegetable),0.092667
+beef smokd sausg,2.29,1.5,lb,lb,Meat,1.526667
+bell peppers (multi),2.65,3.0,each,each,Produce (Fruit/Vegetable),0.883333
+black beans,0.69,15.0,oz,oz,Pantry Staple,0.046000
+bread,1.89,1.0,each,each,Bakery,1.890000
+breakfast bars,1.35,1.0,each,each,Snack,1.350000
+broccoli,1.29,1.0,each,each,Produce (Fruit/Vegetable),1.290000
+broth,1.89,24.0,oz,fl oz,Pantry Staple,0.078750
+brown basmati rice,4.15,32.0,oz,lb,Pantry Staple,2.075000
+brussels sprouts,1.29,1.0,each,each,Produce (Fruit/Vegetable),1.290000
+"buns, hamburger",1.70,1.0,each,each,Meat,1.700000
+butter,2.25,8.0,oz,oz,Dairy,0.281250
+cabbage,1.49,1.0,each,each,Produce (Fruit/Vegetable),1.490000
+caesar chopped salad kit,3.65,10.8,oz,oz,Produce (Fruit/Vegetable),0.337963
+canola oil,1.85,16.0,oz,fl oz,Pantry Staple,0.115625
+carrots,1.49,1.0,each,each,Produce (Fruit/Vegetable),1.490000
+cauliflower,1.59,1.0,each,each,Produce (Fruit/Vegetable),1.590000
+celery,1.29,1.0,each,each,Produce (Fruit/Vegetable),1.290000
+cheddar brats,2.49,1.0,each,each,Other,2.490000
+"cheddar cheese, shrd.",3.29,8.0,oz,oz,Dairy,0.411250
+"cheddar cheese, shredded (12 oz)",2.85,12.0,oz,oz,Dairy,0.237500
+chick peas,0.69,1.0,each,each,Frozen,0.690000
+chicken breast tenderloins,3.99,2.0,lb,lb,Meat,1.995000
+chicken breasts,10.22,1.5,lb,lb,Meat,6.813333
+"chicken broth, 32 oz.",1.19,32.0,oz,fl oz,Pantry Staple,0.037187
+chicken thighs,3.50,1.5,lb,lb,Meat,2.333333
+chili beans,0.69,15.0,oz,oz,Pantry Staple,0.046000
+chipotle peppers,0.99,1.0,each,each,Produce (Fruit/Vegetable),0.990000
+chocolate chips,1.89,1.0,each,each,Snack,1.890000
+cocktail sausages,2.25,1.5,lb,lb,Meat,1.500000
+cocoa,1.79,1.0,each,each,Pantry Staple,1.790000
+coconut oil,4.49,16.0,oz,fl oz,Pantry Staple,0.280625
+coffee,3.79,1.0,each,each,Beverages,3.790000
+coffee creamer,1.79,1.0,each,each,Dairy,1.790000
+"colby, block",1.99,1.0,each,each,Other,1.990000
+cooking spray,1.49,1.0,each,each,Other,1.490000
+corn,0.48,1.0,each,each,Other,0.480000
+corn chips,1.29,1.0,each,each,Snack,1.290000
+cottage cheese,1.59,8.0,oz,oz,Dairy,0.198750
+couscous,1.25,1.0,each,each,Pantry Staple,1.250000
+crackers,1.89,1.0,each,each,Snack,1.890000
+cream cheese,1.00,8.0,oz,fl oz,Dairy,0.125000
+cream soup,0.49,15.0,oz,fl oz,Dairy,0.032667
+Crispy Oats,1.79,1.0,each,each,Other,1.790000
+crushed red pepper,1.09,1.8,oz,oz,Produce (Fruit/Vegetable),0.605556
+"cucumbers, large",0.49,1.0,each,each,Produce (Fruit/Vegetable),0.490000
+deli meats,3.19,1.5,lb,lb,Meat,2.126667
+diced tom w/GrnChl,0.59,1.0,each,each,Other,0.590000
+dressings,1.29,1.0,each,each,Condiments,1.290000
+dried apricots,2.79,1.0,each,each,Snack,2.790000
+dried cranberries,1.29,1.0,each,each,Snack,1.290000
+egg noodles,1.39,12.0,each,each,Pantry Staple,0.115833
+eggs,1.18,12.0,each,each,Dairy,0.098333
+elbow macaroni,2.05,32.0,oz,oz,Pantry Staple,0.064062
+english muffins,1.15,1.0,each,each,Bakery,1.150000
+extracts,1.99,1.0,each,each,Pantry Staple,1.990000
+flour,1.69,2.0,lb,lb,Pantry Staple,0.845000
+"freezer bags, quart",2.29,1.0,each,each,Other,2.290000
+"fresh mozarella, 8 oz",2.79,8.0,oz,oz,Other,0.348750
+frozen french fries,2.85,32.0,oz,oz,Frozen,0.089063
+fruit snacks,4.39,22.0,each,each,Snack,0.199545
+garlic,1.49,1.0,each,each,Produce (Fruit/Vegetable),1.490000
+graham crackers,1.25,1.0,each,each,Snack,1.250000
+granola,2.19,1.0,each,each,Snack,2.190000
+granola bars,1.39,1.0,each,each,Snack,1.390000
+grape juice,2.39,16.0,oz,fl oz,Produce (Fruit/Vegetable),0.149375
+grapefruit,0.99,1.0,each,each,Produce (Fruit/Vegetable),0.990000
+grapes,2.29,1.0,each,each,Produce (Fruit/Vegetable),2.290000
+greek yogurt,3.79,1.0,each,each,Dairy,3.790000
+green beans,0.48,15.0,oz,oz,Pantry Staple,0.032000
+green onions,0.99,1.0,each,each,Produce (Fruit/Vegetable),0.990000
+ground beef,9.99,1.5,lb,lb,Meat,6.660000
+ground turkey,5.19,20.8,oz,lb,Meat,3.992308
+half and half,1.99,1.0,each,each,Other,1.990000
+hamburger buns,1.39,8.0,each,each,Bakery,0.173750
+hazelnut spread,1.99,1.0,each,each,Snack,1.990000
+heavy cream,1.55,1.0,each,each,Dairy,1.550000
+herbs/spices,0.95,1.0,each,each,Pantry Staple,0.950000
+honey,4.99,1.0,each,each,Other,4.990000
+hot dogs,1.29,1.0,each,each,Other,1.290000
+hummus,1.99,1.0,each,each,Other,1.990000
+Italian herb mix,1.09,0.9,oz,oz,Pantry Staple,1.211111
+Italian sausage,2.99,1.5,lb,lb,Meat,1.993333
+jam/jelly,1.79,1.0,each,each,Other,1.790000
+"Jasmine rice, 5 lbs",4.79,5.0,lb,lb,Pantry Staple,0.958000
+kale,2.99,1.0,each,each,Produce (Fruit/Vegetable),2.990000
+"ketchup, 38 oz.",1.49,38.0,oz,oz,Condiments,0.039211
+kiwi,3.49,1.0,each,each,Other,3.490000
+lemons,2.19,1.0,each,each,Produce (Fruit/Vegetable),2.190000
+lentils,1.50,1.0,each,each,Pantry Staple,1.500000
+lettuce,0.99,1.0,each,each,Produce (Fruit/Vegetable),0.990000
+limes,2.69,1.0,each,each,Produce (Fruit/Vegetable),2.690000
+lobster crab ravioli,5.29,9.0,oz,oz,Meat,0.587778
+macaroni & cheese,0.49,8.0,oz,oz,Dairy,0.061250
+mango,0.99,1.0,each,each,Other,0.990000
+Marshmallow & Star,1.49,1.0,each,each,Snack,1.490000
+marshmallows,0.89,1.0,each,each,Snack,0.890000
+mayonnaise,1.89,1.0,each,each,Condiments,1.890000
+milk,1.74,1.0,each,each,Dairy,1.740000
+mini gold potatoes,2.59,24.0,oz,lb,Produce (Fruit/Vegetable),1.726667
+mini muffins,3.05,20.0,each,each,Bakery,0.152500
+mixed vegetables,0.95,1.0,each,each,Frozen,0.950000
+"mozzarella cheese, shrd.",3.29,8.0,oz,oz,Dairy,0.411250
+"mozzarella cheese, shredded (32 oz)",7.55,32.0,oz,oz,Dairy,0.235937
+mushrooms,1.49,1.0,each,each,Produce (Fruit/Vegetable),1.490000
+mustard,0.55,1.0,each,each,Condiments,0.550000
+naan,3.79,1.0,each,each,Bakery,3.790000
+nat. peanut butter,1.69,8.0,oz,oz,Dairy,0.211250
+nectarines,3.00,1.0,each,each,Other,3.000000
+oatmeal,2.39,1.0,each,each,Other,2.390000
+olive oil,3.79,16.0,oz,fl oz,Condiments,0.236875
+olives,1.49,1.0,each,each,Condiments,1.490000
+onion powder,1.09,3.0,oz,oz,Produce (Fruit/Vegetable),0.363333
+onions,1.69,1.0,each,each,Produce (Fruit/Vegetable),1.690000
+orange juice,3.55,52.0,fl oz,fl oz,Beverages,0.068269
+oranges,3.89,1.0,each,each,Produce (Fruit/Vegetable),3.890000
+oregano (dried),1.09,0.9,oz,oz,Other,1.211111
+parmesan cheese (grated),3.25,8.0,oz,oz,Dairy,0.406250
+parsley (dried),1.09,0.6,oz,oz,Other,1.816667
+pasta,0.79,16.0,oz,oz,Pantry Staple,0.049375
+PB filled cookies,2.45,9.6,oz,oz,Bakery,0.255208
+peanuts,1.89,1.0,each,each,Snack,1.890000
+pears,3.49,1.0,each,each,Other,3.490000
+peas,0.95,1.0,each,each,Frozen,0.950000
+pepperoni,2.19,1.0,each,each,Meat,2.190000
+"peppers, green",1.99,1.0,each,each,Produce (Fruit/Vegetable),1.990000
+"peppers, multi 3 pk",2.49,3.0,each,each,Produce (Fruit/Vegetable),0.830000
+pickles,1.15,1.0,each,each,Condiments,1.150000
+pineapple,1.29,1.0,each,each,Produce (Fruit/Vegetable),1.290000
+pineapple chunks,0.95,1.0,each,each,Produce (Fruit/Vegetable),0.950000
+pizza,2.29,1.0,each,each,Other,2.290000
+Polska Kielbasa,1.99,1.0,each,each,Meat,1.990000
+pork sausage roll,2.29,1.5,lb,lb,Meat,1.526667
+"potatoes, 10lb",3.99,10.0,lb,lb,Produce (Fruit/Vegetable),0.399000
+pre-cooked sausage,5.29,1.5,lb,lb,Meat,3.526667
+pretzels,1.29,1.0,each,each,Snack,1.290000
+purple onions,1.49,1.0,each,each,Produce (Fruit/Vegetable),1.490000
+quinoa,3.49,1.0,each,each,Pantry Staple,3.490000
+raisins,3.29,1.0,each,each,Snack,3.290000
+ranch dressing,1.95,1.0,each,each,Condiments,1.950000
+refried beans,0.79,15.0,oz,oz,Pantry Staple,0.052667
+refrigerated pie crust,1.95,2.0,each,each,Bakery,0.975000
+Rice Crispies,1.30,2.0,lb,lb,Pantry Staple,0.650000
+romain lettuce,1.99,1.0,each,each,Produce (Fruit/Vegetable),1.990000
+romaine hearts,2.29,1.0,each,each,Other,2.290000
+salad greens (spring mix),5.39,16.0,oz,oz,Produce (Fruit/Vegetable),0.336875
+salsa,1.89,24.0,oz,oz,Condiments,0.078750
+salt,0.39,1.0,each,each,Pantry Staple,0.390000
+seedless cucumber,1.19,1.0,each,each,Produce (Fruit/Vegetable),1.190000
+sesame oil,8.25,16.9,fl oz,fl oz,Pantry Staple,0.488166
+shortening,3.29,1.0,each,each,Other,3.290000
+sliced cheese,1.99,8.0,oz,oz,Dairy,0.248750
+sour cream,1.49,1.0,each,each,Dairy,1.490000
+soy sauce,1.29,24.0,oz,fl oz,Condiments,0.053750
+spaghetti sauce,0.99,24.0,oz,fl oz,Pantry Staple,0.041250
+spinach,1.49,1.0,each,each,Produce (Fruit/Vegetable),1.490000
+squash,0.99,1.0,each,each,Produce (Fruit/Vegetable),0.990000
+strawberries,2.29,1.0,each,each,Produce (Fruit/Vegetable),2.290000
+"sugar, brown",1.29,2.0,lb,lb,Pantry Staple,0.645000
+"sugar, granulated",1.73,2.0,lb,lb,Pantry Staple,0.865000
+"sugar, powdered",1.29,2.0,lb,lb,Pantry Staple,0.645000
+sweet potatoes,1.99,2.0,lb,lb,Produce (Fruit/Vegetable),0.995000
+syrup,1.29,1.0,each,each,Other,1.290000
+taco shells,0.89,1.0,each,each,Other,0.890000
+tea,1.89,1.0,each,each,Beverages,1.890000
+toaster pastries,1.49,1.0,each,each,Other,1.490000
+tomato paste,0.39,15.0,oz,oz,Produce (Fruit/Vegetable),0.026000
+tomato sauce,0.29,24.0,oz,fl oz,Produce (Fruit/Vegetable),0.012083
+"tomatoes, fire roasted",0.89,15.0,oz,oz,Produce (Fruit/Vegetable),0.059333
+"tomatoes, grape",1.69,15.0,oz,oz,Produce (Fruit/Vegetable),0.112667
+"tomatoes, roma",1.49,15.0,oz,oz,Produce (Fruit/Vegetable),0.099333
+"tomatoes, stewed",0.69,15.0,oz,oz,Produce (Fruit/Vegetable),0.046000
+"tortellini, 20 oz",3.99,20.0,oz,oz,Other,0.199500
+tortilla chips,1.29,1.0,each,each,Bakery,1.290000
+"tortillas, wheat",1.59,1.0,each,each,Bakery,1.590000
+tuna,0.79,1.0,each,each,Canned/Dry Goods,0.790000
+turkey thighs,6.10,1.5,lb,lb,Meat,4.066667
+"vinegar, apple cider",3.99,16.0,oz,fl oz,Produce (Fruit/Vegetable),0.249375
+"walnuts, 1 lb",4.79,1.0,each,each,Snack,4.790000
+"white rice, 3 lbs.",1.29,3.0,lb,lb,Pantry Staple,0.430000
+whole chicken,6.70,60.0,oz,lb,Meat,1.786667
+yeast,0.89,1.0,each,each,Pantry Staple,0.890000
+yogurt,1.69,1.0,each,each,Dairy,1.690000
+zucchini,0.89,1.0,each,each,Produce (Fruit/Vegetable),0.890000

@@ -1,190 +1,293 @@
-# Aldi Meal Planning Scraper
+# Aldi Meal Planner
 
-Automate budget‑friendly meal planning with live Aldi pricing and curated recipe plans. This Node.js pipeline scrapes Aldi price data and weekly meal‑plan posts from multiple blogs, normalizes and stores the results as timestamped JSON, and syncs ingredient prices into Notion. It's designed to be respectful to source sites and easy to extend for recipe syncing and budget‑aware planning.
+> Automated weekly dinner planning and grocery list generation using Aldi-only ingredients to minimize cost, reduce waste, and cut planning time to under ten minutes per week.
 
-**Repository**: [https://github.com/BethCNC/aldi_meal_planning.git](https://github.com/BethCNC/aldi_meal_planning.git)
+**Built with:** Node.js, Notion API, automated web scraping  
+**Target:** Budget-conscious households, neurodivergent users, busy professionals  
+**Status:** Active development | Portfolio case study
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Environment Setup](#environment-setup)
-- [Configuration](#configuration)
-  - [Source configuration](#source-configuration)
-  - [Notion setup](#notion-setup)
-- [Usage](#usage)
-  - [Scripts](#scripts)
-  - [Full pipeline](#full-pipeline)
-- [Data Model](#data-model)
-- [Notion Integration](#notion-integration)
-- [Adding or Updating Sources](#adding-or-updating-sources)
-- [Roadmap](#roadmap)
-- [Troubleshooting](#troubleshooting)
-- [License](#license)
+---
 
 ## Overview
 
-This project:
+This project transforms the overwhelming task of weekly meal planning into a streamlined, automated workflow. By constraining ingredients to Aldi's catalog and automating the decision-making process, it removes cognitive load while keeping grocery costs predictable and low.
 
-- Scrapes Aldi prices from a community-maintained price list
-- Scrapes weekly budget meal-plan posts from several food blogs
-- Parses cost, family size, meal count, and ingredients where available
-- Saves all scrapes to timestamped JSON files
-- Syncs ingredient price data to a Notion "Ingredients" database (recipes sync planned)
+### What It Does
 
-**Tech stack:**
+- **Generates** budget-conscious meal plans for 5–7 dinners per week
+- **Rotates** protein variety and includes leftover-friendly meals
+- **Calculates** accurate per-meal and weekly costs from real Aldi pricing
+- **Produces** a consolidated, category-organized grocery list ready for shopping
+- **Syncs** with Notion databases as the single source of truth
+- **Flags** non-Aldi items when they appear in scraped recipes
 
-- Node.js 18+
-- axios + cheerio for scraping
-- @notionhq/client for Notion API
-- Simple utilities for retry, delay, parsing, and logging
+### Core Value Proposition
 
-## Features
+**Time**: Planning drops from 2+ hours to under 10 minutes  
+**Money**: Weekly grocery spending stays within a fixed budget cap  
+**Mental Health**: Eliminates decision paralysis and "what's for dinner?" anxiety  
+**Waste**: Intentional ingredient reuse across recipes reduces food waste
 
-- Price scraping with polite rate limiting and retry
-- Recipe plan scraping from 7 sources with site-specific selectors
-- Timestamped data snapshots under `data/prices` and `data/recipes`
-- Notion sync for ingredients with create-or-update behavior
-- Clear modular structure for scrapers, parsers, and Notion client
+---
 
 ## Architecture
 
-- `src/index.js`: Orchestrates the full pipeline
-- `src/scrapers/pricesScraper.js`: Scrapes Aldi price list
-- `src/scrapers/recipesScraper.js`: Scrapes meal-plan posts
-- `src/scrapers/sources.js`: Source definitions and CSS selectors
-- `src/utils/scraper.js`: HTTP, retries, delays, cheerio helpers
-- `src/utils/parser.js`: Ingredient line parsing, numeric extraction, URL normalization
-- `src/notion/notionClient.js`: Notion client and CRUD helpers
-- `src/notion/syncToNotion.js`: Reads latest prices JSON and syncs to Notion
+### Data Model
 
-**Data folders:**
+Three primary Notion databases form the system's backbone:
 
-- `data/prices`: Aldi pricing snapshots
-- `data/recipes`: Meal-plan snapshots
-- `logs`: scrape logs (gitignored)
+**1. Aldi Ingredients** (`3d79c2030ca045faa454ff4a72dc1143`)
+- Item names, package sizes/units, base units (g/ml/each)
+- Price per package, price per base unit (calculated)
+- Grocery categories (Produce, Meat, Dairy, Pantry, Frozen, etc.)
+- Source URLs and last-updated timestamps
+
+**2. Aldi Recipes** (`659afecb3faf43cd883af3e756f7efc9`)
+- Recipe metadata (title, servings, source URL)
+- Linked ingredients (multi-select relation)
+- Instructions and notes
+- Total cost and cost-per-serving (auto-calculated from linked ingredients)
+
+**3. Aldi Meal Planner** (`29f86edc-ae2c-808e-a798-e57a82ca904f`)
+- Calendar view of weekly dinners
+- Each day links to a recipe from the Recipes database
+- Free-text fields for breakfast, lunch, and snacks
+- Weekly budget tracking and rollup totals
+
+**4. Receipts** (optional: `a644ab1b-20f0-4bdb-aa1d-bf1e1f6ab450`)
+- Manual entry for keeping prices current from actual shopping trips
+
+### Automation Flow
+
+```
+1. Recipe Curation
+   â†' Scrape Aldi meal plans from blogs
+   â†' Filter for budget-friendly, simple recipes
+   â†' Manually verify and import to Notion
+
+2. Price Maintenance
+   â†' Scrape Aldi prices from aggregator sites
+   â†' Sync to Notion Ingredients database
+   â†' Update price-per-base-unit formulas
+
+3. Meal Plan Generation (weekly)
+   â†' Select 5–7 recipes within budget cap
+   â†' Rotate protein types for variety
+   â†' Include leftover and flexible nights
+   â†' Populate calendar for upcoming week
+
+4. Grocery List Generation
+   â†' Extract all ingredients from week's recipes
+   â†' Consolidate duplicate items
+   â†' Convert to packages (round up)
+   â†' Group by store category for efficient shopping
+   â†' Output as printable "Week of {date}" page
+```
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js v18+ and npm or yarn
-- A Notion account and integration token
-- Notion databases for Ingredients (required) and Recipes (optional)
+- **Node.js** v18 or later
+- **Notion account** with API integration enabled
+- **Notion databases** created and shared with your integration
 
 ### Installation
 
+**1. Clone and install dependencies:**
+
 ```bash
-git clone https://github.com/BethCNC/aldi_meal_planning.git
-cd aldi_meal_planning
 npm install
 ```
 
-### Environment Setup
+**2. Set up environment variables:**
 
-1. **Create a `.env` file from the example:**
+Create a `.env` file in the project root:
 
-   ```bash
-   cp .env.example .env
-   ```
+```env
+NOTION_API_KEY=secret_your_notion_integration_token
+NOTION_INGREDIENTS_DB_ID=3d79c2030ca045faa454ff4a72dc1143
+NOTION_RECIPES_DB_ID=659afecb3faf43cd883af3e756f7efc9
+NOTION_MEAL_PLANNER_DB_ID=29f86edc-ae2c-808e-a798-e57a82ca904f
+```
 
-2. **Add your secrets:**
+**3. Share databases with your integration:**
 
-   ```env
-   NOTION_API_KEY=secret_...
-   NOTION_INGREDIENTS_DB_ID=...
-   NOTION_RECIPES_DB_ID=...  # Optional
-   ```
+- Open each database in Notion
+- Click `...` menu → `Add connections`
+- Select your integration
+- Repeat for all three databases
 
-3. **Share your Notion databases with the integration:**
-   - Open each database in Notion
-   - Click the "..." menu → "Add connections"
-   - Select your integration
-   - This allows the integration to read/write to your databases
+### Notion Setup
 
-## Configuration
-
-### Source configuration
-
-Edit `src/scrapers/sources.js` to:
-
-- Add or remove price sources
-- Add recipe sources
-- Update CSS selectors if sites change structure
-
-**Current sources:**
-
-- **Pricing**: SimpleGroceryDeals Aldi price list
-- **Recipes**: DontWasteTheCrumbs, MomsConfession, ThriftyFrugalMom, TheFigJar, MealsWithMaria, RootedAtHeart, SimplePurposefulLiving
-
-### Notion setup
-
-**Ingredients database recommended properties:**
-
+**Ingredients Database Properties:**
 - `Name` (Title)
-- `Price` (Number)
-- `Unit` (Text, optional)
-- `Source` (Text, optional)
-- `URL` (URL, optional)
-
-**Recipes database** (planned for sync):
-
-- `Title` (Title)
-- `Total Cost` (Number)
-- `Ingredients` (Relation → Ingredients)
+- `Package Size` (Text) — e.g., "1 lb", "16 oz"
+- `Base Unit` (Select) — g, ml, or each
+- `Price per Package` (Number)
+- `Price per Base Unit` (Formula) — auto-calculated
+- `Category` (Select) — Produce, Meat, Dairy, Pantry, Frozen, Other
 - `Source URL` (URL)
+- `Last Updated` (Date)
+
+**Recipes Database Properties:**
+- `Recipe Name` (Title)
+- `Servings` (Number)
+- `Ingredients` (Relation → Ingredients DB, multi-select)
+- `Instructions` (Text)
+- `Total Cost` (Rollup from Ingredients)
+- `Cost per Serving` (Formula)
+- `Source URL` (URL)
+- `Tags` (Multi-select) — Quick, Leftover-Friendly, Sheet Pan, etc.
+
+**Meal Planner Database Properties:**
+- `Date` (Date)
+- `Dinner` (Relation → Recipes DB)
+- `Breakfast` (Text)
+- `Lunch` (Text)
+- `Snacks` (Text)
+- `Daily Cost` (Rollup from Dinner recipe)
+
+---
 
 ## Usage
 
-### Scripts
+### Scraping and Syncing
 
 **Scrape Aldi prices:**
 
 ```bash
 npm run scrape:prices
 ```
-
-Outputs: `data/prices/aldi-prices-[timestamp].json`
+- Outputs: `data/prices/aldi-prices-{timestamp}.json`
+- Sources: SimpleGroceryDeals and other price aggregators
 
 **Scrape recipe plans:**
 
 ```bash
 npm run scrape:recipes
 ```
+- Outputs: `data/recipes/aldi-recipes-{timestamp}.json`
+- Sources: DontWasteTheCrumbs, MomsConfession, ThriftyFrugalMom, and others
 
-Outputs: `data/recipes/aldi-recipes-[timestamp].json`
-
-**Sync ingredient prices to Notion:**
+**Sync prices to Notion:**
 
 ```bash
 npm run sync:notion
 ```
+- Reads latest `data/prices/*.json`
+- Updates existing ingredients or creates new entries
+- Calculates price-per-base-unit automatically
 
-Reads latest prices JSON and upserts into Notion Ingredients DB
-
-### Full pipeline
-
-Run end-to-end: prices → recipes → Notion sync
+**Run full pipeline:**
 
 ```bash
 npm run pipeline
 ```
+- Scrapes prices → scrapes recipes → syncs to Notion
 
-Or:
+### Core Scripts (In Development)
+
+**Add recipes interactively:**
 
 ```bash
-node src/index.js
+node scripts/add-recipe-interactive.js
+```
+- Prompts for recipe details via CLI
+- Links ingredients from existing Notion database
+- Calculates cost automatically
+
+**Generate weekly meal plan:**
+
+```bash
+node scripts/generate-meal-plan.js --budget 75 --servings 4
+```
+- Selects 5–7 recipes within budget
+- Rotates proteins for variety
+- Includes leftover and flexible nights
+- Populates Notion calendar view
+
+**Generate grocery list:**
+
+```bash
+node scripts/generate-grocery-list.js --week 2025-11-04
+```
+- Extracts ingredients from week's meal plan
+- Consolidates quantities and converts to packages
+- Groups by grocery category
+- Outputs printable "Week of {date}" Notion page
+
+**Update prices from receipts:**
+
+```bash
+node scripts/update-prices.js
+```
+- Reads manual receipt entries from Receipts database
+- Updates ingredient prices with latest values
+
+**Analyze recipe costs:**
+
+```bash
+node scripts/analyze-recipe-costs.js
+```
+- Generates cost report for all recipes
+- Identifies most/least expensive meals
+- Suggests budget optimizations
+
+---
+
+## Project Structure
+
+```
+aldi_meal_planning/
+├── .env                              # API keys and database IDs
+├── .env.example                      # Template for environment variables
+├── package.json                      # Dependencies and npm scripts
+├── README.md                         # This file
+│
+├── docs/
+│   ├── PROJECT_OVERVIEW.md           # High-level vision and goals
+│   ├── CURSOR_AI_WORKFLOW.md         # Complete technical specification
+│   ├── QUICK_START.md                # Quick reference for immediate action
+│   ├── NOTION_WORKFLOW_GUIDE.md      # Notion-specific setup guide
+│   └── INDEX.md                      # Documentation index
+│
+├── src/
+│   ├── index.js                      # Main pipeline orchestrator
+│   ├── scrapers/
+│   │   ├── pricesScraper.js          # Aldi price scraping logic
+│   │   ├── recipesScraper.js         # Recipe plan scraping logic
+│   │   └── sources.js                # Source URLs and selectors
+│   ├── utils/
+│   │   ├── scraper.js                # Generic scraper utilities
+│   │   └── parser.js                 # Data parsing and normalization
+│   └── notion/
+│       ├── notionClient.js           # Notion API client wrapper
+│       └── syncToNotion.js           # Price sync implementation
+│
+├── scripts/                          # Automation scripts (in development)
+│   ├── curate-recipes.js             # Filter scraped recipes by criteria
+│   ├── add-recipe-interactive.js     # Interactive recipe import CLI
+│   ├── generate-meal-plan.js         # Weekly meal plan generator
+│   ├── generate-grocery-list.js      # Grocery list consolidator
+│   ├── update-prices.js              # Price update from receipts
+│   └── analyze-recipe-costs.js       # Cost analysis and reporting
+│
+├── data/
+│   ├── prices/                       # Scraped price JSON files
+│   ├── recipes/                      # Scraped recipe JSON files
+│   └── curated-recipes.json          # Filtered recipe candidates
+│
+└── logs/                             # Scraper logs and error reports
 ```
 
-All scrapes are logged under `logs/` with retry and delay behavior enabled.
+---
 
-## Data Model
+## Data Formats
 
-**Price snapshot (example):**
+### Price Snapshot (JSON)
 
 ```json
 {
@@ -201,7 +304,7 @@ All scrapes are logged under `logs/` with retry and delay behavior enabled.
 }
 ```
 
-**Recipe plan snapshot (example):**
+### Recipe Plan Snapshot (JSON)
 
 ```json
 {
@@ -223,69 +326,214 @@ All scrapes are logged under `logs/` with retry and delay behavior enabled.
 }
 ```
 
-**Notes on variability:**
+---
 
-- Ingredients and recipe titles may be partially captured depending on site structure
-- Selectors are intentionally simple and may need per-site refinements
+## Design Principles
 
-## Notion Integration
+### ADHD-Friendly Architecture
 
-`syncToNotion` reads the newest JSON in `data/prices` and:
+This system was designed with neurodivergent users in mind. Core principles:
 
-- Finds existing ingredient rows by name
-- Updates Price and last priced info
-- Creates a new row if not found
-- Returns counts of created, updated, and failures
+**1. Remove decisions, don't organize them**
+- System decides → user approves
+- No browsing, no choosing
+- Automation over configuration
 
-Recipes are not yet synced; a similar module can be implemented for the recipes DB.
+**2. Reduce cognitive load**
+- Single-column layouts
+- Clear visual hierarchy
+- Minimal text
+- One primary action per screen
 
-## Adding or Updating Sources
+**3. Provide structure and routine**
+- Consistent weekly format
+- Same process every Sunday
+- Predictable meal rotation
+- Built-in flexibility (leftover/order-out nights)
 
-1. Add a source entry in `src/scrapers/sources.js`
+**4. Satisfy completion drive**
+- Checkboxes everywhere
+- Status indicators
+- Progress tracking
+- Clear endpoints
 
-2. Provide:
-
-   - One or more URLs per source
-   - CSS selectors for title, cost, ingredients, recipe names
-3. Run a scoped scrape and verify:
-
-   ```bash
-   npm run scrape:recipes
-   ```
-
-4. Inspect the resulting JSON for completeness and adjust selectors as needed
-
-## Roadmap
-
-- Recipe sync to Notion with relations to Ingredients
-- More robust per-site extraction for ingredients and recipe titles
-- Multi-source pricing or direct first-party pricing where allowed
-- Budget-aware planning: compute per-meal costs and suggest menus within a weekly budget
-
-## Troubleshooting
-
-**Notion sync fails:**
-
-- Verify `NOTION_API_KEY` and DB IDs in `.env`
-- Ensure databases are shared with the integration
-
-**Scraping gaps or errors:**
-
-- Site structure may have changed; update selectors in `sources.js`
-- Some sites block automated requests; check logs for HTTP status and retry notes
-
-**Node compatibility:**
-
-- Confirm Node v18+ with `node --version`
-
-## License
-
-MIT
-
-## Author
-
-Beth Cartrette
+**5. Eliminate anxiety triggers**
+- Show costs upfront
+- Time estimates included
+- No surprises at the store
+- Permission to deviate from the plan
 
 ---
 
-**Note**: This tool is for personal use. Please respect the terms of service of the websites being scraped and use responsibly.
+## Development
+
+### Code Style Guidelines
+
+From project owner preferences:
+
+- **Arrow functions:** Always use parentheses — `(item) => item.price`
+- **Object literals:** Minimal spaces — `{name, cost}`
+- **Variable names:** Clear and descriptive, avoid abbreviations
+- **Comments:** Only for complex logic, not obvious operations
+- **Commands:** Always specify where to run (VS Code terminal vs macOS shell)
+
+### Testing Approach
+
+- Test with small datasets first (1–2 recipes)
+- Verify Notion entries manually after script runs
+- Use `--dry-run` flags where implemented
+- Log all operations for debugging
+
+### Error Handling
+
+- Always wrap Notion API calls in `try-catch`
+- Provide helpful error messages with context
+- Log errors to console and `logs/` directory
+
+---
+
+## Regional Notes
+
+**Pricing Assumptions:** North Carolina Aldi stores  
+**Non-Aldi Items:** Flagged when encountered in scraped recipes  
+**Store Categories:** Based on Charlotte, NC Aldi layout (Produce front-left, Meat back-left, Dairy back-right, Frozen middle-right, Pantry center)
+
+---
+
+## Portfolio Context
+
+This project serves dual purposes:
+
+**1. Functional Tool**
+- Real-world meal planning automation for the project owner
+- Addresses genuine pain points around decision fatigue and budget anxiety
+
+**2. UX/UI Case Study**
+- Demonstrates end-to-end product design process
+- Showcases systems thinking and accessibility awareness
+- Documents research, iteration, and validation
+- Highlights neurodivergent-first design principles
+
+**Case Study Emphasis:**
+- User research and problem definition
+- Information architecture and data modeling
+- Automation design and implementation
+- Real-world validation and measurable outcomes
+- Honest reflection on iterations and learning
+
+---
+
+## Current Status
+
+**✅ Completed:**
+- Notion database architecture and formulas
+- Price scraping from aggregator sites
+- Recipe scraping from meal planning blogs
+- Notion API sync for ingredient prices
+- Project documentation and workflow specs
+
+**🚧 In Progress:**
+- Recipe curation and manual import (target: 25+ recipes)
+- Interactive recipe addition CLI tool
+- Meal plan generation algorithm
+
+**📋 Planned:**
+- Grocery list consolidation and formatting
+- Price update from manual receipts
+- Cost analysis and optimization reporting
+- Web scraper fixes for additional sources
+
+**🎯 Immediate Priorities:**
+1. Build `add-recipe-interactive.js` to streamline recipe imports
+2. Reach 25+ recipes in Notion database
+3. Implement meal plan generator with budget constraints
+4. Create printable grocery list output
+
+---
+
+## Success Metrics
+
+### Quantitative
+- **Planning Time:** < 10 minutes per week (down from 2+ hours)
+- **Budget Adherence:** 95%+ of plans stay within weekly cap
+- **Cost Accuracy:** ±5% between estimate and actual spend
+- **Waste Reduction:** Ingredients reused across 2+ recipes per week
+
+### Qualitative
+- **Reduced Anxiety:** No more "what's for dinner?" paralysis
+- **Improved Routine:** Consistent Sunday planning ritual
+- **Increased Cooking:** More home meals, fewer emergency takeout orders
+- **Mental Clarity:** Decision-making energy preserved for other tasks
+
+---
+
+## Contributing
+
+This is currently a solo project serving as both a functional tool and a portfolio case study. If you're interested in the approach or have suggestions, feel free to reach out.
+
+**Areas Open for Discussion:**
+- Additional Aldi price sources
+- Recipe blog scraping improvements
+- Meal plan optimization algorithms
+- Grocery list formatting options
+
+---
+
+## Technical Notes
+
+### Notion API Rate Limits
+- 3 requests per second per integration
+- Scripts include delays to stay within limits
+- Bulk operations batch requests appropriately
+
+### Scraping Considerations
+- CSS selectors may break if source sites update
+- Retry logic included for transient failures
+- Logs capture all scraping activity for debugging
+
+### Data Normalization
+- Quantities converted to base units (g/ml/each)
+- Package sizes parsed from text (e.g., "1 lb" → 453.59g)
+- Price-per-base-unit calculated via Notion formulas
+
+---
+
+## License
+
+Private project — Not open source at this time.
+
+---
+
+## Contact
+
+**Project Owner:** Beth Cartrette  
+**Purpose:** Functional tool + UX/UI portfolio case study  
+**Tech Stack:** Node.js, Notion API, web scraping  
+**Location:** Charlotte, North Carolina
+
+---
+
+## Acknowledgments
+
+**Recipe Sources:**
+- DontWasteTheCrumbs
+- MomsConfession
+- ThriftyFrugalMom
+- TheFigJar
+- MealsWithMaria
+- RootedAtHeart
+- SimplePurposefulLiving
+
+**Price Sources:**
+- SimpleGroceryDeals
+- Manual receipt entry
+
+**Inspiration:**
+- Neurodivergent community insights on decision fatigue
+- Budget-conscious families sharing meal planning strategies
+- Aldi shoppers documenting weekly hauls and costs
+
+---
+
+**Last Updated:** November 2025  
+**Version:** 1.0.0 (Active Development)

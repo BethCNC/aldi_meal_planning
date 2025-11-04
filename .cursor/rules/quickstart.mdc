@@ -1,0 +1,237 @@
+---
+alwaysApply: true
+---
+
+# Quick Start Guide - Aldi Meal Planning Automation
+
+## 🎯 Current Goal
+Build automated weekly meal planning using your Notion databases as the source of truth.
+
+---
+
+## ✅ What You Have
+- **8 recipes** in Notion (need 20-25 for variety)
+- **Hundreds of ingredients** with Aldi prices
+- Working Notion API integration
+- Database relations properly set up
+
+---
+
+## 🚀 Immediate Actions (In Order)
+
+### 1. Create Scripts Directory
+```bash
+mkdir -p scripts
+```
+
+### 2. Build Recipe Import Tool
+**File:** `scripts/add-recipe-interactive.js`
+- Interactive CLI for adding recipes to Notion
+- Auto-matches ingredients from your database
+- Calculates costs automatically
+- Links everything properly
+
+**Priority:** HIGH - This lets you quickly add 15+ more recipes
+
+### 3. Add More Recipes
+Get to 20-25 recipes manually using the tool from step 2.
+
+### 4. Build Meal Plan Generator
+**File:** `scripts/generate-meal-plan.js`
+- Generates 7-day meal plan within budget
+- Optimizes for ingredient overlap
+- Creates grocery list
+- Writes to Notion automatically
+
+**Priority:** HIGH - This is the main automation goal
+
+---
+
+## 📋 First Script to Build (Most Important)
+
+### `scripts/add-recipe-interactive.js`
+
+**What it does:**
+```
+$ node scripts/add-recipe-interactive.js
+
+🍳 Add New Recipe to Notion
+
+Recipe name: Chicken Tacos
+Servings: 4
+Category: Chicken
+Source URL (optional): https://example.com/recipe
+
+📝 Enter ingredients (one per line, press Enter twice when done):
+> 1 lb chicken breast
+> 1 packet taco seasoning
+> 8 tortillas
+> 
+
+✅ Found in database: Chicken breast ($4.50)
+❓ Not found: taco seasoning - Enter cost: $0.79
+❓ Not found: tortillas - Enter cost: $2.49
+
+💰 Total Cost: $7.78
+💵 Cost per Serving: $1.95
+
+✨ Creating recipe in Notion...
+✅ Recipe added successfully!
+🔗 https://notion.so/your-recipe-link
+```
+
+**Key Features:**
+- Searches your existing Ingredients database
+- Prompts for costs on new ingredients
+- Creates ingredient entries automatically
+- Links recipe to ingredients
+- Calculates totals
+
+---
+
+## 🎨 Code Example Structure
+
+```javascript
+// scripts/add-recipe-interactive.js
+const { Client } = require('@notionhq/client');
+const readline = require('readline');
+require('dotenv').config();
+
+const notion = new Client({ auth: process.env.NOTION_API_KEY });
+
+async function searchIngredient(name) {
+  // Query Notion Ingredients DB
+  const results = await notion.databases.query({
+    database_id: process.env.NOTION_INGREDIENTS_DB_ID,
+    filter: {
+      property: 'Item',
+      title: { contains: name }
+    }
+  });
+  return results;
+}
+
+async function createRecipe(recipeData) {
+  // Create in Notion Recipes DB
+  await notion.pages.create({
+    parent: { database_id: process.env.NOTION_RECIPES_DB_ID },
+    properties: {
+      'Recipe Name': { title: [{ text: { content: recipeData.name } }] },
+      'Cost ($)': { number: recipeData.totalCost },
+      // ... etc
+    }
+  });
+}
+
+// Main interactive flow
+async function main() {
+  // Prompt for recipe details
+  // Search/create ingredients
+  // Calculate costs
+  // Create recipe
+}
+
+main();
+```
+
+---
+
+## 📊 Database IDs (from .env)
+
+```
+NOTION_RECIPES_DB_ID=9b818405-7376-4924-a0be-3b48c7bf2f4a
+NOTION_INGREDIENTS_DB_ID=27d2bdca-781f-42f0-8b5f-1927fec26d8a
+```
+
+---
+
+## 🧪 Testing Strategy
+
+1. **Test with 1 recipe first**
+2. Verify it appears correctly in Notion
+3. Check all relations work
+4. Then add remaining recipes
+
+---
+
+## 📁 Where to Put Scripts
+
+```
+aldi_meal_planning/
+├── scripts/               ← NEW folder
+│   ├── add-recipe-interactive.js
+│   ├── generate-meal-plan.js
+│   └── generate-grocery-list.js
+└── ... (existing files)
+```
+
+---
+
+## 💡 Quick Wins
+
+**Fastest path to working automation:**
+
+1. ✅ Build `add-recipe-interactive.js` (30 min)
+2. ✅ Add 15 recipes using the tool (60 min)
+3. ✅ Build `generate-meal-plan.js` (2 hours)
+4. 🎉 Generate your first automated meal plan!
+
+**Total time to working system:** ~4 hours
+
+---
+
+## 🎯 Success Looks Like
+
+```bash
+$ node scripts/generate-meal-plan.js --budget 75 --servings 4
+
+🎯 Generating meal plan...
+✅ Found 23 recipes in budget range
+🧮 Optimizing for ingredient overlap...
+📅 Creating 7-day plan...
+
+✨ Meal Plan Complete!
+
+Week of Nov 4-10, 2025
+Budget: $75.00 | Actual: $68.42
+
+Mon: Taco Pasta ($7.78)
+Tue: Chicken Stir Fry ($7.91)
+Wed: Leftovers ($0)
+Thu: Spaghetti Night ($11.98)
+Fri: Sheet Pan Sausage ($9.90)
+Sat: Cheeseburger Bowls ($11.63)
+Sun: Shrimp & Zucchini ($9.44)
+
+🛒 Shopping list saved to: grocery-list-2025-11-04.txt
+📝 Meal plan added to Notion!
+```
+
+---
+
+## ⚠️ Important Notes
+
+- **Notion API rate limits:** Max 3 requests/second (already handled in existing code)
+- **Test carefully:** Always verify Notion entries after running scripts
+- **Backup data:** JSON files are automatic backups
+- **Price updates:** Plan to update ingredient prices monthly
+
+---
+
+## 📞 Help Commands
+
+```bash
+# Verify Notion connection
+npm run sync:notion
+
+# Check existing recipes
+node -e "console.log(process.env.NOTION_RECIPES_DB_ID)"
+
+# Install any missing dependencies
+npm install
+```
+
+---
+
+**Ready to start?** 
+Begin with: `mkdir -p scripts && cd scripts`

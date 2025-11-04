@@ -9,15 +9,39 @@
     "scrape:recipes": "node src/scrapers/recipesScraper.js",
     "sync:notion": "node src/notion/syncToNotion.js",
     "scrape:all": "npm run scrape:prices && npm run scrape:recipes",
-    "pipeline": "npm run scrape:all && npm run sync:notion"
+    "pipeline": "npm run scrape:all && npm run sync:notion",
+    "verify:notion": "node scripts/verify-notion-databases.js",
+    "add:recipe": "node scripts/add-recipe-interactive.js",
+    "calc:costs": "node scripts/calc-recipe-costs.js",
+    "calc:costs:v2": "node scripts/calc-recipe-costs-v2.js",
+    "calc:costs:v3": "node scripts/calc-recipe-costs-v3.js",
+    "calc:ingredient-units": "node scripts/calculate-ingredient-units.js",
+    "populate:packages": "node scripts/populate-package-data.js --auto",
+    "bulk:update-ingredients": "node scripts/bulk-update-ingredients.js",
+    "fetch:prices": "node scripts/fetch-aldi-prices.js",
+    "fetch:prices:advanced": "node scripts/fetch-prices-advanced.js",
+    "populate:missing": "node scripts/populate-missing-ingredients.js",
+    "import:csv": "node scripts/import-csv-prices-simple.js",
+    "generate:table": "node scripts/generate-ingredient-table.js",
+    "check:missing": "node scripts/check-missing-status.js",
+    "plan:generate": "node scripts/generate-meal-plan.js",
+    "grocery:list": "node scripts/generate-grocery-list.js"
   },
-  "keywords": ["aldi", "scraping", "meal-planning", "notion"],
+  "keywords": [
+    "aldi",
+    "scraping",
+    "meal-planning",
+    "notion"
+  ],
   "author": "Beth Cartrette",
   "license": "MIT",
   "dependencies": {
     "@notionhq/client": "^2.2.15",
+    "@supabase/supabase-js": "^2.79.0",
     "axios": "^1.7.2",
+    "better-sqlite3": "^12.4.1",
     "cheerio": "^1.0.0-rc.12",
+    "csv-parse": "^6.1.0",
     "dotenv": "^16.4.5",
     "puppeteer": "^22.0.0"
   }

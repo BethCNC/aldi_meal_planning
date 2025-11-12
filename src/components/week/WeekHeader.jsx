@@ -6,7 +6,7 @@ export function WeekHeader({label, onPrev, onNext}) {
       <button
         type="button"
         onClick={onPrev}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-inverse hover:bg-surface-inverted-hover/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-surface-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-inverse"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-inverse hover:bg-surface-inverse-hover/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-surface-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-inverse"
         aria-label="Previous week"
       >
         <IconChevronLeft className="h-5 w-5" strokeWidth={1.75} />
@@ -15,7 +15,7 @@ export function WeekHeader({label, onPrev, onNext}) {
       <button
         type="button"
         onClick={onNext}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-inverse hover:bg-surface-inverted-hover/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-surface-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-inverse"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-inverse hover:bg-surface-inverse-hover/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-surface-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-inverse"
         aria-label="Next week"
       >
         <IconChevronRight className="h-5 w-5" strokeWidth={1.75} />

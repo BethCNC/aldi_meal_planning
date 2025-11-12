@@ -276,7 +276,7 @@
 
 **Design Tokens:**
 - Typography: `text-[11px] font-semibold`
-- Colors: `text-text-body`, `text-icon-default`
+- Colors: `text-text-body`, `text-icon-display`
 
 **Note:** All status indicators are decorative (`aria-hidden="true"`).
 

@@ -14,10 +14,10 @@ All colors, typography, spacing, radii, and shadow values used across the Figma 
 | Action fills (primary button, tab active bg) | `surface.primary` / `surface.primary-hover` | Matches apple green ramp. |
 | Action outline focus ring | `surface.focus` / `surface.focus-subtle` | Focus halo uses translucent `#5cb4f34d` already present. |
 | Neutral surfaces (page, card, elevated) | `surface.page`, `surface.card`, `surface.elevated`, `surface.disabled` | Align with light stone/neutral ramp. |
-| Dark backgrounds (week header, filled button) | `surface.inverse`, `surface.inverted-hover` | Both tokens exist; ensure hover uses `surface.inverted-hover`. |
+| Dark backgrounds (week header, filled button) | `surface.inverse`, `surface.inverse-hover` | Both tokens exist; ensure hover uses `surface.inverse-hover`. |
 | Text colors (default/inverse/subtle/primary/focus) | `text.body`, `text.inverse`, `text.subtle`, `text.primary`, `text.focus` | All referenced values covered. |
-| Disabled text | `text.disbaled` (typo) | Token exists but is misspelled; recommend renaming to `text.disabled` during implementation pass. |
-| Icon colors | `icon.default`, `icon.subtle`, `icon.primary`, `icon.focus`, `icon.disabled`, `icon.inverted` | Matches usage in nav/tab items. |
+| Disabled text | `text.disabled` | Token now correctly named and surfaced through Tailwind. |
+| Icon colors | `icon.display`, `icon.subtle`, `icon.primary`, `icon.focus`, `icon.disabled`, `icon.inverse` | Matches usage in nav/tab items. |
 | Weekday badge backgrounds | `surface.day.monday` … `surface.day.sunday` | Palette aligns with Figma chip colors. |
 | Borders (default, subtle, focus, primary) | `border.default`, `border.subtle`, `border.focus`, `border.primary` | Outline button/tab separators covered. |
 | Form outline disabled | `border.disabled` | Matches grey border in disabled inputs. |
@@ -43,11 +43,10 @@ No additional typography tokens required. Continue to centralize through planned
 
 ## Identified Gaps & Cleanup Tasks
 
-1. **Token typo:** `text.disbaled` should be renamed to `text.disabled` for clarity. Requires coordinated update in tokens + Tailwind + any existing references.  
-2. **Semantic aliases:** Consider adding explicit semantic aliases during component implementation (e.g., `button.filled.bg`, `input.border.default`) for clarity, but not required before coding.  
-3. **Dark-mode testing:** Ensure `ThemeDark.surface.focus-subtle` uses an actual translucent variant (`blueberry` at reduced alpha). Current value reuses solid `blueberry.400`; may want `#5cb4f352` equivalent later when implementing dark mode focus rings.
+1. **Semantic aliases:** Consider adding explicit semantic aliases during component implementation (e.g., `button.filled.bg`, `input.border.default`) for clarity, but not required before coding.  
+2. **Dark-mode testing:** Ensure `ThemeDark.surface.focus-subtle` uses an actual translucent variant (`blueberry` at reduced alpha). Current value reuses solid `blueberry.400`; may want `#5cb4f352` equivalent later when implementing dark mode focus rings.
 
 ## Recommendation
 
-Proceed to component development (Phase 2 of plan) with existing tokens. Schedule a minor refactor to fix the misspelled `text.disbaled` token before wiring up text styles to prevent future bugs. If we introduce additional semantic aliases, capture them in `tokens.json` under a new layer (e.g., `Component.button`), but this can wait until initial implementations highlight true repetition. ***!
+Proceed to component development (Phase 2 of plan) with existing tokens. If we introduce additional semantic aliases, capture them in `tokens.json` under a new layer (e.g., `Component.button`), but this can wait until initial implementations highlight true repetition. ‼️
 

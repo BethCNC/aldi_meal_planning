@@ -8,7 +8,7 @@ function StatusBar() {
   return (
     <div className="flex h-6 items-center justify-between px-4 text-[11px] font-semibold text-text-body">
       <span>9:41</span>
-      <div className="flex items-center gap-2 text-icon-default">
+      <div className="flex items-center gap-2 text-icon-display">
         <span aria-hidden className="block h-2.5 w-4 rounded-sm bg-text-body" />
         <span aria-hidden className="block h-2.5 w-4 rounded-sm bg-text-body" />
         <span aria-hidden className="flex h-3 w-6 items-center justify-end rounded-sm border border-border-subtle px-0.5">

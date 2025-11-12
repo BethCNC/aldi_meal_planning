@@ -1,3 +1,127 @@
+import plugin from 'tailwindcss/plugin'
+import tokens from './tokens.json' assert { type: 'json' }
+
+const FONT_WEIGHT_LOOKUP = {
+  Light: '300',
+  Regular: '400',
+  Medium: '500',
+  SemiBold: '600',
+  Bold: '700',
+  ExtraBold: '800'
+}
+
+const FONT_STACK = '"Plus Jakarta Sans", system-ui, sans-serif'
+
+function resolveTokenPath(root, segments) {
+  return segments.reduce((acc, segment) => {
+    if (acc == null) return undefined
+    return acc[segment]
+  }, root)
+}
+
+function resolveTokenValue(raw) {
+  if (raw == null) return null
+  if (typeof raw === 'number') return raw
+  if (typeof raw !== 'string') return raw
+
+  const match = raw.match(/^\{(.+)\}$/)
+  if (!match) {
+    return raw
+  }
+
+  const path = match[1].split('.')
+  const candidates = [tokens.Theme, tokens.Primitives]
+
+  for (const candidate of candidates) {
+    const result = resolveTokenPath(candidate, path)
+    if (result !== undefined) {
+      if (result && typeof result === 'object' && 'value' in result) {
+        return result.value
+      }
+      return result
+    }
+  }
+
+  return null
+}
+
+function toRem(value) {
+  if (value == null) return undefined
+  if (typeof value === 'string') return value
+  if (typeof value !== 'number') return undefined
+  if (value === 0) return '0rem'
+  const remValue = value / 16
+  const trimmed = parseFloat(remValue.toFixed(4)).toString()
+  return `${trimmed}rem`
+}
+
+function toLetterSpacing(value) {
+  if (value == null) return undefined
+  if (typeof value === 'number') return `${value}em`
+  if (typeof value !== 'string') return undefined
+  const percentMatch = value.match(/^(-?\d+(\.\d+)?)%$/)
+  if (percentMatch) {
+    const decimal = parseFloat(percentMatch[1]) / 100
+    if (decimal === 0) return '0'
+    const trimmed = parseFloat(decimal.toFixed(4)).toString()
+    return `${trimmed}em`
+  }
+  return value
+}
+
+function mapFontWeight(value) {
+  if (value == null) return undefined
+  if (typeof value === 'number') return value.toString()
+  if (typeof value === 'string') {
+    const mapped = FONT_WEIGHT_LOOKUP[value] || value
+    return mapped
+  }
+  return undefined
+}
+
+const textStyleUtilities = {}
+
+for (const [styleKey, styleValue] of Object.entries(tokens.Theme)) {
+  if (!styleKey.startsWith('text-') || typeof styleValue !== 'object') continue
+
+  for (const [weightKey, tokenValue] of Object.entries(styleValue)) {
+    if (!tokenValue || typeof tokenValue !== 'object' || !tokenValue.value) continue
+
+    const { fontFamily, fontWeight, lineHeight, fontSize, letterSpacing } = tokenValue.value
+
+    const className = `.text-style-${styleKey}-${weightKey.replace('font-', '')}`
+    const resolvedFontSize = toRem(resolveTokenValue(fontSize))
+    const resolvedLineHeight = toRem(resolveTokenValue(lineHeight))
+    const resolvedFontFamily = resolveTokenValue(fontFamily) || FONT_STACK
+    const resolvedFontWeight = mapFontWeight(resolveTokenValue(fontWeight))
+    const resolvedLetterSpacing = toLetterSpacing(resolveTokenValue(letterSpacing))
+
+    const utility = {}
+
+    if (resolvedFontFamily) {
+      utility.fontFamily = Array.isArray(resolvedFontFamily)
+        ? resolvedFontFamily.join(', ')
+        : resolvedFontFamily === 'Plus Jakarta Sans'
+          ? FONT_STACK
+          : resolvedFontFamily
+    }
+    if (resolvedFontSize) {
+      utility.fontSize = resolvedFontSize
+    }
+    if (resolvedLineHeight) {
+      utility.lineHeight = resolvedLineHeight
+    }
+    if (resolvedFontWeight) {
+      utility.fontWeight = resolvedFontWeight
+    }
+    if (resolvedLetterSpacing !== undefined) {
+      utility.letterSpacing = resolvedLetterSpacing
+    }
+
+    textStyleUtilities[className] = utility
+  }
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
@@ -222,5 +346,9 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addUtilities }) => {
+      addUtilities(textStyleUtilities, ['responsive'])
+    })
+  ],
 }

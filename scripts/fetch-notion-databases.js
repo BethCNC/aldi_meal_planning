@@ -6,6 +6,7 @@
  */
 
 import notion from '../backend/notion/notionClient.js';
+import { convertUnit } from '../backend/utils/unitConversions.js';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -100,7 +101,18 @@ async function fetchIngredients() {
     
     // Calculate package price from PPU if missing
     if (!pricePerPackage && pricePerBaseUnit && packageSize) {
-      pricePerPackage = pricePerBaseUnit * packageSize;
+      let sizeForPricing = packageSize;
+      if (packageUnit && baseUnit && packageUnit.toLowerCase() !== baseUnit.toLowerCase()) {
+        try {
+          const converted = convertUnit(packageSize, packageUnit, baseUnit);
+          if (typeof converted === 'number' && Number.isFinite(converted) && converted > 0) {
+            sizeForPricing = converted;
+          }
+        } catch (error) {
+          console.warn(`⚠️  Failed to convert ${packageSize}${packageUnit} to ${baseUnit} for ${item}: ${error.message}`);
+        }
+      }
+      pricePerPackage = pricePerBaseUnit * sizeForPricing;
     }
     
     return {

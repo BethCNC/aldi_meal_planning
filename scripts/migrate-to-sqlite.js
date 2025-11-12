@@ -18,6 +18,7 @@
 import Database from 'better-sqlite3';
 import {fetchIngredients, fetchRecipes} from './fetch-notion-databases.js';
 import {parseIngredientLine, matchIngredient} from './calculate-recipe-costs.js';
+import { convertUnit } from '../backend/utils/unitConversions.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -222,7 +223,18 @@ function importIngredients(db, ingredients) {
       // Calculate package price from PPU if missing
       let pricePerPackage = ing.pricePerPackage;
       if (!pricePerPackage && ing.pricePerBaseUnit && ing.packageSize) {
-        pricePerPackage = ing.pricePerBaseUnit * ing.packageSize;
+        let sizeForPricing = ing.packageSize;
+        if (ing.packageUnit && ing.baseUnit && ing.packageUnit.toLowerCase() !== ing.baseUnit.toLowerCase()) {
+          try {
+            const converted = convertUnit(ing.packageSize, ing.packageUnit, ing.baseUnit);
+            if (typeof converted === 'number' && Number.isFinite(converted) && converted > 0) {
+              sizeForPricing = converted;
+            }
+          } catch (error) {
+            console.warn(`⚠️  Unable to convert ${ing.packageSize}${ing.packageUnit} to ${ing.baseUnit} for ${ing.item}: ${error.message}`);
+          }
+        }
+        pricePerPackage = ing.pricePerBaseUnit * sizeForPricing;
       }
       
       // Handle category array (convert to string)

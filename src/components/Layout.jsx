@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { IconMenu2 } from '@tabler/icons-react';
 import { BottomNav } from './BottomNav';
 import { MenuDrawer } from './MenuDrawer';
+import { NavBar } from './NavBar';
 
 function StatusBar() {
   return (
@@ -15,29 +15,6 @@ function StatusBar() {
           <span className="block h-2 w-3 rounded-[1px] bg-text-body" />
         </span>
       </div>
-    </div>
-  );
-}
-
-function NavBar({ onMenuClick }) {
-  return (
-    <div className="flex h-14 items-center justify-between bg-surface-focus px-4 text-text-inverse">
-      <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-primary text-base font-semibold text-text-display shadow-sm">
-          🍏
-        </div>
-        <span className="text-sm font-semibold tracking-wide uppercase text-text-inverse/80">
-          Aldi Meal Planner
-        </span>
-      </div>
-      <button
-        type="button"
-        onClick={onMenuClick}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-inverse hover:bg-surface-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-surface-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface-focus"
-        aria-label="Open navigation menu"
-      >
-        <IconMenu2 className="h-5 w-5" strokeWidth={1.75} />
-      </button>
     </div>
   );
 }

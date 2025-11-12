@@ -11,8 +11,8 @@
 
 import {readFile} from 'fs/promises';
 import {parse} from 'csv-parse';
-import notion from '../src/notion/notionClient.js';
-import {searchIngredient} from '../src/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
+import {searchIngredient} from '../backend/notion/notionClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

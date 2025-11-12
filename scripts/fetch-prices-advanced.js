@@ -16,7 +16,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import {setTimeout} from 'timers/promises';
-import notion from '../src/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

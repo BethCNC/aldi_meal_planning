@@ -9,8 +9,8 @@
  *   node scripts/populate-missing-ingredients.js --list-only
  */
 
-import notion from '../src/notion/notionClient.js';
-import {searchIngredient, updateIngredientPrice} from '../src/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
+import {searchIngredient, updateIngredientPrice} from '../backend/notion/notionClient.js';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import {setTimeout} from 'timers/promises';

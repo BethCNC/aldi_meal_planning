@@ -4,8 +4,8 @@
  * Quick tests to verify database connectivity and structure
  */
 
-import {queryRecipes, queryMealPlanEntries, searchIngredient} from '../src/notion/notionClient.js';
-import notion from '../src/notion/notionClient.js';
+import {queryRecipes, queryMealPlanEntries, searchIngredient} from '../backend/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
 
 async function testRecipesQuery() {
   console.log('\n📋 Test 1: Query Recipes Database\n');

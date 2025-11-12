@@ -1,13 +1,17 @@
 {
-  "name": "aldi-meal-planning-scraper",
+  "name": "aldi-meal-planner",
   "version": "1.0.0",
-  "description": "Web scraping system for Aldi pricing and budget recipes",
+  "description": "Automated weekly meal planning with Aldi-only ingredients - Full-stack React app with backend automation",
   "type": "module",
-  "main": "src/index.js",
+  "main": "backend/index.js",
   "scripts": {
-    "scrape:prices": "node src/scrapers/pricesScraper.js",
-    "scrape:recipes": "node src/scrapers/recipesScraper.js",
-    "sync:notion": "node src/notion/syncToNotion.js",
+    "dev": "vite",
+    "build": "npx vite@5.4.11 build",
+    "preview": "npx vite@5.4.11 preview",
+    "lint": "eslint .",
+    "scrape:prices": "node backend/scrapers/pricesScraper.js",
+    "scrape:recipes": "node backend/scrapers/recipesScraper.js",
+    "sync:notion": "node backend/notion/syncToNotion.js",
     "scrape:all": "npm run scrape:prices && npm run scrape:recipes",
     "pipeline": "npm run scrape:all && npm run sync:notion",
     "verify:notion": "node scripts/verify-notion-databases.js",
@@ -25,24 +29,52 @@
     "generate:table": "node scripts/generate-ingredient-table.js",
     "check:missing": "node scripts/check-missing-status.js",
     "plan:generate": "node scripts/generate-meal-plan.js",
-    "grocery:list": "node scripts/generate-grocery-list.js"
+    "grocery:list": "node scripts/generate-grocery-list.js",
+    "verify:supabase": "node scripts/verify-supabase-setup.js",
+    "check:recipe-data": "node scripts/check-recipe-data-quality.js",
+    "test:rpc": "node scripts/test-rpc-function.js"
   },
   "keywords": [
     "aldi",
-    "scraping",
     "meal-planning",
-    "notion"
+    "react",
+    "notion",
+    "supabase",
+    "budget-cooking"
   ],
   "author": "Beth Cartrette",
   "license": "MIT",
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
+    "@heroicons/react": "^2.2.0",
     "@notionhq/client": "^2.2.15",
     "@supabase/supabase-js": "^2.79.0",
+    "@tabler/icons-react": "^3.35.0",
     "axios": "^1.7.2",
     "better-sqlite3": "^12.4.1",
     "cheerio": "^1.0.0-rc.12",
     "csv-parse": "^6.1.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
-    "puppeteer": "^22.0.0"
+    "openai": "^6.8.0",
+    "puppeteer": "^22.0.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.9.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@tailwindcss/postcss": "^4.1.16",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.22",
+    "globals": "^16.4.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "vite": "^5.4.11"
   }
 }

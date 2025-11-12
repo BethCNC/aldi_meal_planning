@@ -15,9 +15,9 @@
  *   node scripts/calc-recipe-costs-v3.js --update  # Actually update Notion
  */
 
-import {queryRecipes, updateRecipeCost} from '../src/notion/notionClient.js';
-import {calculateIngredientCost} from '../src/utils/unitConversions.js';
-import notion from '../src/notion/notionClient.js';
+import {queryRecipes, updateRecipeCost} from '../backend/notion/notionClient.js';
+import {calculateIngredientCost} from '../backend/utils/unitConversions.js';
+import notion from '../backend/notion/notionClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

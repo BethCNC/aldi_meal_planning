@@ -5,7 +5,7 @@
  * for analysis and cost calculation.
  */
 
-import notion from '../src/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';

@@ -5,8 +5,8 @@
  */
 
 import {readFile} from 'fs/promises';
-import notion from '../src/notion/notionClient.js';
-import {searchIngredient} from '../src/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
+import {searchIngredient} from '../backend/notion/notionClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

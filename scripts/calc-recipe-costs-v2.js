@@ -12,8 +12,8 @@
  *   node scripts/calc-recipe-costs-v2.js --recipe "Taco Pasta"  # Single recipe
  */
 
-import {queryRecipes, updateRecipeCost} from '../src/notion/notionClient.js';
-import notion from '../src/notion/notionClient.js';
+import {queryRecipes, updateRecipeCost} from '../backend/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
 
 /**
  * Parse ingredient line to extract quantity and name

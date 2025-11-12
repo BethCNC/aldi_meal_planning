@@ -10,7 +10,7 @@
  *   node scripts/populate-package-data.js --update           # Actually update Notion
  */
 
-import notion from '../src/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

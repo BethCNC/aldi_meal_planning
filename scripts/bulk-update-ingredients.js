@@ -8,9 +8,9 @@
  *   node scripts/bulk-update-ingredients.js
  */
 
-import {queryRecipes} from '../src/notion/notionClient.js';
-import notion from '../src/notion/notionClient.js';
-import {updateIngredientPrice} from '../src/notion/notionClient.js';
+import {queryRecipes} from '../backend/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
+import {updateIngredientPrice} from '../backend/notion/notionClient.js';
 import readline from 'readline';
 import dotenv from 'dotenv';
 

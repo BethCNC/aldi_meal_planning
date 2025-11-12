@@ -9,8 +9,8 @@
  *   node scripts/calc-recipe-costs.js --recipe "Taco Pasta"  # Single recipe
  */
 
-import {queryRecipes, updateRecipeCost, linkRecipeToIngredients} from '../src/notion/notionClient.js';
-import notion from '../src/notion/notionClient.js';
+import {queryRecipes, updateRecipeCost, linkRecipeToIngredients} from '../backend/notion/notionClient.js';
+import notion from '../backend/notion/notionClient.js';
 
 /**
  * Get ingredient cost from Notion page

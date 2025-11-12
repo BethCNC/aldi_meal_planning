@@ -14,8 +14,8 @@
  *   node scripts/calculate-ingredient-units.js --dry-run    # Just show calculations
  */
 
-import notion from '../src/notion/notionClient.js';
-import {calculatePricePerUnit, normalizeUnit} from '../src/utils/unitConversions.js';
+import notion from '../backend/notion/notionClient.js';
+import {calculatePricePerUnit, normalizeUnit} from '../backend/utils/unitConversions.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

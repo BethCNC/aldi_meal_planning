@@ -15,8 +15,8 @@
  */
 
 import {fetchIngredients, fetchRecipes, getPropertyValue} from './fetch-notion-databases.js';
-import {calculateIngredientCost} from '../src/utils/unitConversions.js';
-import {updateRecipeCost} from '../src/notion/notionClient.js';
+import {calculateIngredientCost} from '../backend/utils/unitConversions.js';
+import {updateRecipeCost} from '../backend/notion/notionClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

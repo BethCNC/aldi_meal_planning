@@ -57,6 +57,7 @@ CREATE TABLE recipes (
     cost_per_serving REAL,
     instructions TEXT,
     source_url TEXT,
+    image_url TEXT,
     tags TEXT,
     notion_url TEXT,
     created_at TIMESTAMP DEFAULT NOW(),

@@ -1,45 +1,78 @@
 import { Link, useLocation } from 'react-router-dom';
-import { IconHome, IconMenu2, IconShoppingCart, IconChefHat, IconSettings } from '@tabler/icons-react';
+import {
+  IconHome,
+  IconCalendarEvent,
+  IconShoppingCart,
+  IconBook,
+  IconSettings,
+} from '@tabler/icons-react';
 
 const navItems = [
-  { path: '/', label: 'Home', icon: IconHome },
-  { path: '/weekly-plan', label: 'Menu', icon: IconMenu2 },
-  { path: '/grocery-list', label: 'Groceries', icon: IconShoppingCart },
-  { path: '/pantry', label: 'Pantry', icon: IconChefHat },
-  { path: '/settings', label: 'Settings', icon: IconSettings },
+  {
+    path: '/',
+    label: 'Home',
+    icon: IconHome,
+    match: (pathname) => pathname === '/',
+  },
+  {
+    path: '/weekly-plan',
+    label: 'Meals',
+    icon: IconCalendarEvent,
+    match: (pathname) => pathname === '/weekly-plan' || pathname === '/',
+  },
+  {
+    path: '/grocery-list',
+    label: 'Groceries',
+    icon: IconShoppingCart,
+    match: (pathname) => pathname.startsWith('/grocery-list'),
+  },
+  {
+    path: '/recipe-suggestions',
+    label: 'Recipes',
+    icon: IconBook,
+    match: (pathname) =>
+      pathname.startsWith('/recipe') || pathname.startsWith('/recipe-suggestions'),
+  },
+  {
+    path: '/settings',
+    label: 'Settings',
+    icon: IconSettings,
+    match: (pathname) => pathname.startsWith('/settings'),
+  },
 ];
 
 export function BottomNav() {
   const location = useLocation();
-  
-  const isActiveRoute = (path) => {
-    if (path === '/') {
-      return location.pathname === '/' || location.pathname === '/weekly-plan';
-    }
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
-  
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-surface-page border-t border-border-subtle z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-around items-center h-16">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border-disabled bg-surface-page/95 backdrop-blur"
+      aria-label="Main navigation"
+    >
+      <div className="mx-auto w-full max-w-[430px] px-2">
+        <div className="grid h-16 grid-cols-5 gap-1" role="list">
           {navItems.map((item) => {
-            const isActive = isActiveRoute(item.path);
+            const isActive = item.match(location.pathname);
             const IconComponent = item.icon;
-            
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                  isActive ? 'text-text-body' : 'text-icon-subtle'
+                role="listitem"
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex flex-col items-center justify-center rounded-lg border-t border-border-disabled text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-border-focus focus:ring-offset-2 ${
+                  isActive
+                    ? 'bg-surface-primary text-text-display shadow-sm'
+                    : 'text-icon-subtle hover:text-text-body'
                 }`}
               >
-                <IconComponent 
-                  className="w-6 h-6 mb-1" 
+                <IconComponent
+                  className="mb-1 h-5 w-5"
                   strokeWidth={isActive ? 2 : 1.5}
+                  aria-hidden="true"
                 />
-                <span className="text-xs font-medium">{item.label}</span>
+                <span>{item.label}</span>
               </Link>
             );
           })}

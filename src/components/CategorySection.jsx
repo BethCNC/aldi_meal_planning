@@ -1,39 +1,82 @@
-import { Checkbox } from './ui/Checkbox';
+import { GroceryListItem } from './grocery/GroceryListItem';
 
-export function CategorySection({ category, items, onToggle }) {
-  if (!items || items.length === 0) return null;
-  
+const CATEGORY_META = {
+  Produce: {
+    iconFile: 'food icon=broccoli.png',
+    location: 'Front Left',
+    accent: 'bg-apple-100',
+  },
+  Meat: {
+    iconFile: 'food icon=steak.png',
+    location: 'Back Left',
+    accent: 'bg-tomato-100',
+  },
+  Dairy: {
+    iconFile: 'food icon=cheese.png',
+    location: 'Back Right',
+    accent: 'bg-strawberry-100',
+  },
+  Pantry: {
+    iconFile: 'food icon=bread-02.png',
+    location: 'Center Aisles',
+    accent: 'bg-lemon-100',
+  },
+  Frozen: {
+    iconFile: 'food icon=ice-cream-02.png',
+    location: 'Middle Right',
+    accent: 'bg-blueberry-100',
+  },
+  Bakery: {
+    iconFile: 'food icon=croissant.png',
+    location: 'Center Aisles',
+    accent: 'bg-clementine-100',
+  },
+};
+
+function encodePublicPath(file) {
+  if (!file) return null;
+  return `/icons/food-icons/${encodeURIComponent(file)}`;
+}
+
+export function CategorySection({ category, items = [], onToggle }) {
+  if (!items.length) return null;
+
+  const meta = CATEGORY_META[category.name] || {
+    iconFile: 'food icon=organic-food.png',
+    location: category.location || 'Various',
+    accent: 'bg-blueberry-50',
+  };
+
+  const iconSrc = encodePublicPath(meta.iconFile);
+
   return (
-    <div>
-      <h2 className="text-xl font-bold mb-2 text-text-body">
-        {category.icon} {category.name}
-      </h2>
-      <p className="text-sm text-icon-subtle mb-4">{category.location}</p>
-      
+    <section className="space-y-4">
+      <header className="flex items-center justify-between rounded-2xl border border-border-subtle bg-surface-card px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${meta.accent}`}>
+            {iconSrc ? (
+              <img src={iconSrc} alt="" className="h-8 w-8 object-contain" />
+            ) : (
+              <span className="text-xl" aria-hidden>
+                📦
+              </span>
+            )}
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-text-body">{category.name}</h2>
+            <p className="text-xs uppercase tracking-wide text-icon-subtle">{meta.location}</p>
+          </div>
+        </div>
+        <span className="text-xs font-medium uppercase tracking-wide text-icon-subtle">
+          {items.length} item{items.length === 1 ? '' : 's'}
+        </span>
+      </header>
+
       <div className="space-y-2">
-        {items.map((item) => {
-          const isPurchased = item.is_purchased || false;
-          return (
-            <div 
-              key={item.id} 
-              className={`flex items-center gap-4 p-3 bg-surface-card border border-border-subtle rounded-lg transition-opacity ${
-                isPurchased ? 'opacity-60' : ''
-              }`}
-            >
-              <Checkbox
-                checked={isPurchased}
-                onChange={(checked) => onToggle?.(item.id, checked)}
-              />
-              <span className={`flex-1 ${isPurchased ? 'line-through text-icon-subtle' : 'text-text-body'}`}>
-                {item.ingredient?.item || item.notes} ({item.packages_to_buy || item.quantity_needed} {item.unit})
-              </span>
-              <span className={`font-medium ${isPurchased ? 'line-through text-icon-subtle' : 'text-text-body'}`}>
-                ${item.estimated_cost?.toFixed(2) || '0.00'}
-              </span>
-            </div>
-          );
-        })}
+        {items.map((item) => (
+          <GroceryListItem key={item.id} item={item} onToggle={onToggle} />
+        ))}
       </div>
-    </div>
+    </section>
   );
 }

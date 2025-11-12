@@ -3,6 +3,7 @@ import { SupabaseProvider } from './contexts/SupabaseContext';
 import { ScheduleProvider, useSchedule } from './contexts/ScheduleContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Layout } from './components/Layout';
+import { HomeView } from './pages/HomeView';
 import { PantryInputView } from './pages/PantryInputView';
 import { RecipeSuggestionsView } from './pages/RecipeSuggestionsView';
 import { WeeklyPlanView } from './pages/WeeklyPlanView';
@@ -37,7 +38,7 @@ function App() {
             <Routes>
               <Route path="/onboarding" element={<OnboardingView />} />
               <Route path="/" element={<ProtectedLayout />}>
-                <Route index element={<WeeklyPlanView />} />
+                <Route index element={<HomeView />} />
                 <Route path="pantry-input" element={<PantryInputView />} />
                 <Route path="recipe-suggestions" element={<RecipeSuggestionsView />} />
                 <Route path="weekly-plan" element={<WeeklyPlanView />} />

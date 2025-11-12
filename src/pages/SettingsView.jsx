@@ -1,24 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
+import { DaySelectGrid } from '../components/schedule/DaySelectGrid';
 import { useSchedule } from '../contexts/ScheduleContext';
-import { WEEK_DAYS, getDayName } from '../utils/days';
+import { getDayName } from '../utils/days';
 
-function DayButton({ label, selected, onClick }) {
-  return (
-    <button
-      type="button"
-      className={`px-4 py-2 border rounded-lg transition ${
-        selected
-          ? 'border-border-focus bg-surface-primary text-text-inverse'
-          : 'border-border-subtle bg-surface-page text-text-body hover:bg-surface-card'
-      }`}
-      onClick={onClick}
-    >
-      {label}
-    </button>
-  );
-}
+const HERO_ICON = '/icons/icon%3Dsettings.png';
 
 export function SettingsView() {
   const navigate = useNavigate();
@@ -41,76 +28,84 @@ export function SettingsView() {
     try {
       await updatePreferences({
         meal_plan_day: mealDay,
-        grocery_day: groceryDay
+        grocery_day: groceryDay,
       });
-      setStatus('Preferences saved successfully.');
+      setStatus({ type: 'success', message: 'Preferences saved successfully.' });
     } catch (error) {
-      setStatus(error.message || 'Failed to save preferences. Please try again.');
+      setStatus({ type: 'error', message: error.message || 'Failed to save preferences. Please try again.' });
     } finally {
       setSaving(false);
       refresh();
     }
   };
 
-  return (
-    <div className="max-w-3xl mx-auto p-6 space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-text-body mb-2">Settings</h1>
-        <p className="text-icon-subtle">
-          Update your weekly rhythm or restart onboarding any time.
-        </p>
-      </header>
+  if (loading) {
+    return (
+      <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 py-10">
+        <p className="text-sm text-text-body">Loading current settings...</p>
+      </div>
+    );
+  }
 
-      {loading && <p className="text-icon-subtle">Loading current settings...</p>}
+  return (
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-6 px-4 pb-24 pt-6">
+      <div className="overflow-hidden rounded-3xl border border-border-subtle bg-gradient-to-br from-surface-primary/80 via-surface-primary/60 to-surface-inverse/50 text-text-inverse shadow-lg">
+        <div className="flex items-center gap-3 px-6 py-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-page/20">
+            <img src={HERO_ICON} alt="" className="h-8 w-8 object-contain" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold leading-8">Settings</h1>
+            <p className="text-sm text-text-inverse/80">
+              Update your weekly rhythm or restart onboarding any time.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {status && (
-        <div className="border border-border-subtle bg-surface-card px-4 py-3 rounded-lg text-text-body">
-          {status}
+        <div
+          className={`rounded-2xl border px-4 py-3 text-sm ${
+            status.type === 'error'
+              ? 'border-error/40 bg-error/10 text-text-body'
+              : 'border-border-focus bg-surface-primary/10 text-text-body'
+          }`}
+        >
+          {status.message}
         </div>
       )}
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold text-text-body mb-2">Meal plan day</h2>
-          <p className="text-icon-subtle mb-3">
+      <section className="space-y-5">
+        <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-text-body">Meal plan day</h2>
+          <p className="text-sm text-icon-subtle">
             We’ll generate new recipes every {getDayName(mealDay)}.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {WEEK_DAYS.map((day, index) => (
-              <DayButton
-                key={`settings-meal-${day}`}
-                label={day}
-                selected={mealDay === index}
-                onClick={() => setMealDay(index)}
-              />
-            ))}
-          </div>
+          <DaySelectGrid selectedIndex={mealDay} onSelect={setMealDay} />
         </div>
 
-        <div>
-          <h2 className="text-xl font-semibold text-text-body mb-2">Grocery shopping day</h2>
-          <p className="text-icon-subtle mb-3">
+        <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-text-body">Grocery shopping day</h2>
+          <p className="text-sm text-icon-subtle">
             We’ll prompt you to review your pantry before shopping on {getDayName(groceryDay)}.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {WEEK_DAYS.map((day, index) => (
-              <DayButton
-                key={`settings-grocery-${day}`}
-                label={day}
-                selected={groceryDay === index}
-                onClick={() => setGroceryDay(index)}
-              />
-            ))}
-          </div>
+          <DaySelectGrid selectedIndex={groceryDay} onSelect={setGroceryDay} />
         </div>
       </section>
 
-      <footer className="flex flex-wrap items-center gap-4">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving...' : 'Save changes'}
-        </Button>
+      <section className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-text-body">Need to start over?</h2>
+        <p className="text-sm text-icon-subtle">
+          Restart onboarding to reset your schedule and pantry snapshot from scratch.
+        </p>
         <Button variant="ghost" onClick={() => navigate('/onboarding')}>
           Restart onboarding
+        </Button>
+      </section>
+
+      <footer className="flex items-center gap-3 border-t border-border-subtle pt-4">
+        <Button onClick={handleSave} disabled={saving} className="flex-1">
+          {saving ? 'Saving…' : 'Save changes'}
         </Button>
       </footer>
     </div>

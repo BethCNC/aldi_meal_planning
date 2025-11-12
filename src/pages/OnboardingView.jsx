@@ -4,53 +4,81 @@ import { Button } from '../components/ui/Button';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { useIngredientSearch } from '../hooks/useIngredientSearch';
 import { replacePantryItems } from '../api/pantry';
-import { WEEK_DAYS, getDayName } from '../utils/days';
+import { getDayName } from '../utils/days';
+import { DaySelectGrid } from '../components/schedule/DaySelectGrid';
 
-const DAY_OPTIONS = WEEK_DAYS;
+const STEP_INFO = [
+  {
+    title: 'Set your weekly rhythm',
+    description: 'Pick the days you want fresh meal plans and gentle grocery nudges.',
+    icon: '/icons/icon%3Dcalendar-star.png',
+  },
+  {
+    title: 'Snapshot your pantry',
+    description: 'Add a few staples so we can prioritize recipes that use what you already own.',
+    icon: '/icons/food-icons/food%20icon=natural-food.png',
+  },
+  {
+    title: 'Review & finish',
+    description: 'Double-check your selections before the planner takes over.',
+    icon: '/icons/icon%3Dcheck.png',
+  },
+];
 
 const DEFAULT_UNITS = ['each', 'lb', 'oz', 'pack', 'bag'];
-
-function dayIndex(day) {
-  if (typeof day === 'number') return day;
-  const idx = DAY_OPTIONS.findIndex((d) => d === day);
-  return idx >= 0 ? idx : 0;
-}
 
 const createTempId = () =>
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-function DayButton({ label, selected, onClick }) {
+function StepIndicator({ current }) {
   return (
-    <button
-      type="button"
-      className={`px-4 py-3 border rounded-lg transition-all ${
-        selected
-          ? 'border-border-focus bg-surface-primary text-text-inverse'
-          : 'border-border-subtle bg-surface-page text-text-body hover:bg-surface-card'
-      }`}
-      onClick={onClick}
-    >
-      {label}
-    </button>
+    <div className="flex items-center justify-between gap-2">
+      {STEP_INFO.map((step, index) => {
+        const isActive = current === index;
+        const isComplete = index < current;
+        return (
+          <div key={step.title} className="flex flex-1 items-center gap-2 last:flex-none">
+            <span
+              className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-shadow ${
+                isActive
+                  ? 'border-border-focus bg-surface-primary text-text-display shadow-sm'
+                  : isComplete
+                    ? 'border-border-focus bg-surface-primary/20 text-text-body'
+                    : 'border-border-subtle bg-surface-page text-icon-subtle'
+              }`}
+            >
+              {index + 1}
+            </span>
+            {index < STEP_INFO.length - 1 && (
+              <span
+                className={`h-[2px] flex-1 rounded-full ${
+                  index < current ? 'bg-surface-primary' : 'bg-border-subtle'
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 function PantryListItem({ item, onQuantityChange, onUnitChange, onRemove }) {
   return (
-    <li className="flex items-center gap-3 p-3 border border-border-subtle rounded-lg bg-surface-card">
-      <span className="flex-1 text-text-body font-medium">{item.name}</span>
+    <li className="flex items-center gap-3 rounded-2xl border border-border-subtle bg-surface-card px-3 py-3 shadow-sm">
+      <span className="flex-1 text-sm font-semibold text-text-body">{item.name}</span>
       <input
         type="number"
         min="0.25"
         step="0.25"
-        className="w-20 border border-border-subtle rounded px-2 py-1 text-right"
+        className="w-20 rounded-lg border border-border-subtle px-2 py-2 text-right text-sm focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-border-focus"
         value={item.quantity}
         onChange={(e) => onQuantityChange(item.tempId, Number(e.target.value))}
       />
       <select
-        className="border border-border-subtle rounded px-2 py-1 text-text-body"
+        className="rounded-lg border border-border-subtle px-2 py-2 text-sm text-text-body focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-border-focus"
         value={item.unit}
         onChange={(e) => onUnitChange(item.tempId, e.target.value)}
       >
@@ -60,7 +88,7 @@ function PantryListItem({ item, onQuantityChange, onUnitChange, onRemove }) {
           </option>
         ))}
       </select>
-      <Button variant="secondary" size="sm" onClick={() => onRemove(item.tempId)}>
+      <Button variant="ghost" size="sm" onClick={() => onRemove(item.tempId)}>
         Remove
       </Button>
     </li>
@@ -72,8 +100,8 @@ export function OnboardingView() {
   const { preferences, updatePreferences, markOnboardingComplete, loading } = useSchedule();
   const { suggestions, search, clear, isSearching } = useIngredientSearch();
   const [step, setStep] = useState(0);
-  const [mealPlanDay, setMealPlanDay] = useState(1); // default Monday
-  const [groceryDay, setGroceryDay] = useState(0); // default Sunday
+  const [mealPlanDay, setMealPlanDay] = useState(1);
+  const [groceryDay, setGroceryDay] = useState(0);
   const [input, setInput] = useState('');
   const [pantryItems, setPantryItems] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -92,7 +120,7 @@ export function OnboardingView() {
 
   const sortedPantryItems = useMemo(
     () => [...pantryItems].sort((a, b) => a.name.localeCompare(b.name)),
-    [pantryItems]
+    [pantryItems],
   );
 
   const handleAddSuggestion = (ingredient) => {
@@ -108,8 +136,8 @@ export function OnboardingView() {
           ingredient_id: ingredient.id,
           name: ingredient.item,
           quantity: 1,
-          unit: 'each'
-        }
+          unit: 'each',
+        },
       ];
     });
     setInput('');
@@ -118,13 +146,13 @@ export function OnboardingView() {
 
   const handleQuantityChange = (tempId, value) => {
     setPantryItems((prev) =>
-      prev.map((item) => (item.tempId === tempId ? { ...item, quantity: value } : item))
+      prev.map((item) => (item.tempId === tempId ? { ...item, quantity: value } : item)),
     );
   };
 
   const handleUnitChange = (tempId, value) => {
     setPantryItems((prev) =>
-      prev.map((item) => (item.tempId === tempId ? { ...item, unit: value } : item))
+      prev.map((item) => (item.tempId === tempId ? { ...item, unit: value } : item)),
     );
   };
 
@@ -132,7 +160,10 @@ export function OnboardingView() {
     setPantryItems((prev) => prev.filter((item) => item.tempId !== tempId));
   };
 
-  const canContinueSchedule = useMemo(() => mealPlanDay !== null && groceryDay !== null, [mealPlanDay, groceryDay]);
+  const canContinueSchedule = useMemo(
+    () => mealPlanDay !== null && groceryDay !== null,
+    [mealPlanDay, groceryDay],
+  );
 
   const handleNext = () => {
     if (step === 0 && !canContinueSchedule) {
@@ -152,24 +183,24 @@ export function OnboardingView() {
     setSaving(true);
     setError(null);
 
-    const schedulePayload = {
-      meal_plan_day: mealPlanDay,
-      grocery_day: groceryDay,
-      onboarding_completed: true
-    };
-
     try {
-      await updatePreferences(schedulePayload);
+      await updatePreferences({
+        meal_plan_day: mealPlanDay,
+        grocery_day: groceryDay,
+        onboarding_completed: true,
+      });
+
       if (pantryItems.length > 0) {
         await replacePantryItems(
           pantryItems.map((item) => ({
             ingredient_id: item.ingredient_id,
             quantity: item.quantity,
             unit: item.unit,
-            source: 'onboarding'
-          }))
+            source: 'onboarding',
+          })),
         );
       }
+
       await markOnboardingComplete();
       navigate('/');
     } catch (err) {
@@ -180,79 +211,74 @@ export function OnboardingView() {
     }
   };
 
+  const scheduleDayLabel = (index) => getDayName(index);
+  const currentStepConfig = STEP_INFO[step] ?? STEP_INFO[0];
+
   if (loading) {
     return (
-      <div className="max-w-xl mx-auto p-6">
-        <p className="text-text-body">Loading your preferences...</p>
+      <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 py-10">
+        <p className="text-sm text-text-body">Loading your preferences...</p>
       </div>
     );
   }
 
-  const scheduleDayLabel = (index) => getDayName(index);
-
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold text-text-body mb-2">Welcome to your Aldi meal planner</h1>
-        <p className="text-icon-subtle">
-          Let’s set up your weekly rhythm so the planner can handle decisions for you.
-        </p>
-      </header>
+    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-6 px-4 pb-24 pt-6">
+      <div className="overflow-hidden rounded-3xl border border-border-subtle bg-gradient-to-br from-surface-primary/85 via-surface-primary/75 to-surface-inverse/60 text-text-inverse shadow-lg">
+        <div className="relative flex flex-col gap-4 px-6 py-8">
+          <div className="flex items-center gap-3">
+            {currentStepConfig?.icon && (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-page/20">
+                <img src={currentStepConfig.icon} alt="" className="h-8 w-8 object-contain" />
+              </div>
+            )}
+            <div>
+              <p className="text-xs uppercase tracking-wide text-text-inverse/80">
+                Step {step + 1} of {STEP_INFO.length}
+              </p>
+              <h1 className="text-2xl font-semibold leading-8">
+                {currentStepConfig?.title || 'Welcome to your Aldi meal planner'}
+              </h1>
+            </div>
+          </div>
+          <p className="text-sm text-text-inverse/80">
+            {currentStepConfig?.description ||
+              'Let’s set up your weekly rhythm so the planner can handle decisions for you.'}
+          </p>
+        </div>
+      </div>
+
+      <StepIndicator current={step} />
 
       {error && (
-        <div className="border border-error/40 bg-error/10 text-text-body px-4 py-3 rounded-lg">
+        <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-sm text-text-body">
           {error}
         </div>
       )}
 
       {step === 0 && (
-        <section className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold text-text-body mb-2">Pick your meal plan day</h2>
-            <p className="text-icon-subtle mb-3">
-              We’ll generate new recipes on this day each week.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {DAY_OPTIONS.map((day, index) => (
-                <DayButton
-                  key={`meal-${day}`}
-                  label={day}
-                  selected={mealPlanDay === index}
-                  onClick={() => setMealPlanDay(index)}
-                />
-              ))}
-            </div>
+        <section className="space-y-5">
+          <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-text-body">Pick your meal plan day</h2>
+            <p className="text-sm text-icon-subtle">We’ll generate new recipes on this day each week.</p>
+            <DaySelectGrid selectedIndex={mealPlanDay} onSelect={setMealPlanDay} />
           </div>
 
-          <div>
-            <h2 className="text-xl font-semibold text-text-body mb-2">Pick your grocery day</h2>
-            <p className="text-icon-subtle mb-3">
-              We’ll remind you to review your pantry before shopping.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {DAY_OPTIONS.map((day, index) => (
-                <DayButton
-                  key={`shop-${day}`}
-                  label={day}
-                  selected={groceryDay === index}
-                  onClick={() => setGroceryDay(index)}
-                />
-              ))}
-            </div>
+          <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-text-body">Pick your grocery day</h2>
+            <p className="text-sm text-icon-subtle">We’ll remind you to review your pantry before shopping.</p>
+            <DaySelectGrid selectedIndex={groceryDay} onSelect={setGroceryDay} />
           </div>
         </section>
       )}
 
       {step === 1 && (
-        <section className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold text-text-body mb-2">What’s already in your kitchen?</h2>
-            <p className="text-icon-subtle mb-4">
+        <section className="space-y-5">
+          <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-text-body">What’s already in your kitchen?</h2>
+            <p className="text-sm text-icon-subtle">
               Add a few essentials so we can prioritize recipes that use what you have. You can always update this later.
             </p>
-          </div>
-
-          <div>
             <label htmlFor="pantry-search" className="sr-only">
               Search ingredients
             </label>
@@ -270,18 +296,16 @@ export function OnboardingView() {
                 }
               }}
               placeholder="Search Aldi ingredients (e.g., chicken breast, jasmine rice)"
-              className="w-full px-4 py-3 text-base border-2 border-border-subtle rounded-lg focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-border-focus"
+              className="w-full rounded-xl border border-border-subtle px-4 py-3 text-sm focus:border-border-focus focus:outline-none focus:ring-2 focus:ring-border-focus"
             />
-            {isSearching && (
-              <p className="text-sm text-icon-subtle mt-2">Searching ingredients...</p>
-            )}
+            {isSearching && <p className="mt-2 text-xs text-icon-subtle">Searching ingredients...</p>}
             {suggestions.length > 0 && (
-              <ul className="mt-2 border border-border-subtle rounded-lg shadow-lg bg-surface-page max-h-60 overflow-y-auto">
+              <ul className="mt-2 max-h-60 overflow-y-auto rounded-xl border border-border-subtle bg-surface-page shadow-lg">
                 {suggestions.map((item) => (
                   <li
                     key={item.id}
                     onClick={() => handleAddSuggestion(item)}
-                    className="px-4 py-3 hover:bg-surface-card cursor-pointer text-text-body"
+                    className="cursor-pointer px-4 py-3 text-sm text-text-body hover:bg-surface-card"
                   >
                     {item.item}
                   </li>
@@ -303,7 +327,7 @@ export function OnboardingView() {
               ))}
             </ul>
           ) : (
-            <p className="text-icon-subtle italic">
+            <p className="text-sm italic text-icon-subtle">
               Add at least one pantry item or continue to skip for now.
             </p>
           )}
@@ -311,27 +335,27 @@ export function OnboardingView() {
       )}
 
       {step === 2 && (
-        <section className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold text-text-body mb-2">All set!</h2>
-            <p className="text-icon-subtle">
+        <section className="space-y-5">
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold text-text-body">All set!</h2>
+            <p className="text-sm text-icon-subtle">
               Here’s what we’ll do every week. You can change these anytime in Settings.
             </p>
           </div>
 
           <div className="space-y-4">
-            <div className="p-4 border border-border-subtle rounded-lg bg-surface-card">
-              <h3 className="text-lg font-semibold text-text-body mb-1">Weekly schedule</h3>
-              <p className="text-icon-subtle">
+            <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+              <h3 className="text-base font-semibold text-text-body">Weekly schedule</h3>
+              <p className="text-sm text-icon-subtle">
                 Meal plan on <strong>{scheduleDayLabel(mealPlanDay)}</strong> • Grocery run on{' '}
                 <strong>{scheduleDayLabel(groceryDay)}</strong>
               </p>
             </div>
 
-            <div className="p-4 border border-border-subtle rounded-lg bg-surface-card">
-              <h3 className="text-lg font-semibold text-text-body mb-2">Pantry highlights</h3>
+            <div className="space-y-2 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+              <h3 className="text-base font-semibold text-text-body">Pantry highlights</h3>
               {pantryItems.length > 0 ? (
-                <ul className="list-disc list-inside text-icon-subtle">
+                <ul className="list-disc list-inside text-sm text-icon-subtle">
                   {sortedPantryItems.map((item) => (
                     <li key={item.tempId}>
                       {item.name} — {item.quantity} {item.unit}
@@ -339,7 +363,7 @@ export function OnboardingView() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-icon-subtle italic">
+                <p className="text-sm italic text-icon-subtle">
                   No pantry items added yet. You can update this anytime under Pantry.
                 </p>
               )}
@@ -348,9 +372,9 @@ export function OnboardingView() {
         </section>
       )}
 
-      <footer className="flex justify-between items-center">
+      <footer className="flex items-center justify-between gap-3 border-t border-border-subtle pt-4">
         {step > 0 ? (
-          <Button variant="secondary" onClick={handleBack}>
+          <Button variant="ghost" onClick={handleBack}>
             Back
           </Button>
         ) : (

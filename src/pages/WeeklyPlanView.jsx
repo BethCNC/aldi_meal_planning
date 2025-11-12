@@ -9,6 +9,7 @@ import { DayCard } from '../components/DayCard';
 import { Button } from '../components/ui/Button';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { getDayName } from '../utils/days';
+import { WeekHeader } from '../components/week/WeekHeader';
 
 const STATUS_FLOW = ['planned', 'shopped', 'completed'];
 
@@ -158,34 +159,19 @@ export function WeeklyPlanView() {
   const currentDayOfWeek = today.getDay();
   
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-surface-inverted text-text-inverse px-4 py-3">
-        <div className="flex items-center justify-between">
-          <span className="text-base font-semibold">
-            Week of {formatWeekRange(weekStartDate)}
-          </span>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => changeWeek(-1)}
-              className="text-text-inverse hover:text-icon-focus px-2 py-1"
-            >
-              ←
-            </button>
-            <button 
-              onClick={() => changeWeek(1)}
-              className="text-text-inverse hover:text-icon-focus px-2 py-1"
-            >
-              →
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-4">
-        {mealPlan ? (
-          <>
-            {showMealPrompt && preferences && (
-              <div className="mb-4 border border-border-focus bg-surface-card rounded-lg p-4">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col">
+      <WeekHeader
+        label={`Week of ${formatWeekRange(weekStartDate)}`}
+        onPrev={() => changeWeek(-1)}
+        onNext={() => changeWeek(1)}
+      />
+
+      {mealPlan ? (
+        <>
+          {/* Prompt banner (if applicable) */}
+          {showMealPrompt && preferences && (
+            <div className="px-4 pt-4">
+              <div className="rounded-xl border border-border-focus bg-surface-card p-4 shadow-sm">
                 <h3 className="text-lg font-semibold text-text-body mb-1">
                   It&apos;s {getDayName(preferences.meal_plan_day)}—pantry check time!
                 </h3>
@@ -199,42 +185,30 @@ export function WeeklyPlanView() {
                   </Button>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            <BudgetProgress 
-              current={mealPlan.totalCost} 
-              budget={mealPlan.budget || 100}
-              className="mb-6"
-            />
-            
-            <div className="bg-surface-page rounded-lg border border-border-subtle overflow-hidden mb-6">
-              {mealPlan.days.map((day) => {
-                const dayDate = new Date(weekStartDate);
-                dayDate.setDate(dayDate.getDate() + (day.day_of_week || 0));
-                const isTodayDay = isToday(dayDate) && currentDayOfWeek === day.day_of_week;
-                
-                return (
-                  <DayCard
-                    key={day.id || `${weekStartDate}-${day.day_of_week}`}
-                    day={day}
-                    isToday={isTodayDay}
-                    onUpdateStatus={() => advanceStatus(day)}
-                  />
-                );
-              })}
-            </div>
-            
-            <div className="flex gap-4">
-              <Button onClick={() => navigate(`/grocery-list?week=${weekStartDate}`)}>
-                Generate Grocery List →
-              </Button>
-              <Button variant="secondary" onClick={handleGenerate}>
-                Regenerate Plan
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-12">
+          {/* Daily Recipe List - matches Figma menu screen structure */}
+          <div className="flex-1 overflow-y-auto">
+            {mealPlan.days.map((day) => {
+              const dayDate = new Date(weekStartDate);
+              dayDate.setDate(dayDate.getDate() + (day.day_of_week || 0));
+              const isTodayDay = isToday(dayDate) && currentDayOfWeek === day.day_of_week;
+              
+              return (
+                <DayCard
+                  key={day.id || `${weekStartDate}-${day.day_of_week}`}
+                  day={day}
+                  isToday={isTodayDay}
+                  onUpdateStatus={() => advanceStatus(day)}
+                />
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-1 items-center justify-center px-4 py-12">
+          <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 text-text-body">No meal plan yet</h2>
             <p className="text-icon-subtle mb-8">
               Generate your weekly meal plan to get started
@@ -243,8 +217,8 @@ export function WeeklyPlanView() {
               Generate Meal Plan
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,15 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Badge } from './ui/Badge';
-
-const dayAbbreviations = {
-  'Monday': 'M',
-  'Tuesday': 'T',
-  'Wednesday': 'W',
-  'Thursday': 'Th',
-  'Friday': 'F',
-  'Saturday': 'S',
-  'Sunday': 'Su',
-};
+import { DayChip } from './week/DayChip';
 
 const statusMeta = {
   planned: {label: 'Planned', variant: 'warning'},
@@ -32,8 +23,6 @@ function formatCurrency(value) {
 export function DayCard({ day, isToday, onUpdateStatus }) {
   const navigate = useNavigate();
   const dayName = day.dayName || ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day.day_of_week || 0];
-  const dayAbbr = dayAbbreviations[dayName] || 'M';
-  const dayBgClass = `bg-day-${(dayName || 'Monday').toLowerCase()}`;
   const recipe = day.recipe;
   const statusKey = day.status || 'planned';
   const status = statusMeta[statusKey] || statusMeta.planned;
@@ -60,28 +49,33 @@ export function DayCard({ day, isToday, onUpdateStatus }) {
   };
 
   return (
-    <div
+    <article
       className={`
-        flex items-start gap-4 p-4 border-b border-border-subtle transition-colors
+        flex min-h-[101px] items-stretch border-b border-border-subtle transition-colors
         ${isToday ? 'bg-surface-card' : 'bg-surface-page'}
-        ${actionable ? 'hover:bg-surface-card cursor-pointer' : ''}
+        ${actionable ? 'hover:bg-surface-card cursor-pointer focus-within:ring-2 focus-within:ring-border-focus focus-within:ring-offset-2' : ''}
       `}
       onClick={() => actionable && navigate(`/recipe/${recipe.id}`)}
+      role={actionable ? 'button' : undefined}
+      tabIndex={actionable ? 0 : undefined}
+      aria-label={actionable ? `View recipe: ${recipe.name}` : undefined}
+      onKeyDown={(e) => {
+        if (actionable && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          navigate(`/recipe/${recipe.id}`);
+        }
+      }}
     >
-      <div
-        className={`w-12 h-12 rounded-lg flex items-center justify-center text-text-inverse font-bold text-lg flex-shrink-0 ${dayBgClass}`}
-      >
-        {dayAbbr}
-      </div>
+      <DayChip dayName={dayName} isToday={isToday} />
 
-      <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex flex-1 flex-col justify-center gap-2 px-4 py-3">
         {actionable ? (
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="text-base font-semibold text-text-body truncate">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-1">
+              <h3 className="text-lg font-semibold text-text-body truncate">
                 {recipe.name}
               </h3>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-icon-subtle">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-icon-subtle">
                 <Badge variant={status.variant}>{status.label}</Badge>
                 {isSafeRecipe && <Badge variant="success">Safe Favorite</Badge>}
                 {prepTimeNote && <Badge>{prepTimeNote}</Badge>}
@@ -95,18 +89,19 @@ export function DayCard({ day, isToday, onUpdateStatus }) {
               </div>
             </div>
             <button
-              className="text-xs text-icon-subtle hover:text-icon-focus underline"
+              className="text-xs text-icon-subtle hover:text-icon-focus underline focus:outline-none focus:ring-2 focus:ring-border-focus focus:ring-offset-2 rounded"
               onClick={handleStatusAdvance}
+              aria-label={`${nextStatusLabel} for ${recipe.name}`}
             >
               {nextStatusLabel}
             </button>
           </div>
         ) : day.isLeftoverNight ? (
-          <h3 className="text-base font-semibold text-icon-subtle">Leftover Night or Pizza</h3>
+          <h3 className="text-lg font-semibold text-icon-subtle">Leftover Night or Pizza</h3>
         ) : day.isOrderOutNight ? (
-          <h3 className="text-base font-semibold text-icon-subtle">Order Out (guilt-free!)</h3>
+          <h3 className="text-lg font-semibold text-icon-subtle">Order Out (guilt-free!)</h3>
         ) : (
-          <h3 className="text-base font-semibold text-text-disabled">No meal planned</h3>
+          <h3 className="text-lg font-semibold text-text-disabled">No meal planned</h3>
         )}
 
         {actionable && recipe?.source_url && (
@@ -115,6 +110,6 @@ export function DayCard({ day, isToday, onUpdateStatus }) {
           </p>
         )}
       </div>
-    </div>
+    </article>
   );
 }

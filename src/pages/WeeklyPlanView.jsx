@@ -8,7 +8,7 @@ import { BudgetProgress } from '../components/BudgetProgress';
 import { DayCard } from '../components/DayCard';
 import { Button } from '../components/ui/Button';
 import { useSchedule } from '../contexts/ScheduleContext';
-import { getDayName } from '../utils/days';
+import { getDayName, sortDaysMondayFirst } from '../utils/days';
 import { WeekHeader } from '../components/week/WeekHeader';
 
 const STATUS_FLOW = ['planned', 'shopped', 'completed'];
@@ -68,10 +68,11 @@ export function WeeklyPlanView() {
         .order('day_of_week');
       
       if (data && data.length > 0) {
+        const orderedDays = sortDaysMondayFirst(data);
         setMealPlan({
           weekStartDate,
-          days: data,
-          totalCost: data.reduce((sum, day) => sum + (day.recipe?.total_cost || 0), 0),
+          days: orderedDays,
+          totalCost: orderedDays.reduce((sum, day) => sum + (day.recipe?.total_cost || 0), 0),
           budget: 100
         });
       } else {
@@ -111,6 +112,8 @@ export function WeeklyPlanView() {
     }
   };
   
+  const [useAI, setUseAI] = useState(false);
+  
   const handleGenerate = async () => {
     if (preferences && typeof preferences.meal_plan_day === 'number') {
       const todayIndex = new Date().getDay();
@@ -134,7 +137,8 @@ export function WeeklyPlanView() {
         servings: 4,
         weekStartDate,
         pantryItems,
-        usePantryFirst: pantryItems.length > 0
+        usePantryFirst: pantryItems.length > 0,
+        useAI // Pass toggle state
       });
       
       setMealPlan(plan);
@@ -148,7 +152,7 @@ export function WeeklyPlanView() {
   
   if (loading || generating || statusUpdatingId) {
     const message = generating
-      ? 'Generating your meal plan...'
+      ? (useAI ? 'Thinking like a chef (AI)...' : 'Generating your meal plan...')
       : statusUpdatingId
         ? 'Updating status...'
         : 'Loading...';
@@ -213,6 +217,20 @@ export function WeeklyPlanView() {
             <p className="text-icon-subtle mb-8">
               Generate your weekly meal plan to get started
             </p>
+            
+            <div className="mb-6 flex items-center justify-center gap-2">
+              <input
+                type="checkbox"
+                id="useAI"
+                checked={useAI}
+                onChange={(e) => setUseAI(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="useAI" className="text-sm text-text-body">
+                Use Advanced AI (Better variety & pairings)
+              </label>
+            </div>
+
             <Button onClick={handleGenerate} size="lg">
               Generate Meal Plan
             </Button>

@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getMonday, formatWeekRange } from '../utils/dateHelpers';
+import { WEEK_DAYS, sortDaysMondayFirst } from '../utils/days';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { WeekHeader } from '../components/week/WeekHeader';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { formatCurrency } from '../utils/numberFormat';
-
-const WEEK_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const DAY_COLOR_CLASSES = {
   Sunday: 'bg-day-sunday',
@@ -101,11 +100,12 @@ export function HomeView() {
           ...day,
           dayName: day.dayName || WEEK_DAYS[day.day_of_week || 0]
         }));
+        const orderedDays = sortDaysMondayFirst(daysWithNames);
         
-        const totalCost = daysWithNames.reduce((sum, day) => sum + (day.recipe?.total_cost || 0), 0);
+        const totalCost = orderedDays.reduce((sum, day) => sum + (day.recipe?.total_cost || 0), 0);
         setMealPlan({
           weekStartDate,
-          days: daysWithNames,
+          days: orderedDays,
           totalCost
         });
       } else {

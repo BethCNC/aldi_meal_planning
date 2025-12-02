@@ -63,7 +63,7 @@ export function ScheduleProvider({ children }) {
   const updatePreferences = useCallback(
     async (updates) => {
       const merged = {
-        ...(preferences || { user_id: 'default' }),
+        ...(preferences || {}),
         ...updates
       };
 

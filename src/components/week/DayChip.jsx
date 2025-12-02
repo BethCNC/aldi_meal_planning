@@ -30,7 +30,7 @@ export function DayChip({dayName, isToday = false, className = ''}) {
       {isToday && (
         <span className="absolute inset-y-2 left-2 right-auto w-1 rounded-full bg-surface-inverse" aria-hidden="true" />
       )}
-      <span className="text-3xl font-semibold text-text-inverse drop-shadow-sm" aria-hidden="true">{abbr}</span>
+      <span className="text-3xl font-semibold text-text-body drop-shadow-sm" aria-hidden="true">{abbr}</span>
       <span className="sr-only">{dayName}</span>
     </div>
   );

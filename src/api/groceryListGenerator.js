@@ -83,9 +83,16 @@ export async function generateGroceryList(weekStartDate, options = {}) {
   // Calculate packages and costs
   const withPackages = calculatePackages(byCategory);
   
+  // Get current user ID
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to create grocery lists');
+  }
+  
   // Save to database
   const groceryEntries = Object.values(withPackages).flatMap(cat => 
     cat.items.map(item => ({
+      user_id: user.id,
       week_start_date: weekStartDate,
       ingredient_id: item.ingredient_id,
       quantity_needed: item.total_quantity,
@@ -97,11 +104,12 @@ export async function generateGroceryList(weekStartDate, options = {}) {
     }))
   );
   
-  // Delete existing grocery list for this week first
+  // Delete existing grocery list for this week first (only for current user)
   await supabase
     .from('grocery_lists')
     .delete()
-    .eq('week_start_date', weekStartDate);
+    .eq('week_start_date', weekStartDate)
+    .eq('user_id', user.id);
   
   if (groceryEntries.length > 0) {
     const { error: insertError } = await supabase.from('grocery_lists').insert(groceryEntries);

@@ -15,7 +15,14 @@ export function formatWeekRange(weekStartDate) {
   const start = new Date(weekStartDate);
   const end = new Date(start);
   end.setDate(end.getDate() + 6);
-  return `${formatDate(start)} - ${formatDate(end)}`;
+  const startMonth = start.toLocaleString('en-US', {month: 'short'});
+  const endMonth = end.toLocaleString('en-US', {month: 'short'});
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  if (startMonth === endMonth) {
+    return `${startMonth} ${startDay} - ${endDay}`;
+  }
+  return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
 }
 
 export function isToday(date) {

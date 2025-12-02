@@ -1,11 +1,20 @@
 import { supabase } from '../lib/supabase';
 
 const TABLE = 'user_preferences';
-const DEFAULT_USER_ID = 'default';
 
 const missingTable = (error) => error && (error.code === '42P01' || error.code === 'PGRST116');
 
-export async function fetchPreferences(userId = DEFAULT_USER_ID) {
+async function getCurrentUserId() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to access preferences');
+  }
+  return user.id;
+}
+
+export async function fetchPreferences() {
+  const userId = await getCurrentUserId();
+  
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
@@ -21,7 +30,9 @@ export async function fetchPreferences(userId = DEFAULT_USER_ID) {
   return data;
 }
 
-export async function savePreferences(preferences, userId = DEFAULT_USER_ID) {
+export async function savePreferences(preferences) {
+  const userId = await getCurrentUserId();
+  
   const payload = {
     user_id: userId,
     ...preferences,
@@ -43,15 +54,12 @@ export async function savePreferences(preferences, userId = DEFAULT_USER_ID) {
   return data;
 }
 
-export async function completeOnboarding(userId = DEFAULT_USER_ID) {
+export async function completeOnboarding() {
   const timestamp = new Date().toISOString();
-  return savePreferences(
-    {
-      onboarding_completed: true,
-      onboarding_completed_at: timestamp
-    },
-    userId
-  );
+  return savePreferences({
+    onboarding_completed: true,
+    onboarding_completed_at: timestamp
+  });
 }
 
 

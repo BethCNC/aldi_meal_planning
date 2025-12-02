@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Badge } from './ui/Badge';
 import { DayChip } from './week/DayChip';
+import { getDayName } from '../utils/days';
 
 const statusMeta = {
   planned: {label: 'Planned', variant: 'warning'},
@@ -22,7 +23,7 @@ function formatCurrency(value) {
 
 export function DayCard({ day, isToday, onUpdateStatus }) {
   const navigate = useNavigate();
-  const dayName = day.dayName || ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day.day_of_week || 0];
+  const dayName = day.dayName || getDayName(day.day_of_week || 0);
   const recipe = day.recipe;
   const statusKey = day.status || 'planned';
   const status = statusMeta[statusKey] || statusMeta.planned;

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { SupabaseProvider } from './contexts/SupabaseContext';
+import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { ScheduleProvider, useSchedule } from './contexts/ScheduleContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Layout } from './components/Layout';
@@ -12,8 +12,24 @@ import { RecipeDetailView } from './pages/RecipeDetailView';
 import { PantryView } from './pages/PantryView';
 import { CaseStudyView } from './pages/CaseStudyView';
 import { OnboardingView } from './pages/OnboardingView';
+import { RecipeDiscoveryView } from './pages/RecipeDiscoveryView';
 import { SettingsView } from './pages/SettingsView';
+import { AuthView } from './pages/AuthView';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
+
+function AuthGuard({ children }) {
+  const { user, loading } = useSupabase();
+
+  if (loading) {
+    return <LoadingSpinner message="Loading..." />;
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 function ProtectedLayout() {
   const { preferences, loading } = useSchedule();
@@ -36,11 +52,27 @@ function App() {
         <ScheduleProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/onboarding" element={<OnboardingView />} />
-              <Route path="/" element={<ProtectedLayout />}>
+              <Route path="/auth" element={<AuthView />} />
+              <Route
+                path="/onboarding"
+                element={
+                  <AuthGuard>
+                    <OnboardingView />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/"
+                element={
+                  <AuthGuard>
+                    <ProtectedLayout />
+                  </AuthGuard>
+                }
+              >
                 <Route index element={<HomeView />} />
                 <Route path="pantry-input" element={<PantryInputView />} />
                 <Route path="recipe-suggestions" element={<RecipeSuggestionsView />} />
+                <Route path="recipe-discovery" element={<RecipeDiscoveryView />} />
                 <Route path="weekly-plan" element={<WeeklyPlanView />} />
                 <Route path="grocery-list" element={<GroceryListView />} />
                 <Route path="recipe/:id" element={<RecipeDetailView />} />

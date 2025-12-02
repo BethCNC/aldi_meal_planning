@@ -1,9 +1,17 @@
 import OpenAI from 'openai';
 
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+if (!apiKey) {
+  console.warn('Missing VITE_OPENAI_API_KEY. AI features may not work.');
+}
+
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // For client-side usage
+  apiKey: apiKey || 'placeholder',
+  dangerouslyAllowBrowser: true
 });
+
+export default openai;
 
 export async function suggestRecipesFromPantry(pantryItems, safeRecipes, constraints) {
   const prompt = `You are a meal planning assistant for a user with ADHD/ARFID who needs familiar, safe recipes.
@@ -26,13 +34,19 @@ Suggest 5 dinner recipes that:
 
 Return as JSON object with a "recipes" array: { "recipes": [{ "recipeName": "...", "pantryItemsUsed": ["..."], "estimatedCost": 0.00, "reasoning": "..." }] }`;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-    temperature: 0.7
-  });
-  
-  const response = JSON.parse(completion.choices[0].message.content);
-  return response.recipes || [];
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.7
+    });
+    
+    const response = JSON.parse(completion.choices[0].message.content);
+    return response.recipes || [];
+  } catch (error) {
+    console.error('OpenAI Suggestion Error:', error);
+    return [];
+  }
 }
+

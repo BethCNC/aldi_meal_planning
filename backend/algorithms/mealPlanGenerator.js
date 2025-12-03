@@ -35,21 +35,23 @@ export async function generateWeeklyMealPlan(options) {
   }
   
   // Step 3: Apply protein rotation and budget constraints
+  // We need 4 meals for Mon/Tue/Thu/Sat (Wed/Fri/Sun are leftover nights)
   const selectedMeals = selectMealsWithRotation(prioritizedRecipes, {
-    count: 5,
-    budget: budgetPerMeal * 5, // 5 cooking nights
+    count: 4,
+    budget: budgetPerMeal * 4, // 4 cooking nights
     servings
   });
   
   // Step 4: Build 7-day plan
+  // Schedule: Mon/Tue/Thu/Sat = Cook, Wed/Fri/Sun = Leftovers
   const weekPlan = [
-    { dayOfWeek: 0, dayName: 'Sunday', recipeId: null, isOrderOutNight: true },
+    { dayOfWeek: 0, dayName: 'Sunday', recipeId: null, isLeftoverNight: true },
     { dayOfWeek: 1, dayName: 'Monday', recipeId: selectedMeals[0]?.id },
     { dayOfWeek: 2, dayName: 'Tuesday', recipeId: selectedMeals[1]?.id },
-    { dayOfWeek: 3, dayName: 'Wednesday', recipeId: selectedMeals[2]?.id },
-    { dayOfWeek: 4, dayName: 'Thursday', recipeId: selectedMeals[3]?.id },
-    { dayOfWeek: 5, dayName: 'Friday', recipeId: selectedMeals[4]?.id },
-    { dayOfWeek: 6, dayName: 'Saturday', recipeId: null, isLeftoverNight: true },
+    { dayOfWeek: 3, dayName: 'Wednesday', recipeId: null, isLeftoverNight: true },
+    { dayOfWeek: 4, dayName: 'Thursday', recipeId: selectedMeals[2]?.id },
+    { dayOfWeek: 5, dayName: 'Friday', recipeId: null, isLeftoverNight: true },
+    { dayOfWeek: 6, dayName: 'Saturday', recipeId: selectedMeals[3]?.id },
   ];
   
   // Step 5: Calculate total cost

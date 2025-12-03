@@ -28,6 +28,32 @@ export async function generateWeeklyMealPlan(options) {
   
   const budgetPerMeal = budget / 7;
   
+  // Get current user ID (needed for history and preferences)
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to create meal plans');
+  }
+
+  // Get user dietary preferences
+  const { data: preferences } = await supabase
+    .from('user_preferences')
+    .select('dietary_restrictions')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  let dietaryRestrictions = null;
+  if (preferences?.dietary_restrictions) {
+    try {
+      dietaryRestrictions = typeof preferences.dietary_restrictions === 'string' 
+        ? JSON.parse(preferences.dietary_restrictions)
+        : preferences.dietary_restrictions;
+    } catch (e) {
+      console.warn('Failed to parse dietary restrictions:', e);
+    }
+  }
+
+  const chickenBreastOnly = dietaryRestrictions?.chicken_breast_only || dietaryRestrictions?.no_dark_meat_chicken;
+
   // 1. Fetch Recipes with Ingredients for Overlap Calculation
   let { data: allRecipes, error: recipesError } = await supabase
     .from('recipes')
@@ -41,12 +67,28 @@ export async function generateWeeklyMealPlan(options) {
   }
   
   if (!allRecipes) allRecipes = [];
-  
+
   // Filter valid costs and appropriate categories
   allRecipes = allRecipes.filter(r => {
     const hasCost = r.total_cost > 0 && r.cost_per_serving > 0;
     const invalidCategories = ['Dessert', 'Breakfast', 'Snack', 'Side', 'Beverage'];
     const isDinnerAppropriate = !invalidCategories.includes(r.category);
+    
+    // Apply dietary restrictions: Filter out dark meat chicken recipes if preference is set
+    if (chickenBreastOnly && r.category === 'Chicken') {
+      const recipeName = (r.name || '').toLowerCase();
+      const instructions = (r.instructions || '').toLowerCase();
+      const hasDarkMeat = recipeName.includes('thigh') || recipeName.includes('drumstick') || 
+                          recipeName.includes('leg') || recipeName.includes('wing') ||
+                          instructions.includes('thigh') || instructions.includes('drumstick') ||
+                          instructions.includes('leg') || instructions.includes('wing');
+      
+      if (hasDarkMeat) {
+        console.log(`🚫 Filtered out recipe with dark meat: ${r.name}`);
+        return false; // Exclude dark meat chicken recipes
+      }
+    }
+    
     return hasCost && isDinnerAppropriate;
   });
   
@@ -54,19 +96,85 @@ export async function generateWeeklyMealPlan(options) {
     throw new Error('No recipes available within budget. Please add more recipes or increase your budget.');
   }
   
-  // 2. Prioritize Pantry Items (Base Scoring)
+  // 2. Get Recipe Usage History (for variety tracking)
+  // Query meal plans from last 4 weeks to avoid repeats
+  
+  const fourWeeksAgo = new Date(weekStartDate);
+  fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+  
+  const { data: recentMealPlans } = await supabase
+    .from('meal_plans')
+    .select('recipe_id, week_start_date')
+    .eq('user_id', user.id) // Only look at current user's history
+    .gte('week_start_date', fourWeeksAgo.toISOString().split('T')[0])
+    .lt('week_start_date', weekStartDate)
+    .not('recipe_id', 'is', null);
+  
+  // Build map of recipe usage frequency (how many times used in last 4 weeks)
+  const recipeUsageCount = new Map();
+  const recipeLastUsed = new Map(); // Track most recent week used
+  
+  if (recentMealPlans) {
+    recentMealPlans.forEach(plan => {
+      const recipeId = plan.recipe_id;
+      recipeUsageCount.set(recipeId, (recipeUsageCount.get(recipeId) || 0) + 1);
+      // Track most recent week
+      const currentLastUsed = recipeLastUsed.get(recipeId);
+      if (!currentLastUsed || plan.week_start_date > currentLastUsed) {
+        recipeLastUsed.set(recipeId, plan.week_start_date);
+      }
+    });
+  }
+  
+  // 3. Prioritize Pantry Items (Base Scoring)
   // We'll assign a base score to every recipe.
-  // Default score = Random(0-10) for variety
+  // Default score = Random(0-20) for variety
   // Pantry Match = +50
+  // Variety Bonus = +30 for unused recipes, -50 for used last week
   
   const recipeScores = new Map();
   const pantryIds = new Set(pantryItems.map(i => i.id || i.ingredient_id));
   
   // Initialize scores with random noise for freshness
   allRecipes.forEach(recipe => {
-    // Higher randomness = more variety between generations
+    // Base random score for variety
     const baseRandom = Math.random() * 20; 
-    recipeScores.set(recipe.id, baseRandom);
+    let score = baseRandom;
+    
+    // Variety Intelligence: Penalize recently used recipes
+    const usageCount = recipeUsageCount.get(recipe.id) || 0;
+    const lastUsedWeek = recipeLastUsed.get(recipe.id);
+    
+    if (usageCount > 0) {
+      // Calculate weeks since last use
+      let weeksSinceLastUse = 999;
+      if (lastUsedWeek) {
+        const lastUsed = new Date(lastUsedWeek);
+        const currentWeek = new Date(weekStartDate);
+        weeksSinceLastUse = Math.floor((currentWeek - lastUsed) / (1000 * 60 * 60 * 24 * 7));
+      }
+      
+      // Heavy penalty for recipes used last week
+      if (weeksSinceLastUse === 0) {
+        score -= 100; // Strongly avoid last week's recipes
+      } else if (weeksSinceLastUse === 1) {
+        score -= 50; // Moderate penalty for 2 weeks ago
+      } else if (weeksSinceLastUse === 2) {
+        score -= 20; // Light penalty for 3 weeks ago
+      }
+      
+      // Additional penalty for high usage frequency
+      if (usageCount >= 3) {
+        score -= 30; // Used 3+ times in last 4 weeks
+      } else if (usageCount === 2) {
+        score -= 15; // Used twice
+      }
+    } else {
+      // Bonus for recipes never used (or not used in last 4 weeks)
+      score += 30; // Encourage trying new/forgotten recipes
+    }
+    
+    recipeScores.set(recipe.id, score);
   });
 
   // Apply Pantry Bonus
@@ -88,9 +196,8 @@ export async function generateWeeklyMealPlan(options) {
     }
   }
 
-  // 3. Select Meals with Smart Logic
-  // We need 4 meals (Mon, Tue, Thu, Sat). 
-  // Wed, Fri, Sun are Leftovers.
+  // 4. Select Meals with Smart Logic
+  // Fixed Schedule: Mon/Tue/Thu/Sat = Cook (4 meals), Wed/Fri/Sun = Leftovers (no cooking)
   
   const selectedMeals = [];
   const usedProteins = [];
@@ -120,7 +227,7 @@ export async function generateWeeklyMealPlan(options) {
         continue; 
       }
 
-      // Constraint: Protein Variety
+      // Constraint: Protein Variety (avoid same protein 2 days in a row)
       const protein = candidate.category;
       const recentProteins = usedProteins.slice(-2); 
       if (recentProteins.includes(protein)) {
@@ -131,7 +238,7 @@ export async function generateWeeklyMealPlan(options) {
         score -= 30; 
       }
       
-      // Bonus: Ingredient Overlap
+      // Bonus: Ingredient Overlap (reduce waste by reusing ingredients)
       if (usedIngredients.size > 0) {
         const candidateIngredients = getIngredients(candidate);
         let overlapCount = 0;
@@ -139,6 +246,31 @@ export async function generateWeeklyMealPlan(options) {
           if (usedIngredients.has(id)) overlapCount++;
         });
         score += (overlapCount * 5); 
+      }
+      
+      // Additional Variety Intelligence: Check if recipe was used recently
+      const wasUsedLastWeek = recipeLastUsed.get(candidate.id);
+      if (wasUsedLastWeek) {
+        const lastUsed = new Date(wasUsedLastWeek);
+        const currentWeek = new Date(weekStartDate);
+        const weeksSince = Math.floor((currentWeek - lastUsed) / (1000 * 60 * 60 * 24 * 7));
+        
+        // Extra penalty if used very recently (within scoring already done, but reinforce)
+        if (weeksSince === 0) {
+          score -= 200; // Absolutely avoid if used last week
+        }
+      }
+
+      // Bonus: Prioritize newly added recipes (from this session or recently added)
+      // Check if recipe name matches the new recipes we just added
+      const newRecipeNames = [
+        'Lemon Garlic Butter Chicken and Asparagus',
+        'Copycat Crunchwraps',
+        'Teriyaki Chicken and Crispy Brussel Sprout & Broccoli Bowls',
+        'One Pot Creamy Cheesy Beef Pasta'
+      ];
+      if (newRecipeNames.some(name => candidate.name.includes(name) || name.includes(candidate.name))) {
+        score += 100; // Big bonus for new recipes
       }
       
       if (score > bestScore) {
@@ -157,7 +289,7 @@ export async function generateWeeklyMealPlan(options) {
     }
   }
   
-  // 4. Build Plan Structure (Custom Schedule)
+  // 5. Build Plan Structure (Custom Schedule)
   // Mon/Tue/Thu/Sat = Cook
   // Wed/Fri/Sun = Leftovers
   const weekPlan = [
@@ -170,15 +302,26 @@ export async function generateWeeklyMealPlan(options) {
     { dayOfWeek: 6, dayName: 'Saturday', recipeId: selectedMeals[3]?.id },
   ];
   
-  // 5. Save & Return
+  // 6. Log Variety Intelligence Results
+  const newRecipesCount = selectedMeals.filter(m => !recipeUsageCount.has(m.id)).length;
+  const lastWeekRecipesCount = selectedMeals.filter(m => {
+    const lastUsed = recipeLastUsed.get(m.id);
+    if (!lastUsed) return false;
+    const lastUsedDate = new Date(lastUsed);
+    const currentWeekDate = new Date(weekStartDate);
+    const weeksSince = Math.floor((currentWeekDate - lastUsedDate) / (1000 * 60 * 60 * 24 * 7));
+    return weeksSince === 0;
+  }).length;
+  
+  console.log('🎯 Variety Intelligence Results:');
+  console.log(`   • New recipes this week: ${newRecipesCount}/4`);
+  console.log(`   • Recipes from last week: ${lastWeekRecipesCount}/4 (avoided)`);
+  console.log(`   • Recipes used in last 4 weeks: ${Array.from(recipeUsageCount.keys()).length} unique recipes`);
+  
+  // 7. Save & Return
   const totalCost = selectedMeals.reduce((sum, meal) => sum + (meal.total_cost || 0), 0);
   
-  // Get current user ID
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('User must be authenticated to create meal plans');
-  }
-  
+  // User is already defined at the top of the function
   const entries = weekPlan.map(meal => ({
     user_id: user.id,
     week_start_date: weekStartDate,
@@ -190,13 +333,26 @@ export async function generateWeeklyMealPlan(options) {
     status: 'planned'
   }));
   
-  // Clean up old plan (only for current user)
-  await supabase
+  // Delete existing meal plans for this week and user first
+  // This prevents unique constraint violations when inserting new plans
+  const { error: deleteError } = await supabase
     .from('meal_plans')
     .delete()
     .eq('week_start_date', weekStartDate)
     .eq('user_id', user.id);
-  const { error: insertError } = await supabase.from('meal_plans').insert(entries);
+  
+  if (deleteError) {
+    console.warn('Warning: Failed to delete existing meal plans:', deleteError.message);
+    // Continue anyway - upsert will handle conflicts
+  }
+  
+  // Insert new meal plan entries
+  // Using upsert as a fallback in case delete didn't catch everything
+  const { error: insertError } = await supabase
+    .from('meal_plans')
+    .upsert(entries, {
+      onConflict: 'user_id,week_start_date,day_of_week,meal_type'
+    });
   
   if (insertError) {
     throw new Error(`Failed to save meal plan: ${insertError.message}`);
@@ -211,6 +367,11 @@ export async function generateWeeklyMealPlan(options) {
     totalCost,
     budget,
     underBudget: totalCost <= budget,
-    matchSource: 'smart-scoring'
+    matchSource: 'smart-scoring',
+    varietyInfo: {
+      recipesUsedLastWeek: Array.from(recipeUsageCount.keys()).length,
+      newRecipesThisWeek: selectedMeals.filter(m => !recipeUsageCount.has(m.id)).length,
+      totalRecipesAvailable: allRecipes.length
+    }
   };
 }

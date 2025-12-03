@@ -50,7 +50,7 @@ export function MenuDrawer({ isOpen, onClose }) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-surface-inverse/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />

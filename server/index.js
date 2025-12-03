@@ -75,17 +75,124 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
       salesContext = []
     } = req.body;
 
-    // Fetch recipes from Supabase (using service key for admin access)
+    // 1. Fetch recipes from Supabase
     const { data: allRecipes } = await supabase
       .from('recipes')
       .select('*')
       .not('total_cost', 'is', null);
 
+    // 2. Get recipe usage history for variety tracking
+    const fourWeeksAgo = new Date(weekStartDate);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    
+    const { data: recentMealPlans } = await supabase
+      .from('meal_plans')
+      .select('recipe_id, week_start_date')
+      .eq('user_id', req.user.id)
+      .gte('week_start_date', fourWeeksAgo.toISOString().split('T')[0])
+      .lt('week_start_date', weekStartDate)
+      .not('recipe_id', 'is', null);
+
+    // Build map of recently used recipes
+    const recentlyUsedRecipes = new Set();
+    if (recentMealPlans) {
+      recentMealPlans.forEach(plan => {
+        recentlyUsedRecipes.add(plan.recipe_id);
+      });
+    }
+
+    // 3. Check if we need more variety - discover new recipes if needed
+    const availableRecipes = allRecipes.filter(r => !recentlyUsedRecipes.has(r.id));
+    const needsMoreVariety = availableRecipes.length < 10; // Less than 10 unused recipes
+
+    let newRecipes = [];
+    if (needsMoreVariety) {
+      console.log(`🔍 Low recipe variety (${availableRecipes.length} unused). Discovering new recipes...`);
+      
+      // Use AI to discover new budget-friendly recipes
+      const pantryNames = pantryItems.map(i => i.ingredient?.item || i.item || 'Unknown').join(', ');
+      const discoverPrompt = `
+        Generate 3-5 new, budget-friendly dinner recipes using Aldi ingredients.
+        
+        Requirements:
+        - Budget: Under $${budget / 4} per recipe (for ${servings} servings)
+        - Use common Aldi ingredients
+        - Avoid recipes that might already exist in this catalog: ${allRecipes.slice(0, 20).map(r => r.name).join(', ')}
+        - Focus on variety: different proteins, cuisines, cooking methods
+        ${pantryNames ? `- Prioritize using: ${pantryNames}` : ''}
+        
+        Return JSON:
+        {
+          "recipes": [
+            {
+              "name": "Recipe Name",
+              "category": "Chicken|Beef|Pork|Seafood|Vegetarian|Other",
+              "servings": ${servings},
+              "ingredients": [
+                {"item": "Ingredient Name", "quantity": 1, "unit": "lb"}
+              ],
+              "instructions": ["Step 1", "Step 2"],
+              "estimated_total_cost": 12.50,
+              "reasoning": "Why this recipe adds variety"
+            }
+          ]
+        }
+      `;
+
+      try {
+        const discoveryCompletion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [{ role: 'system', content: discoverPrompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.8 // Higher creativity for discovery
+        });
+
+        const discoveryResult = JSON.parse(discoveryCompletion.choices[0].message.content);
+        newRecipes = discoveryResult.recipes || [];
+
+        // Save new recipes to database
+        const savedNewRecipes = [];
+        for (const recipe of newRecipes) {
+          try {
+            const { data: savedRecipe } = await supabase
+              .from('recipes')
+              .insert({
+                name: recipe.name,
+                category: recipe.category,
+                servings: recipe.servings || servings,
+                instructions: recipe.instructions?.join('\n') || '',
+                total_cost: recipe.estimated_total_cost || 0,
+                cost_per_serving: (recipe.estimated_total_cost || 0) / (recipe.servings || servings),
+                source_url: 'AI Discovered',
+                tags: 'AI Discovered, Budget Friendly'
+              })
+              .select()
+              .single();
+
+            if (savedRecipe) {
+              console.log(`✅ Discovered and saved: ${savedRecipe.name} (ID: ${savedRecipe.id})`);
+              // Add to available recipes list
+              allRecipes.push(savedRecipe);
+              savedNewRecipes.push(savedRecipe);
+            }
+          } catch (saveError) {
+            console.warn(`Failed to save discovered recipe ${recipe.name}:`, saveError.message);
+          }
+        }
+        // Update newRecipes to reference saved recipes
+        newRecipes = savedNewRecipes;
+      } catch (discoverError) {
+        console.warn('Recipe discovery failed, continuing with existing recipes:', discoverError.message);
+      }
+    }
+
+    // 4. Build recipe catalog for AI selection
     const recipeCatalog = allRecipes.map(r => ({
       id: r.id,
       name: r.name,
       category: r.category,
       cost: r.total_cost,
+      recentlyUsed: recentlyUsedRecipes.has(r.id),
       ingredients: []
     }));
 
@@ -99,20 +206,24 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
       - Budget: $${budget} for the week
       - Servings: ${servings}
       - Schedule: Mon/Tue/Thu/Sat = Cook. Wed/Fri/Sun = Leftovers/Order Out. (4 meals total).
+      - Recently Used: Avoid recipes marked as "recentlyUsed: true" unless absolutely necessary.
+      ${newRecipes.length > 0 ? `- 🆕 NEW RECIPES JUST DISCOVERED (Prioritize these for maximum variety!): ${newRecipes.map(r => `${r.name} (ID: ${r.id})`).join(', ')}` : ''}
       
       Available Resources:
       - Pantry: ${pantryNames.join(', ')}
       - On Sale: ${salesNames.join(', ')}
-      - Recipe Catalog (ID: Name - Cost - Category):
-        ${recipeCatalog.map(r => `${r.id}: ${r.name} - $${r.cost} - ${r.category}`).join('\n      ')}
+      - Recipe Catalog (ID: Name - Cost - Category - RecentlyUsed):
+        ${recipeCatalog.map(r => `${r.id}: ${r.name} - $${r.cost} - ${r.category}${r.recentlyUsed ? ' [USED RECENTLY - AVOID]' : ''}`).join('\n      ')}
       
       Task:
       Select exactly 4 distinct recipes from the catalog for the cooking nights.
       Optimize for:
-      1. Using pantry items (High priority)
-      2. Using sale items (Medium priority)
-      3. Protein variety (Don't repeat proteins back-to-back)
-      4. Total cost under $${budget}
+      1. VARIETY FIRST: Prioritize recipes NOT marked as recently used
+      2. Using pantry items (High priority)
+      3. Using sale items (Medium priority)
+      4. Protein variety (Don't repeat proteins back-to-back)
+      5. Total cost under $${budget}
+      ${newRecipes.length > 0 ? '6. Include at least 1-2 of the newly discovered recipes for freshness' : ''}
       
       Return JSON:
       {
@@ -122,7 +233,7 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
           { "day": "Thursday", "recipeId": "..." },
           { "day": "Saturday", "recipeId": "..." }
         ],
-        "reasoning": "Brief explanation of the strategy used."
+        "reasoning": "Brief explanation of the strategy used, including variety considerations."
       }
     `;
 
@@ -135,10 +246,25 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
 
     const result = JSON.parse(completion.choices[0].message.content);
     
+    // Log variety stats
+    const selectedRecipeIds = (result.plan || []).map(p => p.recipeId);
+    const newRecipeIds = new Set(newRecipes.map(r => r.id));
+    const newRecipesUsed = selectedRecipeIds.filter(id => newRecipeIds.has(id)).length;
+    
+    console.log(`🎯 AI Meal Plan Generated:`);
+    console.log(`   • Recipes discovered this session: ${newRecipes.length}`);
+    console.log(`   • New recipes in plan: ${newRecipesUsed}/4`);
+    console.log(`   • Recipes from last 4 weeks avoided: ${selectedRecipeIds.filter(id => recentlyUsedRecipes.has(id)).length}/4`);
+    
     res.json({
       success: true,
       plan: result.plan || [],
-      reasoning: result.reasoning || ''
+      reasoning: result.reasoning || '',
+      varietyStats: {
+        newRecipesDiscovered: newRecipes.length,
+        newRecipesInPlan: newRecipesUsed,
+        totalRecipesAvailable: allRecipes.length
+      }
     });
   } catch (error) {
     console.error('AI Plan Generation Error:', error);

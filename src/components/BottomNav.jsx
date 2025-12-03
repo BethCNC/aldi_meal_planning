@@ -19,7 +19,7 @@ const navItems = [
     path: '/weekly-plan',
     label: 'Meals',
     icon: IconCalendarEvent,
-    match: (pathname) => pathname === '/weekly-plan' || pathname === '/',
+    match: (pathname) => pathname === '/weekly-plan',
   },
   {
     path: '/grocery-list',
@@ -68,7 +68,7 @@ export function BottomNav() {
                 to={item.path}
                 role="listitem"
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex flex-col items-center justify-center gap-1 border-t px-1 py-2 text-[10px] font-semibold transition cursor-pointer focus:outline-none ${
+                className={`flex flex-col items-center justify-center gap-1 border-t px-1 py-2 text-xs font-semibold transition cursor-pointer focus:outline-none ${
                   isActive
                     ? 'bg-surface-primary border-border-subtle'
                     : 'border-border-disabled hover:border-border-subtle focus:bg-surface-focus-subtle focus:border-border-focus'

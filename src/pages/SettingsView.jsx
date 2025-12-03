@@ -12,6 +12,7 @@ export function SettingsView() {
   const { preferences, loading, updatePreferences, refresh } = useSchedule();
   const [mealDay, setMealDay] = useState(1);
   const [groceryDay, setGroceryDay] = useState(0);
+  const [chickenBreastOnly, setChickenBreastOnly] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null);
 
@@ -19,6 +20,18 @@ export function SettingsView() {
     if (preferences) {
       if (typeof preferences.meal_plan_day === 'number') setMealDay(preferences.meal_plan_day);
       if (typeof preferences.grocery_day === 'number') setGroceryDay(preferences.grocery_day);
+      
+      // Load dietary restrictions
+      if (preferences.dietary_restrictions) {
+        try {
+          const restrictions = typeof preferences.dietary_restrictions === 'string'
+            ? JSON.parse(preferences.dietary_restrictions)
+            : preferences.dietary_restrictions;
+          setChickenBreastOnly(restrictions.chicken_breast_only || restrictions.no_dark_meat_chicken || false);
+        } catch (e) {
+          console.warn('Failed to parse dietary restrictions:', e);
+        }
+      }
     }
   }, [preferences]);
 
@@ -29,6 +42,11 @@ export function SettingsView() {
       await updatePreferences({
         meal_plan_day: mealDay,
         grocery_day: groceryDay,
+        dietary_restrictions: JSON.stringify({
+          chicken_breast_only: chickenBreastOnly,
+          no_dark_meat_chicken: chickenBreastOnly,
+          notes: chickenBreastOnly ? 'Only use chicken breast, substitute dark meat with breast' : null
+        })
       });
       setStatus({ type: 'success', message: 'Preferences saved successfully.' });
     } catch (error) {
@@ -87,9 +105,29 @@ export function SettingsView() {
         <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
           <h2 className="text-lg font-semibold text-text-body">Grocery shopping day</h2>
           <p className="text-sm text-icon-subtle">
-            We’ll prompt you to review your pantry before shopping on {getDayName(groceryDay)}.
+            We'll prompt you to review your pantry before shopping on {getDayName(groceryDay)}.
           </p>
           <DaySelectGrid selectedIndex={groceryDay} onSelect={setGroceryDay} />
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
+          <h2 className="text-lg font-semibold text-text-body">Dietary Preferences</h2>
+          <div className="space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={chickenBreastOnly}
+                onChange={(e) => setChickenBreastOnly(e.target.checked)}
+                className="mt-1 h-5 w-5 rounded border-border-subtle text-surface-primary focus:ring-2 focus:ring-border-focus"
+              />
+              <div>
+                <p className="text-sm font-medium text-text-body">Chicken breast only</p>
+                <p className="text-xs text-icon-subtle">
+                  Only use chicken breast in recipes. Dark meat (thighs, drumsticks, wings) will be filtered out or substituted.
+                </p>
+              </div>
+            </label>
+          </div>
         </div>
       </section>
 

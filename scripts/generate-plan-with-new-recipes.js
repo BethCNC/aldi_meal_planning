@@ -1,0 +1,137 @@
+/**
+ * Generate meal plan prioritizing the 4 new recipes for this week
+ */
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Missing Supabase credentials');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// New recipe IDs from the add script
+const NEW_RECIPE_IDS = [
+  'efe9291f-3a24-49ab-af90-89438b06c526', // Lemon Garlic Butter Chicken and Asparagus
+  'a5f5fc9e-7d77-458c-be04-13599b510882', // Copycat Crunchwraps
+  'cbfb0761-e675-471f-9962-165e8d4368f5', // Teriyaki Chicken and Crispy Brussel Sprout & Broccoli Bowls
+  '16609c3f-87e9-4ac0-92e8-cbe197a3133e'  // One Pot Creamy Cheesy Beef Pasta
+];
+
+async function generatePlanWithNewRecipes() {
+  console.log('\n🎯 Generating Meal Plan with New Recipes\n');
+  console.log('════════════════════════════════════════════════════════════\n');
+
+  // Get current user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    console.error('❌ Not authenticated. Please log in to the app first.');
+    return;
+  }
+
+  console.log(`✅ Authenticated as: ${user.email || user.id}\n`);
+
+  // Get current week (Monday)
+  const today = new Date();
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(today.setDate(diff));
+  const weekStartDate = monday.toISOString().split('T')[0];
+
+  console.log(`📅 Week: ${weekStartDate}\n`);
+
+  // Fetch the 4 new recipes
+  const { data: newRecipes, error: recipesError } = await supabase
+    .from('recipes')
+    .select('*')
+    .in('id', NEW_RECIPE_IDS);
+
+  if (recipesError) {
+    console.error('❌ Error fetching recipes:', recipesError.message);
+    return;
+  }
+
+  if (!newRecipes || newRecipes.length === 0) {
+    console.error('❌ New recipes not found. Run add-new-recipes.js first.');
+    return;
+  }
+
+  console.log(`✅ Found ${newRecipes.length} new recipes:\n`);
+  newRecipes.forEach((r, i) => {
+    console.log(`   ${i + 1}. ${r.name} - $${r.total_cost?.toFixed(2) || '0.00'} (${r.category})`);
+  });
+
+  // Build meal plan: Mon/Tue/Thu/Sat = Cook, Wed/Fri/Sun = Leftovers
+  const weekPlan = [
+    { dayOfWeek: 0, dayName: 'Sunday', recipeId: null, isLeftoverNight: true },
+    { dayOfWeek: 1, dayName: 'Monday', recipeId: newRecipes[0]?.id },
+    { dayOfWeek: 2, dayName: 'Tuesday', recipeId: newRecipes[1]?.id },
+    { dayOfWeek: 3, dayName: 'Wednesday', recipeId: null, isLeftoverNight: true },
+    { dayOfWeek: 4, dayName: 'Thursday', recipeId: newRecipes[2]?.id },
+    { dayOfWeek: 5, dayName: 'Friday', recipeId: null, isLeftoverNight: true },
+    { dayOfWeek: 6, dayName: 'Saturday', recipeId: newRecipes[3]?.id },
+  ];
+
+  // Delete existing meal plan for this week
+  const { error: deleteError } = await supabase
+    .from('meal_plans')
+    .delete()
+    .eq('week_start_date', weekStartDate)
+    .eq('user_id', user.id);
+
+  if (deleteError) {
+    console.warn('⚠️  Warning: Failed to delete existing plan:', deleteError.message);
+  }
+
+  // Create meal plan entries
+  const entries = weekPlan.map(meal => ({
+    user_id: user.id,
+    week_start_date: weekStartDate,
+    day_of_week: meal.dayOfWeek,
+    meal_type: 'dinner',
+    recipe_id: meal.recipeId,
+    is_leftover_night: meal.isLeftoverNight || false,
+    is_order_out_night: false,
+    status: 'planned'
+  }));
+
+  const { error: insertError } = await supabase
+    .from('meal_plans')
+    .upsert(entries, {
+      onConflict: 'user_id,week_start_date,day_of_week,meal_type'
+    });
+
+  if (insertError) {
+    console.error('❌ Failed to create meal plan:', insertError.message);
+    return;
+  }
+
+  // Calculate total cost
+  const totalCost = newRecipes.reduce((sum, r) => sum + (r.total_cost || 0), 0);
+
+  console.log('\n✅ Meal Plan Created!\n');
+  console.log('📋 This Week\'s Plan:');
+  console.log('────────────────────────────────────────────────────────');
+  weekPlan.forEach(day => {
+    if (day.isLeftoverNight) {
+      console.log(`   ${day.dayName.padEnd(9)} → Leftover Night`);
+    } else {
+      const recipe = newRecipes.find(r => r.id === day.recipeId);
+      if (recipe) {
+        console.log(`   ${day.dayName.padEnd(9)} → ${recipe.name} ($${recipe.total_cost?.toFixed(2) || '0.00'})`);
+      }
+    }
+  });
+  console.log('────────────────────────────────────────────────────────');
+  console.log(`\n💰 Total Cost: $${totalCost.toFixed(2)}`);
+  console.log(`\n✨ View your meal plan in the app at: http://localhost:5173/weekly-plan\n`);
+}
+
+generatePlanWithNewRecipes().catch(console.error);
+

@@ -1,5 +1,6 @@
 /**
  * Select component with consistent styling
+ * Uses design tokens for all styling values.
  * 
  * Note: For complex dropdowns with search/filtering, consider using Radix UI Select
  * This is a basic styled native select for simple use cases
@@ -19,7 +20,7 @@ export function Select({ label, error, disabled, className = '', id, children, .
       {label && (
         <label
           htmlFor={selectId}
-          className={`text-sm font-semibold ${
+          className={`text-sm font-medium ${
             disabled ? 'text-text-disabled' : hasError ? 'text-error' : 'text-text-body'
           }`}
         >
@@ -32,13 +33,13 @@ export function Select({ label, error, disabled, className = '', id, children, .
         aria-invalid={hasError}
         aria-describedby={error ? `${selectId}-error` : undefined}
         className={`
-          w-full rounded-xl border px-4 py-3 text-sm transition-colors
+          w-full rounded border px-4 py-3 text-base font-medium transition-colors
           focus:outline-none focus:ring-2 focus:ring-offset-2
           ${
             disabled
               ? 'border-border-disabled bg-surface-disabled text-text-disabled cursor-not-allowed'
               : hasError
-                ? 'border-error bg-error/5 text-text-body focus:ring-error'
+                ? 'border-error bg-error/5 text-text-body focus:ring-border-focus'
                 : 'border-border-subtle bg-surface-page text-text-body focus:border-border-focus focus:ring-border-focus'
           }
         `}
@@ -47,11 +48,10 @@ export function Select({ label, error, disabled, className = '', id, children, .
         {children}
       </select>
       {error && (
-        <p id={`${selectId}-error`} className="text-xs text-error" role="alert">
+        <p id={`${selectId}-error`} className="text-xs font-medium text-error" role="alert">
           {error}
         </p>
       )}
     </div>
   );
 }
-

@@ -7,9 +7,12 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { BudgetProgress } from '../components/BudgetProgress';
 import { DayCard } from '../components/DayCard';
 import { Button } from '../components/ui/Button';
+import { Checkbox } from '../components/ui/Checkbox';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { getDayName, sortDaysMondayFirst } from '../utils/days';
 import { WeekHeader } from '../components/week/WeekHeader';
+import { generateWeeklyPlanPDF } from '../utils/pdfGenerator';
+import { IconDownload } from '@tabler/icons-react';
 
 const STATUS_FLOW = ['planned', 'shopped', 'completed'];
 
@@ -172,6 +175,34 @@ export function WeeklyPlanView() {
 
       {mealPlan ? (
         <>
+          {/* Export PDF Button */}
+          <div className="px-4 pt-4">
+            <Button
+              variant="secondary"
+              iconLeading={<IconDownload className="h-4 w-4" />}
+              onClick={async () => {
+                try {
+                  await generateWeeklyPlanPDF(mealPlan, weekStartDate);
+                } catch (error) {
+                  console.error('Error generating PDF:', error);
+                  alert(`Failed to generate PDF: ${error.message}`);
+                }
+              }}
+              className="w-full"
+            >
+              Export PDF
+            </Button>
+          </div>
+
+          {/* Schedule Info Banner */}
+          <div className="px-4 pt-4">
+            <div className="rounded-lg border border-border-subtle bg-surface-card p-3">
+              <p className="text-xs text-icon-subtle">
+                <strong className="text-text-body">Weekly Schedule:</strong> Cook Mon/Tue/Thu/Sat • Leftovers Wed/Fri/Sun
+              </p>
+            </div>
+          </div>
+
           {/* Prompt banner (if applicable) */}
           {showMealPrompt && preferences && (
             <div className="px-4 pt-4">
@@ -214,26 +245,32 @@ export function WeeklyPlanView() {
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4 text-text-body">No meal plan yet</h2>
-            <p className="text-icon-subtle mb-8">
+            <p className="text-icon-subtle mb-4">
               Generate your weekly meal plan to get started
             </p>
+            <div className="mb-8 rounded-lg border border-border-subtle bg-surface-card p-4 text-left">
+              <p className="text-sm font-semibold text-text-body mb-2">📅 Weekly Schedule:</p>
+              <ul className="text-xs text-icon-subtle space-y-1">
+                <li>• <strong className="text-text-body">Monday, Tuesday, Thursday, Saturday:</strong> Cook new meals</li>
+                <li>• <strong className="text-text-body">Wednesday, Friday, Sunday:</strong> Leftover nights (no cooking!)</li>
+              </ul>
+            </div>
             
-            <div className="mb-6 flex items-center justify-center gap-2">
-              <input
-                type="checkbox"
-                id="useAI"
+            <div className="mb-6 flex items-center justify-center">
+              <Checkbox
+                label="Use Advanced AI (Better variety & pairings)"
                 checked={useAI}
-                onChange={(e) => setUseAI(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                onChange={setUseAI}
               />
-              <label htmlFor="useAI" className="text-sm text-text-body">
-                Use Advanced AI (Better variety & pairings)
-              </label>
             </div>
 
-            <Button onClick={handleGenerate} size="lg">
-              Generate Meal Plan
-            </Button>
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="w-full rounded-lg bg-surface-primary px-6 py-3 text-base font-semibold text-text-inverse transition hover:bg-surface-primary/90 focus:outline-none focus:ring-2 focus:ring-border-focus focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generating ? 'Generating...' : 'Generate Meal Plan'}
+            </button>
           </div>
         </div>
       )}

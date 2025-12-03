@@ -1,5 +1,6 @@
 /**
  * Label component for form inputs with consistent typography
+ * Uses design tokens for typography.
  * 
  * @param {string} htmlFor - ID of associated input element
  * @param {boolean} required - Show required indicator
@@ -12,7 +13,7 @@ export function Label({ htmlFor, required, disabled, className = '', children, .
     <label
       htmlFor={htmlFor}
       className={`
-        text-sm font-semibold
+        text-sm font-medium
         ${disabled ? 'text-text-disabled cursor-not-allowed' : 'text-text-body'}
         ${className}
       `}
@@ -23,4 +24,3 @@ export function Label({ htmlFor, required, disabled, className = '', children, .
     </label>
   );
 }
-

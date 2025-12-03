@@ -1,0 +1,42 @@
+---
+alwaysApply: true
+---
+## 3. Component Tokens
+
+Specific tokens defined for UI components, aliasing the semantic or primitive layers.
+
+### Button
+| Token | Value | Context |
+|-------|-------|---------|
+| `button/gap` | 8px | Gap between icon and text |
+| `button/x-padding` | 24px | Horizontal padding |
+| `button/y-padding` | 16px | Vertical padding |
+| `button/border-radius` | 4px | Corner radius |
+
+---
+
+## 4. Typography Composites
+
+The system uses composite tokens to bundle font properties (Family, Weight, Size, Line Height).
+
+| Composite Token | Composition |
+|-----------------|-------------|
+| `text-5xl/font-semibold` | `font-size/8` (48px) + `font-weight/semibold` (600) + `line-height/8` (64px) |
+| `text-2xl/font-medium` | `font-size/5` (24px) + `font-weight/medium` (500) + `line-height/5` (32px) |
+| `text-xl/font-medium` | `font-size/4` (20px) + `font-weight/medium` (500) + `line-height/4` (27px) |
+| `text-base/font-medium` | `font-size/2` (16px) + `font-weight/medium` (500) + `line-height/2` (21px) |
+
+---
+
+## Summary of Connection Points
+
+The structure demonstrates a clear "Alias" relationship:
+
+1.  **Brand Alias (Primitives)**: Defines the *What* (e.g., `#1c1917`).
+2.  **Mapped Collection**: Defines the *Where/Why* (e.g., `surface/inverse`).
+3.  **Connection**: The Mapped Collection **aliases** the Brand tokens.
+    *   Example: `surface/inverse` 🔗 `Brand Black` (`#1c1917`)
+    *   Example: `text/subtle` 🔗 `Brand Neutral 500` (`#79716b`)
+
+This structure allows for "Theming" or "Branding" updates by simply changing the Primitive values, which automatically propagates to all Semantic and Component tokens.
+

@@ -1,5 +1,6 @@
 /**
  * Switch/Toggle component for boolean settings
+ * Uses design tokens for colors and sizing.
  * 
  * @param {string} label - Optional label text
  * @param {boolean} checked - Checked state
@@ -45,18 +46,17 @@ export function Switch({ label, checked, onChange, disabled, className = '', id,
         />
         <span
           className={`
-            absolute left-1 inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out
+            absolute left-1 inline-block h-4 w-4 transform rounded-full bg-surface-inverse shadow-sm transition-transform duration-200 ease-in-out
             ${checked ? 'translate-x-5' : 'translate-x-0'}
           `}
           aria-hidden="true"
         />
       </div>
       {label && (
-        <span className={`text-sm ${disabled ? 'text-text-disabled' : 'text-text-body'}`}>
+        <span className={`text-sm font-medium ${disabled ? 'text-text-disabled' : 'text-text-body'}`}>
           {label}
         </span>
       )}
     </label>
   );
 }
-

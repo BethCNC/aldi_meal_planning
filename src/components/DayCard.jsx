@@ -98,7 +98,10 @@ export function DayCard({ day, isToday, onUpdateStatus }) {
             </button>
           </div>
         ) : day.isLeftoverNight ? (
-          <h3 className="text-lg font-semibold text-icon-subtle">Leftover Night or Pizza</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-icon-subtle">Leftover Night</h3>
+            <p className="text-xs text-icon-subtle mt-1">No cooking needed - enjoy leftovers or order pizza!</p>
+          </div>
         ) : day.isOrderOutNight ? (
           <h3 className="text-lg font-semibold text-icon-subtle">Order Out (guilt-free!)</h3>
         ) : (

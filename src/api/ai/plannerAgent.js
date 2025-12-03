@@ -49,45 +49,85 @@ export async function generateAIWeeklyPlan(options) {
     // 3. Map AI Plan to Database Structure
     const dayMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
     
+    // Schedule: Mon/Tue/Thu/Sat = Cook, Wed/Fri/Sun = Leftovers (fixed schedule)
+    // Build all 7 days first, set leftover days
     const weekPlan = [
-      { dayOfWeek: 0, dayName: 'Sunday', recipeId: null, isOrderOutNight: true }, 
-      { dayOfWeek: 3, dayName: 'Wednesday', recipeId: null, isLeftoverNight: true }, 
-      { dayOfWeek: 5, dayName: 'Friday', recipeId: null, isLeftoverNight: true }, 
+      { dayOfWeek: 0, dayName: 'Sunday', recipeId: null, isLeftoverNight: true },
+      { dayOfWeek: 1, dayName: 'Monday', recipeId: null },
+      { dayOfWeek: 2, dayName: 'Tuesday', recipeId: null },
+      { dayOfWeek: 3, dayName: 'Wednesday', recipeId: null, isLeftoverNight: true },
+      { dayOfWeek: 4, dayName: 'Thursday', recipeId: null },
+      { dayOfWeek: 5, dayName: 'Friday', recipeId: null, isLeftoverNight: true },
+      { dayOfWeek: 6, dayName: 'Saturday', recipeId: null },
     ];
 
-    // Fill in the AI selected days
+    // Fill in the AI selected recipes for cooking days only (Mon/Tue/Thu/Sat)
+    // Filter out Wed/Fri/Sun since those are always leftover days
+    const cookingDays = [1, 2, 4, 6]; // Mon, Tue, Thu, Sat
+    let recipeIndex = 0;
+    
     aiPlan.forEach(slot => {
       const dayIndex = dayMap[slot.day];
-      if (dayIndex !== undefined) {
-        weekPlan.push({
-          dayOfWeek: dayIndex,
-          dayName: slot.day,
-          recipeId: slot.recipeId
-        });
+      // Only assign recipes to cooking days, skip leftover days
+      if (dayIndex !== undefined && cookingDays.includes(dayIndex) && slot.recipeId) {
+        const dayPlan = weekPlan.find(d => d.dayOfWeek === dayIndex);
+        if (dayPlan && !dayPlan.isLeftoverNight) {
+          dayPlan.recipeId = slot.recipeId;
+          recipeIndex++;
+        }
       }
     });
 
-    // Sort by day index
-    weekPlan.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+    // 4. Get Recipe Usage History (for variety tracking)
+    // Query meal plans from last 4 weeks to avoid repeats
+    const fourWeeksAgo = new Date(weekStartDate);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    
+    const { data: recentMealPlans } = await supabase
+      .from('meal_plans')
+      .select('recipe_id, week_start_date')
+      .eq('user_id', user.id) // Only look at current user's history
+      .gte('week_start_date', fourWeeksAgo.toISOString().split('T')[0])
+      .lt('week_start_date', weekStartDate)
+      .not('recipe_id', 'is', null);
+    
+    // Build map of recipe usage
+    const recipeLastUsed = new Map();
+    if (recentMealPlans) {
+      recentMealPlans.forEach(plan => {
+        const recipeId = plan.recipe_id;
+        const currentLastUsed = recipeLastUsed.get(recipeId);
+        if (!currentLastUsed || plan.week_start_date > currentLastUsed) {
+          recipeLastUsed.set(recipeId, plan.week_start_date);
+        }
+      });
+    }
+    
+    // Log variety info
+    const selectedRecipeIds = weekPlan.filter(d => d.recipeId).map(d => d.recipeId);
+    const newRecipesCount = selectedRecipeIds.filter(id => !recipeLastUsed.has(id)).length;
+    console.log(`🎯 AI Planner Variety: ${newRecipesCount}/${selectedRecipeIds.length} new recipes this week`);
 
-    // 4. Fetch recipes for cost calculation
+    // 5. Fetch recipes for cost calculation
     let { data: allRecipes } = await supabase
       .from('recipes')
       .select('*')
       .not('total_cost', 'is', null);
 
-    // 5. Save to Database
-    // Get current user ID
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error('User must be authenticated to create meal plans');
-    }
+    // 6. Save to Database
     
-    await supabase
+    // Delete existing meal plans for this week and user first
+    // This prevents unique constraint violations when inserting new plans
+    const { error: deleteError } = await supabase
       .from('meal_plans')
       .delete()
       .eq('week_start_date', weekStartDate)
       .eq('user_id', user.id);
+    
+    if (deleteError) {
+      console.warn('Warning: Failed to delete existing meal plans:', deleteError.message);
+      // Continue anyway - upsert will handle conflicts
+    }
     
     const entries = weekPlan.map(meal => ({
       user_id: user.id,
@@ -101,7 +141,14 @@ export async function generateAIWeeklyPlan(options) {
       notes: reasoning || ''
     }));
 
-    const { error: insertError } = await supabase.from('meal_plans').insert(entries);
+    // Insert new meal plan entries
+    // Using upsert as a fallback in case delete didn't catch everything
+    const { error: insertError } = await supabase
+      .from('meal_plans')
+      .upsert(entries, {
+        onConflict: 'week_start_date,day_of_week,meal_type'
+      });
+    
     if (insertError) throw insertError;
 
     // Calculate cost for return

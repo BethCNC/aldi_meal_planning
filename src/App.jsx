@@ -15,6 +15,8 @@ import { OnboardingView } from './pages/OnboardingView';
 import { RecipeDiscoveryView } from './pages/RecipeDiscoveryView';
 import { SettingsView } from './pages/SettingsView';
 import { AuthView } from './pages/AuthView';
+import { ButtonTest } from './pages/ButtonTest';
+import { InputTest } from './pages/InputTest';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
 
 function AuthGuard({ children }) {
@@ -79,6 +81,8 @@ function App() {
                 <Route path="pantry" element={<PantryView />} />
                 <Route path="case-study" element={<CaseStudyView />} />
                 <Route path="settings" element={<SettingsView />} />
+                <Route path="button-test" element={<ButtonTest />} />
+                <Route path="input-test" element={<InputTest />} />
               </Route>
             </Routes>
           </BrowserRouter>

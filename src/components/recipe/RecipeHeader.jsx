@@ -95,7 +95,7 @@ export function RecipeHeader({recipe, showMeta = true, className = ''}) {
           {tagList.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {tagList.map((tag) => (
-                <Badge key={tag} variant="outline" className="border-white/40 text-white">
+                <Badge key={tag} variant="outline" className="border-text-inverse/40 text-text-inverse">
                   {tag}
                 </Badge>
               ))}

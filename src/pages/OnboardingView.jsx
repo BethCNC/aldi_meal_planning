@@ -260,8 +260,15 @@ export function OnboardingView() {
         <section className="space-y-5">
           <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
             <h2 className="text-lg font-semibold text-text-body">Pick your meal plan day</h2>
-            <p className="text-sm text-icon-subtle">We’ll generate new recipes on this day each week.</p>
+            <p className="text-sm text-icon-subtle">We'll generate new recipes on this day each week.</p>
             <DaySelectGrid selectedIndex={mealPlanDay} onSelect={setMealPlanDay} />
+            <div className="mt-4 rounded-lg border border-border-subtle bg-surface-page p-3">
+              <p className="text-xs font-semibold text-text-body mb-1">📅 Weekly Meal Schedule:</p>
+              <ul className="text-xs text-icon-subtle space-y-1">
+                <li>• <strong className="text-text-body">Monday, Tuesday, Thursday, Saturday:</strong> Cook new meals</li>
+                <li>• <strong className="text-text-body">Wednesday, Friday, Sunday:</strong> Leftover nights (no cooking!)</li>
+              </ul>
+            </div>
           </div>
 
           <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">

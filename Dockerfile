@@ -1,6 +1,6 @@
 # Multi-stage build for Aldi Meal Planner
 # Stage 1: Build the React frontend
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production server
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 

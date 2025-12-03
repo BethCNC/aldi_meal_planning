@@ -101,17 +101,29 @@ NODE_ENV=production
 
 ## Step 6: Configure Build Settings
 
-In Coolify's build configuration:
+In Coolify's build configuration, set these **exact** values:
 
-- **Dockerfile Path:** `Dockerfile` (should auto-detect at root)
-- **Build Context:** `.` (root directory)
-- **Build Command:** (leave empty - Dockerfile handles `npm run build`)
+- **Build Pack:** Select `Dockerfile` (not Docker Compose)
+- **Dockerfile Path:** `Dockerfile` (must be exactly this, no leading slash)
+- **Build Context:** `.` (single dot, means root directory)
+- **Build Command:** (leave completely empty - Dockerfile handles everything)
 - **Start Command:** `node server/index.js`
+
+**Important:** 
+- The Dockerfile is at the **root** of your repository
+- Do NOT use `/Dockerfile` or `./Dockerfile` - just `Dockerfile`
+- Build Context must be `.` (root) so Docker can find the Dockerfile
 
 The Dockerfile will:
 1. Build the React frontend with `npm run build` (creates `dist/` folder)
 2. Copy `dist/` and `server/` to production image
 3. Run `node server/index.js` which serves both the API and static files
+
+**If you get "Dockerfile: no such file or directory" error:**
+- Verify Dockerfile Path is exactly `Dockerfile` (not `/Dockerfile`)
+- Verify Build Context is exactly `.` (not empty, not `/`)
+- Check that the Dockerfile exists in your Git repository root
+- Try redeploying after fixing these settings
 
 ## Step 7: Configure Ports
 
@@ -169,6 +181,16 @@ The Dockerfile will:
 ## Troubleshooting
 
 ### Build Fails
+
+**Error: "Dockerfile: no such file or directory"**
+- **This is a Coolify configuration issue**
+- Go to your application in Coolify → **Settings** → **Build**
+- Verify **Dockerfile Path** is exactly `Dockerfile` (not `/Dockerfile` or `./Dockerfile`)
+- Verify **Build Context** is exactly `.` (single dot, not empty, not `/`)
+- Verify **Build Pack** is set to `Dockerfile` (not Docker Compose)
+- The Dockerfile exists at the root of your repository - verify in GitHub/GitLab
+- Try clicking **Save** and then **Redeploy**
+- If still failing, try setting Dockerfile Path to `./Dockerfile` (with `./` prefix)
 
 **Error: "npm ERR! code ELIFECYCLE"**
 - Check build logs for specific package errors

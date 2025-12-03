@@ -1,10 +1,12 @@
 import { supabase } from '../../lib/supabase';
+import { getBlacklistedRecipeIds } from '../recipePreferences';
 
 /**
  * Gemini Two-Step AI Meal Planner
  * Calls backend API to use Gemini with:
  * - Step A: Context gathering with Google Search (5s timeout)
  * - Step B: Structured generation with strict JSON schema
+ * - Respects user recipe preferences (blacklist)
  */
 export async function generateGeminiWeeklyPlan(options) {
   const {
@@ -14,6 +16,15 @@ export async function generateGeminiWeeklyPlan(options) {
     pantryItems = [],
     salesContext = []
   } = options;
+
+  // Get blacklisted recipes
+  let blacklistedIds = [];
+  try {
+    blacklistedIds = await getBlacklistedRecipeIds();
+    console.log(`Excluding ${blacklistedIds.length} blacklisted recipes`);
+  } catch (error) {
+    console.warn('Could not fetch blacklist:', error);
+  }
 
   // 1. Get auth token
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -39,7 +50,8 @@ export async function generateGeminiWeeklyPlan(options) {
         peopleCount,
         weekStartDate,
         pantryItems,
-        salesContext
+        salesContext,
+        blacklistedRecipeIds: blacklistedIds
       })
     });
 

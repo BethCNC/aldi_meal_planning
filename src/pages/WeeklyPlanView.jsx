@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { IconFileDownload, IconShoppingCart, IconSwitch } from '@tabler/icons-react';
 import { supabase } from '../lib/supabase';
 import { getMonday, formatWeekRange, isToday } from '../utils/dateHelpers';
 import { generateWeeklyMealPlan } from '../api/mealPlanGenerator';
 import { generateGeminiWeeklyPlan } from '../api/ai/geminiPlannerAgent';
+import { downloadMealPlanPDF, downloadGroceryListPDF } from '../api/pdfGenerator';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { BudgetProgress } from '../components/BudgetProgress';
 import { DayCard } from '../components/DayCard';
@@ -12,6 +14,7 @@ import { useSchedule } from '../contexts/ScheduleContext';
 import { getDayName, sortDaysMondayFirst } from '../utils/days';
 import { WeekHeader } from '../components/week/WeekHeader';
 import ChatAssistant from '../components/ChatAssistant';
+import RecipeSwapModal from '../components/RecipeSwapModal';
 
 const STATUS_FLOW = ['planned', 'shopped', 'completed'];
 
@@ -38,7 +41,27 @@ export function WeeklyPlanView() {
   
   useEffect(() => {
     loadMealPlan();
+    loadGroceryList();
   }, [weekStartDate]);
+
+  const loadGroceryList = async () => {
+    try {
+      const { data } = await supabase
+        .from('grocery_lists')
+        .select('*')
+        .eq('week_start_date', weekStartDate)
+        .order('category');
+
+      if (data && data.length > 0) {
+        const totalCost = data.reduce((sum, item) => sum + (item.estimated_cost || 0), 0);
+        setGroceryList({ items: data, totalCost, weekStartDate });
+      } else {
+        setGroceryList(null);
+      }
+    } catch (error) {
+      console.error('Error loading grocery list:', error);
+    }
+  };
 
   const mealPlanWeekKey = useMemo(() => weekStartDate, [weekStartDate]);
 
@@ -115,7 +138,9 @@ export function WeeklyPlanView() {
   };
   
   const [useAI, setUseAI] = useState(false);
-  const [aiProvider, setAiProvider] = useState('openai'); // 'openai' or 'gemini'
+  const [aiProvider, setAiProvider] = useState('gemini'); // Default to Gemini for budget focus
+  const [swapModalDay, setSwapModalDay] = useState(null);
+  const [groceryList, setGroceryList] = useState(null);
 
   const handleGenerate = async () => {
     if (preferences && typeof preferences.meal_plan_day === 'number') {
@@ -159,12 +184,33 @@ export function WeeklyPlanView() {
       }
 
       setMealPlan(plan);
+      // Reload grocery list after generating plan
+      await loadGroceryList();
     } catch (error) {
       console.error('Error generating meal plan:', error);
       alert(`Failed to generate meal plan: ${error.message}`);
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleDownloadMealPlanPDF = () => {
+    if (!mealPlan) return;
+    downloadMealPlanPDF(mealPlan, { peopleCount: 2 });
+  };
+
+  const handleDownloadGroceryListPDF = () => {
+    if (!groceryList) return;
+    downloadGroceryListPDF(groceryList.items, {
+      weekStartDate,
+      totalCost: groceryList.totalCost,
+      budget: mealPlan?.budget || 100
+    });
+  };
+
+  const handleSwapComplete = () => {
+    loadMealPlan();
+    loadGroceryList();
   };
   
   if (loading || generating || statusUpdatingId) {
@@ -196,9 +242,28 @@ export function WeeklyPlanView() {
 
       {mealPlan ? (
         <>
+          {/* PDF Download Buttons */}
+          <div className="px-4 pt-4 pb-2 flex gap-2 flex-wrap">
+            <button
+              onClick={handleDownloadMealPlanPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
+            >
+              <IconFileDownload size={18} />
+              Download Meal Plan PDF
+            </button>
+            <button
+              onClick={handleDownloadGroceryListPDF}
+              disabled={!groceryList}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+            >
+              <IconShoppingCart size={18} />
+              Download Grocery List PDF
+            </button>
+          </div>
+
           {/* Prompt banner (if applicable) */}
           {showMealPrompt && preferences && (
-            <div className="px-4 pt-4">
+            <div className="px-4 pt-2">
               <div className="rounded-xl border border-border-focus bg-surface-card p-4 shadow-sm">
                 <h3 className="text-lg font-semibold text-text-body mb-1">
                   It&apos;s {getDayName(preferences.meal_plan_day)}—pantry check time!
@@ -222,14 +287,26 @@ export function WeeklyPlanView() {
               const dayDate = new Date(weekStartDate);
               dayDate.setDate(dayDate.getDate() + (day.day_of_week || 0));
               const isTodayDay = isToday(dayDate) && currentDayOfWeek === day.day_of_week;
-              
+              const canSwap = day.recipe && !day.is_leftover_night && !day.is_order_out_night;
+
               return (
-                <DayCard
-                  key={day.id || `${weekStartDate}-${day.day_of_week}`}
-                  day={day}
-                  isToday={isTodayDay}
-                  onUpdateStatus={() => advanceStatus(day)}
-                />
+                <div key={day.id || `${weekStartDate}-${day.day_of_week}`} className="relative">
+                  <DayCard
+                    day={day}
+                    isToday={isTodayDay}
+                    onUpdateStatus={() => advanceStatus(day)}
+                  />
+                  {canSwap && (
+                    <button
+                      onClick={() => setSwapModalDay(day)}
+                      className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 bg-orange-500 text-white text-xs font-medium rounded-md hover:bg-orange-600 transition-colors shadow-sm"
+                      title="Swap recipe"
+                    >
+                      <IconSwitch size={14} />
+                      Swap
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -237,9 +314,12 @@ export function WeeklyPlanView() {
       ) : (
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-text-body">No meal plan yet</h2>
-            <p className="text-icon-subtle mb-8">
-              Generate your weekly meal plan to get started
+            <h2 className="text-2xl font-bold mb-4 text-text-body">Budget Meal Planning for 2 People</h2>
+            <p className="text-icon-subtle mb-2">
+              Generate a weekly meal plan with grocery list
+            </p>
+            <p className="text-sm text-green-700 font-semibold mb-8">
+              🎯 Goal: Stay under $100/week at Aldi
             </p>
             
             <div className="mb-6 space-y-4">
@@ -257,10 +337,30 @@ export function WeeklyPlanView() {
               </div>
 
               {useAI && (
-                <div className="mx-auto max-w-xs space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">AI Provider:</p>
+                <div className="mx-auto max-w-xs space-y-2 rounded-lg border border-green-300 bg-green-50 p-4">
+                  <p className="text-xs font-semibold text-green-800 mb-2">AI Provider:</p>
 
-                  <label className="flex items-start gap-3 cursor-pointer">
+                  <label className="flex items-start gap-3 cursor-pointer bg-white rounded-md p-3 border-2 border-green-500">
+                    <input
+                      type="radio"
+                      name="aiProvider"
+                      value="gemini"
+                      checked={aiProvider === 'gemini'}
+                      onChange={(e) => setAiProvider(e.target.value)}
+                      className="mt-0.5 h-4 w-4 text-green-600 focus:ring-green-500"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-green-900">Gemini 2.5 Flash ⚡ (Recommended)</div>
+                      <div className="text-xs text-green-700 mt-1">
+                        ✓ Real-time Aldi price search<br />
+                        ✓ Budget-optimized ($100/week)<br />
+                        ✓ Ingredient cross-utilization<br />
+                        ✓ Leftover strategy
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-3 cursor-pointer bg-white rounded-md p-3 border border-gray-300">
                     <input
                       type="radio"
                       name="aiProvider"
@@ -271,24 +371,7 @@ export function WeeklyPlanView() {
                     />
                     <div className="flex-1">
                       <div className="text-sm font-medium text-text-body">OpenAI GPT-4o</div>
-                      <div className="text-xs text-gray-600">Better variety & pairings</div>
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="aiProvider"
-                      value="gemini"
-                      checked={aiProvider === 'gemini'}
-                      onChange={(e) => setAiProvider(e.target.value)}
-                      className="mt-0.5 h-4 w-4 text-primary focus:ring-primary"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-text-body">Gemini 2.5 Flash ⚡</div>
-                      <div className="text-xs text-gray-600">
-                        Two-step pipeline: Real-time search → Frugal planning
-                      </div>
+                      <div className="text-xs text-gray-600">Creative variety & flavor pairings</div>
                     </div>
                   </label>
                 </div>
@@ -304,6 +387,15 @@ export function WeeklyPlanView() {
 
       {/* Floating Chat Assistant - Always available */}
       <ChatAssistant currentMealPlan={mealPlan} />
+
+      {/* Recipe Swap Modal */}
+      {swapModalDay && (
+        <RecipeSwapModal
+          day={swapModalDay}
+          onSwap={handleSwapComplete}
+          onClose={() => setSwapModalDay(null)}
+        />
+      )}
     </div>
   );
 }

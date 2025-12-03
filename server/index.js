@@ -322,14 +322,23 @@ app.post('/api/ai/gemini/plan', verifyAuth, async (req, res) => {
       peopleCount = 2,
       weekStartDate,
       pantryItems = [],
-      salesContext = []
+      salesContext = [],
+      blacklistedRecipeIds = []
     } = req.body;
 
-    // Fetch recipes from Supabase
-    const { data: allRecipes } = await supabase
+    // Fetch recipes from Supabase (excluding blacklisted ones)
+    let query = supabase
       .from('recipes')
       .select('*')
       .not('total_cost', 'is', null);
+
+    // Filter out blacklisted recipes
+    if (blacklistedRecipeIds.length > 0) {
+      query = query.not('id', 'in', `(${blacklistedRecipeIds.join(',')})`);
+      console.log(`Excluding ${blacklistedRecipeIds.length} blacklisted recipes`);
+    }
+
+    const { data: allRecipes } = await query;
 
     const recipeCatalog = allRecipes.map(r => ({
       id: r.id,
@@ -462,6 +471,86 @@ app.post('/api/ai/gemini/chat', verifyAuth, async (req, res) => {
     console.error('Gemini Chat Error:', error);
     res.status(500).json({
       error: 'Chat failed',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/ai/gemini/discover
+ * Automated recipe discovery with Gemini
+ */
+app.post('/api/ai/gemini/discover', verifyAuth, async (req, res) => {
+  if (!genAI) {
+    return res.status(503).json({ error: 'Gemini not configured. Set GEMINI_API_KEY.' });
+  }
+
+  try {
+    const { query, count = 5, maxBudget = 15, category = null } = req.body;
+
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash-exp',
+      tools: [{ googleSearch: {} }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.8
+      }
+    });
+
+    const prompt = `You are a budget-focused recipe expert specializing in Aldi ingredients.
+
+Search Query: "${query}"
+
+Task: Discover ${count} NEW, creative, budget-friendly dinner recipes that meet these criteria:
+- Total cost under $${maxBudget}
+- Uses common Aldi ingredients
+- Suitable for 2-4 people
+- NOT typical/common recipes (be creative!)
+${category ? `- Category: ${category}` : ''}
+
+Use Google Search to find current Aldi prices and trending budget recipes.
+
+Return JSON array:
+{
+  "recipes": [
+    {
+      "name": "Recipe Title",
+      "description": "Brief description",
+      "category": "Chicken|Beef|Pork|Seafood|Vegetarian|Other",
+      "servings": 4,
+      "ingredients": [
+        {
+          "item": "Ingredient name",
+          "quantity": 1,
+          "unit": "lb",
+          "estimatedPrice": 3.99,
+          "notes": "Optional notes"
+        }
+      ],
+      "instructions": ["Step 1", "Step 2", "..."],
+      "estimated_total_cost": 12.50,
+      "reasoning": "Why this is a good budget recipe"
+    }
+  ]
+}`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let jsonText = cleanJson(response.text());
+    const parsed = JSON.parse(jsonText);
+
+    res.json({
+      success: true,
+      recipes: parsed.recipes || []
+    });
+  } catch (error) {
+    console.error('Gemini Recipe Discovery Error:', error);
+    res.status(500).json({
+      error: 'Recipe discovery failed',
       message: error.message
     });
   }

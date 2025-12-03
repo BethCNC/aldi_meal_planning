@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { calculateIngredientCost, normalizeUnit } from '../../backend/utils/unitConversions.js';
+import { calculateIngredientCost, normalizeUnit } from '../utils/unitConversions.js';
 
 const roundCurrency = (value) => {
   if (value === null || value === undefined || Number.isNaN(value)) {

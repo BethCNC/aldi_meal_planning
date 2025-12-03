@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getMonday, formatWeekRange, isToday } from '../utils/dateHelpers';
 import { generateWeeklyMealPlan } from '../api/mealPlanGenerator';
+import { generateGeminiWeeklyPlan } from '../api/ai/geminiPlannerAgent';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { BudgetProgress } from '../components/BudgetProgress';
 import { DayCard } from '../components/DayCard';
@@ -10,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { useSchedule } from '../contexts/ScheduleContext';
 import { getDayName, sortDaysMondayFirst } from '../utils/days';
 import { WeekHeader } from '../components/week/WeekHeader';
+import ChatAssistant from '../components/ChatAssistant';
 
 const STATUS_FLOW = ['planned', 'shopped', 'completed'];
 
@@ -113,7 +115,8 @@ export function WeeklyPlanView() {
   };
   
   const [useAI, setUseAI] = useState(false);
-  
+  const [aiProvider, setAiProvider] = useState('openai'); // 'openai' or 'gemini'
+
   const handleGenerate = async () => {
     if (preferences && typeof preferences.meal_plan_day === 'number') {
       const todayIndex = new Date().getDay();
@@ -132,15 +135,29 @@ export function WeeklyPlanView() {
     }
     setGenerating(true);
     try {
-      const plan = await generateWeeklyMealPlan({
-        budget: 100,
-        servings: 4,
-        weekStartDate,
-        pantryItems,
-        usePantryFirst: pantryItems.length > 0,
-        useAI // Pass toggle state
-      });
-      
+      let plan;
+
+      if (useAI && aiProvider === 'gemini') {
+        // Use Gemini two-step pipeline
+        plan = await generateGeminiWeeklyPlan({
+          budget: 100,
+          peopleCount: 2,
+          weekStartDate,
+          pantryItems,
+          salesContext: []
+        });
+      } else {
+        // Use standard generator or OpenAI
+        plan = await generateWeeklyMealPlan({
+          budget: 100,
+          servings: 4,
+          weekStartDate,
+          pantryItems,
+          usePantryFirst: pantryItems.length > 0,
+          useAI: useAI && aiProvider === 'openai' // Only use OpenAI if selected
+        });
+      }
+
       setMealPlan(plan);
     } catch (error) {
       console.error('Error generating meal plan:', error);
@@ -151,11 +168,18 @@ export function WeeklyPlanView() {
   };
   
   if (loading || generating || statusUpdatingId) {
-    const message = generating
-      ? (useAI ? 'Thinking like a chef (AI)...' : 'Generating your meal plan...')
-      : statusUpdatingId
-        ? 'Updating status...'
-        : 'Loading...';
+    let message = 'Loading...';
+    if (generating) {
+      if (useAI && aiProvider === 'gemini') {
+        message = '🔍 Gemini AI: Searching for deals & planning... (Two-step pipeline)';
+      } else if (useAI) {
+        message = '🤖 OpenAI: Thinking like a chef...';
+      } else {
+        message = 'Generating your meal plan...';
+      }
+    } else if (statusUpdatingId) {
+      message = 'Updating status...';
+    }
     return <LoadingSpinner message={message} />;
   }
   
@@ -218,17 +242,57 @@ export function WeeklyPlanView() {
               Generate your weekly meal plan to get started
             </p>
             
-            <div className="mb-6 flex items-center justify-center gap-2">
-              <input
-                type="checkbox"
-                id="useAI"
-                checked={useAI}
-                onChange={(e) => setUseAI(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <label htmlFor="useAI" className="text-sm text-text-body">
-                Use Advanced AI (Better variety & pairings)
-              </label>
+            <div className="mb-6 space-y-4">
+              <div className="flex items-center justify-center gap-2">
+                <input
+                  type="checkbox"
+                  id="useAI"
+                  checked={useAI}
+                  onChange={(e) => setUseAI(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <label htmlFor="useAI" className="text-sm font-medium text-text-body">
+                  Use Advanced AI
+                </label>
+              </div>
+
+              {useAI && (
+                <div className="mx-auto max-w-xs space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-xs font-semibold text-gray-700 mb-2">AI Provider:</p>
+
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="aiProvider"
+                      value="openai"
+                      checked={aiProvider === 'openai'}
+                      onChange={(e) => setAiProvider(e.target.value)}
+                      className="mt-0.5 h-4 w-4 text-primary focus:ring-primary"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-text-body">OpenAI GPT-4o</div>
+                      <div className="text-xs text-gray-600">Better variety & pairings</div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="aiProvider"
+                      value="gemini"
+                      checked={aiProvider === 'gemini'}
+                      onChange={(e) => setAiProvider(e.target.value)}
+                      className="mt-0.5 h-4 w-4 text-primary focus:ring-primary"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-text-body">Gemini 2.5 Flash ⚡</div>
+                      <div className="text-xs text-gray-600">
+                        Two-step pipeline: Real-time search → Frugal planning
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              )}
             </div>
 
             <Button onClick={handleGenerate} size="lg">
@@ -237,6 +301,9 @@ export function WeeklyPlanView() {
           </div>
         </div>
       )}
+
+      {/* Floating Chat Assistant - Always available */}
+      <ChatAssistant currentMealPlan={mealPlan} />
     </div>
   );
 }

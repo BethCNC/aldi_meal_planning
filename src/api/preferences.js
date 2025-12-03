@@ -7,14 +7,19 @@ const missingTable = (error) => error && (error.code === '42P01' || error.code =
 async function getCurrentUserId() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error('User must be authenticated to access preferences');
+    return null;
   }
   return user.id;
 }
 
 export async function fetchPreferences() {
   const userId = await getCurrentUserId();
-  
+
+  // If no user is authenticated, return null instead of throwing
+  if (!userId) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
@@ -32,7 +37,12 @@ export async function fetchPreferences() {
 
 export async function savePreferences(preferences) {
   const userId = await getCurrentUserId();
-  
+
+  // Require authentication for saving preferences
+  if (!userId) {
+    throw new Error('User must be authenticated to save preferences');
+  }
+
   const payload = {
     user_id: userId,
     ...preferences,

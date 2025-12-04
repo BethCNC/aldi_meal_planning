@@ -375,3 +375,68 @@ export async function generateWeeklyMealPlan(options) {
     }
   };
 }
+
+/**
+ * Replaces a recipe in an existing meal plan with a new one.
+ * @param {string} mealPlanId - The ID of the meal plan entry to update
+ * @returns {Promise<Object>} - The new recipe object
+ */
+export async function replaceMealPlanRecipe(mealPlanId) {
+  // 1. Get current meal plan entry details
+  const { data: currentPlan, error: fetchError } = await supabase
+    .from('meal_plans')
+    .select('week_start_date, user_id, recipe_id')
+    .eq('id', mealPlanId)
+    .single();
+
+  if (fetchError || !currentPlan) {
+    throw new Error('Could not find meal plan entry');
+  }
+
+  // 2. Get all other recipes used in this week to avoid duplicates
+  const { data: weekPlans } = await supabase
+    .from('meal_plans')
+    .select('recipe_id')
+    .eq('week_start_date', currentPlan.week_start_date)
+    .eq('user_id', currentPlan.user_id)
+    .neq('id', mealPlanId); // Exclude current
+
+  const usedRecipeIds = new Set(weekPlans?.map(p => p.recipe_id).filter(Boolean) || []);
+  if (currentPlan.recipe_id) usedRecipeIds.add(currentPlan.recipe_id);
+
+  // 3. Fetch potential replacement recipes
+  // Limit to recipes with cost <= $15 (arbitrary budget guard) and not "Side", "Dessert", etc.
+  const { data: candidates, error: candidateError } = await supabase
+    .from('recipes')
+    .select('*')
+    .lte('total_cost', 15)
+    .not('category', 'in', '("Side","Dessert","Beverage","Breakfast","Snack")')
+    .not('total_cost', 'is', null);
+
+  if (candidateError || !candidates) {
+    throw new Error('Failed to fetch replacement candidates');
+  }
+
+  // 4. Filter out used recipes
+  const validCandidates = candidates.filter(r => !usedRecipeIds.has(r.id));
+
+  if (validCandidates.length === 0) {
+    throw new Error('No other suitable recipes found to swap.');
+  }
+
+  // 5. Pick a random winner
+  const randomIndex = Math.floor(Math.random() * validCandidates.length);
+  const newRecipe = validCandidates[randomIndex];
+
+  // 6. Update Meal Plan
+  const { error: updateError } = await supabase
+    .from('meal_plans')
+    .update({ recipe_id: newRecipe.id })
+    .eq('id', mealPlanId);
+
+  if (updateError) {
+    throw new Error('Failed to update meal plan with new recipe');
+  }
+
+  return newRecipe;
+}

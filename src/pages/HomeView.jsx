@@ -10,13 +10,13 @@ import { Button } from '../components/ui/Button';
 import { formatCurrency } from '../utils/numberFormat';
 
 const DAY_COLOR_CLASSES = {
-  Sunday: 'bg-day-sunday',
-  Monday: 'bg-day-monday',
-  Tuesday: 'bg-day-tuesday',
-  Wednesday: 'bg-day-wednesday',
-  Thursday: 'bg-day-thursday',
-  Friday: 'bg-day-friday',
-  Saturday: 'bg-day-saturday',
+  Sunday: 'bg-surface-day-Sunday',
+  Monday: 'bg-surface-day-Monday',
+  Tuesday: 'bg-surface-day-Tuesday',
+  Wednesday: 'bg-surface-day-Wednesday',
+  Thursday: 'bg-surface-day-Thursday',
+  Friday: 'bg-surface-day-Friday',
+  Saturday: 'bg-surface-day-Saturday',
 };
 
 const DAY_ABBREVIATIONS = {
@@ -44,23 +44,23 @@ function DailyRecipeCard({ day, recipe, isToday, onClick, isFullWidth = false })
       onClick={() => isActionable && onClick?.()}
       disabled={!isActionable}
       className={`
-        flex flex-col overflow-hidden rounded-xl border transition-all
+        flex flex-col overflow-hidden rounded border-2 h-[112px] transition-all
         ${isActionable 
-          ? 'border-border-subtle bg-surface-card hover:border-border-focus hover:shadow-md cursor-pointer' 
-          : 'border-border-disabled bg-surface-disabled cursor-not-allowed opacity-60'
+          ? 'border-border-body bg-surface-page hover:bg-surface-card cursor-pointer' 
+          : 'border-border-body bg-surface-page cursor-not-allowed opacity-60'
         }
         ${isToday ? 'ring-2 ring-offset-2 ring-surface-focus' : ''}
         ${isFullWidth ? 'w-full' : ''}
       `}
       aria-label={isActionable ? `View ${recipeName} for ${dayName}` : `No meal planned for ${dayName}`}
     >
-      <div className={`h-8 flex items-center justify-center ${dayColorClass}`}>
-        <span className="text-xs font-semibold text-text-inverse uppercase">
-          {dayAbbr}
+      <div className={`w-full h-10 flex items-center justify-center border-b-2 border-border-body ${dayColorClass}`}>
+        <span className="text-2xl font-bold text-text-display leading-none">
+          {dayAbbr.charAt(0)}
         </span>
       </div>
-      <div className="flex-1 p-2 min-h-[80px] flex items-center">
-        <p className={`text-xs font-medium leading-tight line-clamp-3 text-center w-full ${
+      <div className="flex-1 px-1 flex items-center justify-center w-full">
+        <p className={`text-lg font-medium leading-tight line-clamp-2 text-center w-full ${
           isActionable ? 'text-text-body' : 'text-text-disabled'
         }`}>
           {recipeName}
@@ -151,7 +151,7 @@ export function HomeView() {
   const totalCost = mealPlan?.totalCost || 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col space-y-6">
       <WeekHeader
         label={`Week of ${formatWeekRange(weekStartDate)}`}
         onPrev={() => changeWeek(-1)}
@@ -160,7 +160,7 @@ export function HomeView() {
 
       {/* Total Cost Display */}
       {mealPlan && (
-        <div className="px-6 py-6 bg-surface-page">
+        <div className="px-4 py-6 bg-surface-page">
           <div className="text-center">
             <p className="text-5xl font-bold text-text-body mb-3">
               {formatCurrency(totalCost)}
@@ -173,10 +173,10 @@ export function HomeView() {
       )}
 
       {/* Daily Recipe Grid */}
-      <div className="px-6 py-4">
+      <div className="px-4">
         {mealPlan && gridDays.length > 0 ? (
           <>
-            <div className="grid grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-3 gap-3 mb-6">
               {gridDays.slice(0, 6).map((day) => {
                 const dayDate = new Date(weekStartDate);
                 dayDate.setDate(dayDate.getDate() + (day.day_of_week || 0));
@@ -238,7 +238,7 @@ export function HomeView() {
 
       {/* Quick Input Section */}
       {mealPlan && (
-        <div className="px-6 py-4 space-y-4 pb-24">
+        <div className="px-4 space-y-6 pb-24">
           <Input
             label="Weekly Budget"
             type="number"

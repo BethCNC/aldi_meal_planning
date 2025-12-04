@@ -46,7 +46,7 @@ export function RecipeDiscoveryView() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[430px] flex flex-col min-h-screen pb-20">
+    <div className="mx-auto w-full max-w-[430px] flex flex-col min-h-screen space-y-6 pb-24">
       <header className="sticky top-0 z-10 bg-surface-page/95 backdrop-blur border-b border-border-subtle px-4 py-3 flex items-center gap-3">
         <Button variant="icon" onClick={() => navigate(-1)}>
           ←
@@ -54,8 +54,8 @@ export function RecipeDiscoveryView() {
         <h1 className="text-lg font-semibold text-text-body">Discover Recipes</h1>
       </header>
 
-      <div className="p-4 flex-1">
-        <div className="mb-6">
+      <div className="px-4 flex-1 space-y-6">
+        <div>
           <p className="text-text-subtle mb-4 text-sm">
             Find new budget-friendly meals using Aldi ingredients.
           </p>
@@ -98,7 +98,7 @@ export function RecipeDiscoveryView() {
                       </div>
                     </div>
                     <Button
-                      size="sm"
+                      size="small"
                       variant={isSaved ? "secondary" : "primary"}
                       disabled={isSaved || saving === index}
                       onClick={() => handleSave(recipe, index)}

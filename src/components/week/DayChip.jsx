@@ -1,11 +1,11 @@
 const DAY_CONFIG = {
-  Sunday: {abbr: 'Su', className: 'bg-day-sunday'},
-  Monday: {abbr: 'M', className: 'bg-day-monday'},
-  Tuesday: {abbr: 'T', className: 'bg-day-tuesday'},
-  Wednesday: {abbr: 'W', className: 'bg-day-wednesday'},
-  Thursday: {abbr: 'Th', className: 'bg-day-thursday'},
-  Friday: {abbr: 'F', className: 'bg-day-friday'},
-  Saturday: {abbr: 'S', className: 'bg-day-saturday'},
+  Sunday: {abbr: 'Su', className: 'bg-surface-day-Sunday'},
+  Monday: {abbr: 'M', className: 'bg-surface-day-Monday'},
+  Tuesday: {abbr: 'T', className: 'bg-surface-day-Tuesday'},
+  Wednesday: {abbr: 'W', className: 'bg-surface-day-Wednesday'},
+  Thursday: {abbr: 'Th', className: 'bg-surface-day-Thursday'},
+  Friday: {abbr: 'F', className: 'bg-surface-day-Friday'},
+  Saturday: {abbr: 'S', className: 'bg-surface-day-Saturday'},
 };
 
 function getDayConfig(dayName) {
@@ -21,16 +21,13 @@ export function DayChip({dayName, isToday = false, className = ''}) {
 
   return (
     <div
-      className={`relative flex w-24 shrink-0 flex-col items-center justify-center border-r border-border-subtle py-4 ${
+      className={`relative flex w-full shrink-0 flex-col items-center justify-center border-b-2 border-border-body py-2 ${
         colorClass || ''
       } ${className}`}
       data-day-chip={dayName}
       aria-label={isToday ? `${dayName} (today)` : dayName}
     >
-      {isToday && (
-        <span className="absolute inset-y-2 left-2 right-auto w-1 rounded-full bg-surface-inverse" aria-hidden="true" />
-      )}
-      <span className="text-3xl font-semibold text-text-body drop-shadow-sm" aria-hidden="true">{abbr}</span>
+      <span className="text-2xl font-bold text-text-display leading-tight">{abbr}</span>
       <span className="sr-only">{dayName}</span>
     </div>
   );

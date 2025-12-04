@@ -1,13 +1,13 @@
 import { WEEK_DAYS } from '../../utils/days';
 
 const DAY_COLORS = {
-  Sunday: 'bg-day-sunday',
-  Monday: 'bg-day-monday',
-  Tuesday: 'bg-day-tuesday',
-  Wednesday: 'bg-day-wednesday',
-  Thursday: 'bg-day-thursday',
-  Friday: 'bg-day-friday',
-  Saturday: 'bg-day-saturday',
+  Sunday: 'bg-surface-day-Sunday',
+  Monday: 'bg-surface-day-Monday',
+  Tuesday: 'bg-surface-day-Tuesday',
+  Wednesday: 'bg-surface-day-Wednesday',
+  Thursday: 'bg-surface-day-Thursday',
+  Friday: 'bg-surface-day-Friday',
+  Saturday: 'bg-surface-day-Saturday',
 };
 
 function getInitials(day) {

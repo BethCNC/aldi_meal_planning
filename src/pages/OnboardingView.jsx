@@ -88,7 +88,7 @@ function PantryListItem({ item, onQuantityChange, onUnitChange, onRemove }) {
           </option>
         ))}
       </select>
-      <Button variant="ghost" size="sm" onClick={() => onRemove(item.tempId)}>
+      <Button variant="ghost" size="small" onClick={() => onRemove(item.tempId)}>
         Remove
       </Button>
     </li>
@@ -223,8 +223,8 @@ export function OnboardingView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-6 px-4 pb-24 pt-6">
-      <div className="overflow-hidden rounded-3xl border border-border-subtle bg-gradient-to-br from-surface-primary/85 via-surface-primary/75 to-surface-inverse/60 text-text-inverse shadow-lg">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col space-y-6 px-4 pb-24 pt-6">
+      <div className="overflow-hidden rounded-3xl border border-border-subtle bg-surface-inverse text-text-inverse shadow-lg">
         <div className="relative flex flex-col gap-4 px-6 py-8">
           <div className="flex items-center gap-3">
             {currentStepConfig?.icon && (
@@ -257,7 +257,7 @@ export function OnboardingView() {
       )}
 
       {step === 0 && (
-        <section className="space-y-5">
+        <section className="space-y-6">
           <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
             <h2 className="text-lg font-semibold text-text-body">Pick your meal plan day</h2>
             <p className="text-sm text-icon-subtle">We'll generate new recipes on this day each week.</p>
@@ -280,7 +280,7 @@ export function OnboardingView() {
       )}
 
       {step === 1 && (
-        <section className="space-y-5">
+        <section className="space-y-6">
           <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
             <h2 className="text-lg font-semibold text-text-body">What’s already in your kitchen?</h2>
             <p className="text-sm text-icon-subtle">
@@ -342,7 +342,7 @@ export function OnboardingView() {
       )}
 
       {step === 2 && (
-        <section className="space-y-5">
+        <section className="space-y-6">
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-text-body">All set!</h2>
             <p className="text-sm text-icon-subtle">

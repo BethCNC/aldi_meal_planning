@@ -1,6 +1,6 @@
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import dotenv from 'dotenv';
@@ -24,16 +24,14 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// OpenAI client (server-side only)
-const openaiApiKey = process.env.OPENAI_API_KEY;
-if (!openaiApiKey) {
-  console.error('Missing OPENAI_API_KEY environment variable');
+// Gemini client (server-side only)
+const geminiApiKey = process.env.GEMINI_API_KEY;
+if (!geminiApiKey) {
+  console.error('Missing GEMINI_API_KEY environment variable');
   process.exit(1);
 }
 
-const openai = new OpenAI({
-  apiKey: openaiApiKey
-});
+const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 // Middleware
 app.use(express.json());
@@ -140,15 +138,21 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
       `;
 
       try {
-        const discoveryCompletion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [{ role: 'system', content: discoverPrompt }],
-          response_format: { type: 'json_object' },
-          temperature: 0.8 // Higher creativity for discovery
-        });
-
-        const discoveryResult = JSON.parse(discoveryCompletion.choices[0].message.content);
-        newRecipes = discoveryResult.recipes || [];
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+        const discoveryResult = await model.generateContent(discoverPrompt);
+        const response = await discoveryResult.response;
+        const text = response.text();
+        
+        // Extract JSON from response (handle markdown code blocks if present)
+        let jsonText = text.trim();
+        if (jsonText.startsWith('```json')) {
+          jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        } else if (jsonText.startsWith('```')) {
+          jsonText = jsonText.replace(/```\n?/g, '');
+        }
+        
+        const discoveryData = JSON.parse(jsonText);
+        newRecipes = discoveryData.recipes || [];
 
         // Save new recipes to database
         const savedNewRecipes = [];
@@ -237,14 +241,20 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
       }
     `;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'system', content: systemPrompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.7
-    });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const planResult = await model.generateContent(systemPrompt);
+    const planResponse = await planResult.response;
+    const planText = planResponse.text();
+    
+    // Extract JSON from response (handle markdown code blocks if present)
+    let jsonText = planText.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '');
+    }
 
-    const result = JSON.parse(completion.choices[0].message.content);
+    const result = JSON.parse(jsonText);
     
     // Log variety stats
     const selectedRecipeIds = (result.plan || []).map(p => p.recipeId);
@@ -315,14 +325,20 @@ app.post('/api/ai/discover', verifyAuth, async (req, res) => {
       }
     `;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'system', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.7
-    });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const discoverResult = await model.generateContent(prompt);
+    const discoverResponse = await discoverResult.response;
+    const discoverText = discoverResponse.text();
+    
+    // Extract JSON from response (handle markdown code blocks if present)
+    let jsonText = discoverText.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '');
+    }
 
-    const result = JSON.parse(completion.choices[0].message.content);
+    const result = JSON.parse(jsonText);
     
     res.json({
       success: true,

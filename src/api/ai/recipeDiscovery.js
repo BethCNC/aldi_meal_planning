@@ -58,13 +58,10 @@ export async function parseSalesText(rawText) {
   `;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'system', content: prompt }],
-      response_format: { type: 'json_object' }
-    });
-
-    return JSON.parse(completion.choices[0].message.content).sales || [];
+    // Note: This function should ideally call the backend API instead of using client-side Gemini
+    // For now, we'll return empty array since this is a server-side operation
+    console.warn('parseSalesText should be called via backend API. Returning empty array.');
+    return [];
   } catch (error) {
     console.error('Sales Parsing Failed:', error);
     return [];

@@ -147,7 +147,7 @@ export function RecipeDetailView() {
   ].filter(Boolean);
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 px-4 pb-24">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col space-y-6 px-4 pb-24">
       <div className="sticky top-0 z-30 bg-surface-page/90 pt-4 backdrop-blur">
         <Button
           variant="ghost"

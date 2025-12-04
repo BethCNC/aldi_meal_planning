@@ -67,7 +67,7 @@ export function RecipeHeader({recipe, showMeta = true, className = ''}) {
         {!isImageLoaded && (
           <div className="absolute inset-0 animate-pulse bg-surface-primary/40" aria-hidden />
         )}
-        <div className="absolute inset-0 bg-gradient-to-br from-surface-primary/90 via-surface-primary/70 to-surface-inverse/40" />
+        <div className="absolute inset-0 bg-surface-inverse/80" />
         <img
           src={resolvedImage}
           alt={name ? `${name} plated meal` : 'Recipe preview'}

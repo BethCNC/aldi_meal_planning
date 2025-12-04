@@ -66,8 +66,8 @@ export function SettingsView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col gap-6 px-4 pb-24 pt-6">
-      <div className="overflow-hidden rounded-3xl border border-border-subtle bg-gradient-to-br from-surface-primary/80 via-surface-primary/60 to-surface-inverse/50 text-text-inverse shadow-lg">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col space-y-6 px-4 pb-24 pt-6">
+      <div className="overflow-hidden rounded-3xl border border-border-subtle bg-surface-inverse text-text-inverse shadow-lg">
         <div className="flex items-center gap-3 px-6 py-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-page/20">
             <img src={HERO_ICON} alt="" className="h-8 w-8 object-contain" />
@@ -93,7 +93,7 @@ export function SettingsView() {
         </div>
       )}
 
-      <section className="space-y-5">
+      <section className="space-y-6">
         <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
           <h2 className="text-lg font-semibold text-text-body">Meal plan day</h2>
           <p className="text-sm text-icon-subtle">

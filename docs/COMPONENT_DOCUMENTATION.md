@@ -27,7 +27,7 @@
 
 **Props:**
 - `variant` (string): `'primary' | 'secondary' | 'success' | 'ghost'` (default: `'primary'`)
-- `size` (string): `'sm' | 'md' | 'lg'` (default: `'md'`)
+- `size` (string): `'small' | 'medium' | 'large'` (default: `'medium'`)
 - `className` (string): Additional CSS classes
 - Standard button props (`onClick`, `disabled`, `type`, etc.)
 
@@ -38,7 +38,7 @@
 
 **Usage:**
 ```jsx
-<Button variant="primary" size="md" onClick={handleClick}>
+<Button variant="primary" size="medium" onClick={handleClick}>
   Generate Meal Plan
 </Button>
 ```
@@ -391,6 +391,7 @@
 - `day` (object): Day data with `recipe`, `status`, `day_of_week`, etc.
 - `isToday` (boolean): Highlight today's card
 - `onUpdateStatus` (function): Status advancement handler
+- `onSwap` (function): Swap recipe handler `(day) => void`
 
 **Design Tokens:**
 - Background: `bg-surface-card` (today), `bg-surface-page` (other days)

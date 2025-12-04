@@ -65,8 +65,8 @@ export function PantryView() {
   }
   
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <header className="mb-6">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col space-y-6 px-4 pb-24">
+      <header>
         <h1 className="text-2xl font-bold text-text-body">Your Pantry</h1>
         <p className="text-stone-600 mt-2">
           Manage ingredients you have on hand

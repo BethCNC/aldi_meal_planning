@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getMonday, formatWeekRange, isToday } from '../utils/dateHelpers';
-import { generateWeeklyMealPlan } from '../api/mealPlanGenerator';
+import { generateWeeklyMealPlan, replaceMealPlanRecipe } from '../api/mealPlanGenerator';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { BudgetProgress } from '../components/BudgetProgress';
 import { DayCard } from '../components/DayCard';
@@ -26,6 +26,7 @@ export function WeeklyPlanView() {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
+  const [swappingId, setSwappingId] = useState(null);
   const [showMealPrompt, setShowMealPrompt] = useState(false);
   
   const changeWeek = (direction) => {
@@ -107,6 +108,24 @@ export function WeeklyPlanView() {
     }
   };
 
+  const handleSwap = async (day) => {
+    if (!day?.id || !day?.recipe?.id) return;
+    
+    const confirmed = window.confirm(`Swap "${day.recipe.name}" with a different recipe?`);
+    if (!confirmed) return;
+
+    setSwappingId(day.id);
+    try {
+      await replaceMealPlanRecipe(day.id);
+      await loadMealPlan();
+    } catch (error) {
+      console.error('Error swapping recipe:', error);
+      alert(`Failed to swap recipe: ${error.message}`);
+    } finally {
+      setSwappingId(null);
+    }
+  };
+
   const acknowledgeMealPrompt = (action) => {
     markPromptSeen('meal_plan', mealPlanWeekKey);
     setShowMealPrompt(false);
@@ -153,12 +172,14 @@ export function WeeklyPlanView() {
     }
   };
   
-  if (loading || generating || statusUpdatingId) {
+  if (loading || generating || statusUpdatingId || swappingId) {
     const message = generating
       ? (useAI ? 'Thinking like a chef (AI)...' : 'Generating your meal plan...')
       : statusUpdatingId
         ? 'Updating status...'
-        : 'Loading...';
+        : swappingId
+          ? 'Swapping meal...'
+          : 'Loading...';
     return <LoadingSpinner message={message} />;
   }
   
@@ -166,7 +187,7 @@ export function WeeklyPlanView() {
   const currentDayOfWeek = today.getDay();
   
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col space-y-6 pb-24">
       <WeekHeader
         label={`Week of ${formatWeekRange(weekStartDate)}`}
         onPrev={() => changeWeek(-1)}
@@ -176,7 +197,7 @@ export function WeeklyPlanView() {
       {mealPlan ? (
         <>
           {/* Export PDF Button */}
-          <div className="px-4 pt-4">
+          <div className="px-4">
             <Button
               variant="secondary"
               iconLeading={<IconDownload className="h-4 w-4" />}
@@ -195,7 +216,7 @@ export function WeeklyPlanView() {
           </div>
 
           {/* Schedule Info Banner */}
-          <div className="px-4 pt-4">
+          <div className="px-4">
             <div className="rounded-lg border border-border-subtle bg-surface-card p-3">
               <p className="text-xs text-icon-subtle">
                 <strong className="text-text-body">Weekly Schedule:</strong> Cook Mon/Tue/Thu/Sat • Leftovers Wed/Fri/Sun
@@ -205,7 +226,7 @@ export function WeeklyPlanView() {
 
           {/* Prompt banner (if applicable) */}
           {showMealPrompt && preferences && (
-            <div className="px-4 pt-4">
+            <div className="px-4">
               <div className="rounded-xl border border-border-focus bg-surface-card p-4 shadow-sm">
                 <h3 className="text-lg font-semibold text-text-body mb-1">
                   It&apos;s {getDayName(preferences.meal_plan_day)}—pantry check time!
@@ -224,7 +245,7 @@ export function WeeklyPlanView() {
           )}
 
           {/* Daily Recipe List - matches Figma menu screen structure */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto px-4 space-y-4">
             {mealPlan.days.map((day) => {
               const dayDate = new Date(weekStartDate);
               dayDate.setDate(dayDate.getDate() + (day.day_of_week || 0));
@@ -236,6 +257,7 @@ export function WeeklyPlanView() {
                   day={day}
                   isToday={isTodayDay}
                   onUpdateStatus={() => advanceStatus(day)}
+                  onSwap={handleSwap}
                 />
               );
             })}

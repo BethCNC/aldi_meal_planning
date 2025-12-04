@@ -1,6 +1,6 @@
 import { findRecipesWithPantry } from '../supabase/pantryClient.js';
 import { getRecipes } from '../supabase/recipeClient.js';
-import { suggestRecipesFromPantry } from '../ai/openaiClient.js';
+import { suggestRecipesFromPantry } from '../ai/geminiClient.js';
 
 export async function findBestRecipes(pantryItems, options = {}) {
   const { budget = 100, servings = 4, minMatches = 3 } = options;
@@ -17,8 +17,8 @@ export async function findBestRecipes(pantryItems, options = {}) {
     return { matches: strongMatches, source: 'rule-based' };
   }
   
-  // Step 3: OpenAI fallback
-  console.log(`Only ${strongMatches.length} matches found, using OpenAI fallback...`);
+  // Step 3: Gemini fallback
+  console.log(`Only ${strongMatches.length} matches found, using Gemini fallback...`);
   
   const allRecipes = await getRecipes({ maxCostPerServing: budget / 7 / servings });
   const aiSuggestions = await suggestRecipesFromPantry(pantryItems, allRecipes, {

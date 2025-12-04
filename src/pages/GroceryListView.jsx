@@ -154,7 +154,7 @@ export function GroceryListView() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[430px] flex-col">
+    <div className="mx-auto flex w-full max-w-[430px] flex-col space-y-6 pb-24">
       <WeekHeader
         label={`Week of ${formatWeekRange(weekStartDate)}`}
         onPrev={() => changeWeek(-1)}
@@ -164,7 +164,7 @@ export function GroceryListView() {
       {groceryList ? (
         <>
           {/* Total Cost Display - matches Figma */}
-          <div className="px-6 py-6 bg-surface-page">
+          <div className="px-4 py-6 bg-surface-page">
             <div className="text-center">
               <p className="text-5xl font-bold text-text-body mb-3">
                 {groceryList.totalCost != null ? `$${groceryList.totalCost.toFixed(2)}` : '$0.00'}
@@ -176,7 +176,7 @@ export function GroceryListView() {
           </div>
 
           {/* Grocery Lists by Category - matches Figma structure */}
-          <div className="flex-1 overflow-y-auto px-4 pb-24">
+          <div className="flex-1 overflow-y-auto px-4">
             {showGroceryPrompt && preferences && (
               <div className="mb-4 rounded-xl border border-border-focus bg-surface-card p-4 shadow-sm">
                 <h3 className="text-lg font-semibold text-text-body mb-1">
@@ -228,7 +228,7 @@ export function GroceryListView() {
             <p className="text-icon-subtle mb-8">
               Generate a grocery list for this week
             </p>
-            <Button onClick={handleGenerate} size="lg">
+            <Button onClick={handleGenerate} size="large">
               Generate Grocery List
             </Button>
           </div>

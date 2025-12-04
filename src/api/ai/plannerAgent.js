@@ -2,7 +2,7 @@ import { supabase } from '../../lib/supabase';
 
 /**
  * Advanced AI Meal Planner
- * Calls backend API to securely use GPT-4o for meal planning.
+ * Calls backend API to securely use Gemini for meal planning.
  */
 export async function generateAIWeeklyPlan(options) {
   const {

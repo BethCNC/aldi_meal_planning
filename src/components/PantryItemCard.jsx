@@ -12,7 +12,7 @@ export function PantryItemCard({ item, onToggleMustUse, onRemove }) {
         checked={item.must_use || item.mustUse || false}
         onChange={(checked) => onToggleMustUse?.(item.id, checked)}
       />
-      <Button variant="secondary" size="sm" onClick={() => onRemove?.(item.id)}>
+      <Button variant="secondary" size="small" onClick={() => onRemove?.(item.id)}>
         Remove
       </Button>
     </div>

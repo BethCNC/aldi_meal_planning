@@ -6,18 +6,30 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY yarn.lock* ./
 
-# Install dependencies
+# Install all dependencies (needed for build)
 RUN npm install
 
+# Copy configuration files needed for build
+COPY vite.config.js ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+COPY tokens.json ./
+
 # Copy source code
-COPY . .
+COPY src ./src
+COPY public ./public
+COPY index.html ./
 
 # Build the frontend
 RUN npm run build
 
 # Stage 2: Production server
 FROM node:20-alpine
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
@@ -39,6 +51,10 @@ EXPOSE 3000
 
 # Set environment to production
 ENV NODE_ENV=production
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
 # Start the server
 CMD ["node", "server/index.js"]

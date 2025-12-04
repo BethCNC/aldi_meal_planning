@@ -9,7 +9,7 @@ This guide walks you through deploying the **aldi-meal-planner** React + Express
   - Database set up (run migration `docs/migrations/001_add_user_isolation.sql`)
   - Email/Password auth enabled
   - API keys ready
-- An OpenAI API key
+- A Google Gemini API key
 - Git repository (GitHub, GitLab, etc.) with your code pushed
 
 ## Step 1: Run Database Migration (Do This First!)
@@ -72,8 +72,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-public-key-here
 SUPABASE_URL=https://your-project-id.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 
-# OpenAI Configuration (Backend Only - server/index.js)
-OPENAI_API_KEY=sk-your-openai-api-key-here
+# Gemini Configuration (Backend Only - server/index.js)
+GEMINI_API_KEY=your-gemini-api-key-here
 
 # Server Configuration
 PORT=3000
@@ -89,14 +89,15 @@ NODE_ENV=production
 4. **anon public** key → Copy to `VITE_SUPABASE_ANON_KEY`
 5. **service_role** key → Copy to `SUPABASE_SERVICE_ROLE_KEY` ⚠️ **Keep this secret!**
 
-**OpenAI Key:**
-1. Go to https://platform.openai.com/api-keys
-2. Click **Create new secret key**
-3. Copy the key (starts with `sk-`) → Paste to `OPENAI_API_KEY`
+**Gemini Key:**
+1. Go to https://aistudio.google.com/app/apikey
+2. Click **Create API Key** (or use existing key)
+3. Copy the key → Paste to `GEMINI_API_KEY`
 
 **Important Notes:**
 - The server (`server/index.js`) will use `SUPABASE_SERVICE_ROLE_KEY` if available, otherwise falls back to `VITE_SUPABASE_ANON_KEY`
 - Frontend (`src/lib/supabase.js`) uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- The server uses `GEMINI_API_KEY` for AI features (Gemini 1.5 Flash model)
 - All variables must be set in Coolify (don't rely on `.env` files in production)
 
 ## Step 6: Configure Build Settings
@@ -139,7 +140,7 @@ The Dockerfile will:
    - You should see: "Building frontend..." then "Starting server..."
 3. Check for errors in the logs:
    - ❌ "Missing Supabase environment variables" → Check Step 5
-   - ❌ "Missing OPENAI_API_KEY" → Check Step 5
+   - ❌ "Missing GEMINI_API_KEY" → Check Step 5
    - ❌ Build fails → Check Dockerfile syntax
    - ✅ "Server running on port 3000" → Success!
 
@@ -214,10 +215,10 @@ The Dockerfile will:
 - Check that Coolify is routing traffic to port 3000
 - Look for errors in Coolify application logs
 
-**Error: "Missing OPENAI_API_KEY environment variable"**
+**Error: "Missing GEMINI_API_KEY environment variable"**
 - The server (`server/index.js` line 28) requires this
-- Add `OPENAI_API_KEY` to Coolify environment variables
-- Verify the key starts with `sk-` and is valid
+- Add `GEMINI_API_KEY` to Coolify environment variables
+- Verify the key is valid (get from https://aistudio.google.com/app/apikey)
 
 **Error: "Cannot GET /" or 404 errors**
 - The server should serve `dist/index.html` for all routes
@@ -244,9 +245,9 @@ The Dockerfile will:
 ### AI Features Not Working
 
 **Error: "Failed to generate meal plan" or "API error: 401"**
-- Check that `OPENAI_API_KEY` is set correctly in Coolify
-- Verify the key is valid (test at https://platform.openai.com)
-- Check backend logs in Coolify for OpenAI API errors
+- Check that `GEMINI_API_KEY` is set correctly in Coolify
+- Verify the key is valid (test at https://aistudio.google.com/app/apikey)
+- Check backend logs in Coolify for Gemini API errors
 
 **Error: "User must be authenticated to use AI features"**
 - The backend (`server/index.js`) verifies JWT tokens
@@ -254,8 +255,8 @@ The Dockerfile will:
 - Check browser Network tab - API calls should include `Authorization: Bearer ...` header
 
 **Error: "Failed to discover recipes"**
-- Check backend logs for OpenAI API errors
-- Verify `OPENAI_API_KEY` has sufficient credits/quota
+- Check backend logs for Gemini API errors
+- Verify `GEMINI_API_KEY` has sufficient quota/access
 - Test the `/api/ai/discover` endpoint directly (check Network tab)
 
 ### Frontend Not Loading
@@ -280,7 +281,7 @@ The Dockerfile will:
   - [ ] `VITE_SUPABASE_ANON_KEY`
   - [ ] `SUPABASE_URL`
   - [ ] `SUPABASE_SERVICE_ROLE_KEY`
-  - [ ] `OPENAI_API_KEY`
+  - [ ] `GEMINI_API_KEY`
   - [ ] `PORT=3000`
   - [ ] `NODE_ENV=production`
 
@@ -332,23 +333,24 @@ aldi_meal_planning/
 │   ├── lib/supabase.js    # Frontend Supabase client (uses VITE_ vars)
 │   ├── api/ai/            # AI API calls (plannerAgent.js, recipeDiscovery.js)
 │   └── pages/             # React pages (AuthView, WeeklyPlanView, etc.)
-├── package.json           # Dependencies (includes express, openai, @supabase/supabase-js)
+├── package.json           # Dependencies (includes express, @google/generative-ai, @supabase/supabase-js)
 └── dist/                  # Built React app (created by `npm run build`)
 ```
 
 **Key Files:**
 - `server/index.js` - Express server, handles `/api/ai/*` endpoints
 - `src/lib/supabase.js` - Frontend Supabase client
-- `src/api/ai/plannerAgent.js` - Calls backend `/api/ai/plan`
-- `src/api/ai/recipeDiscovery.js` - Calls backend `/api/ai/discover`
+- `src/api/ai/plannerAgent.js` - Calls backend `/api/ai/plan` (uses Gemini)
+- `src/api/ai/recipeDiscovery.js` - Calls backend `/api/ai/discover` (uses Gemini)
+- `backend/ai/geminiClient.js` - Gemini client for backend AI operations
 
 ## Security Notes
 
 - ⚠️ **Never commit `.env` or `.env.local` files to Git**
 - ⚠️ **Keep `SUPABASE_SERVICE_ROLE_KEY` secret** - it bypasses RLS
-- ⚠️ **Keep `OPENAI_API_KEY` secret** - it's used server-side only
+- ⚠️ **Keep `GEMINI_API_KEY` secret** - it's used server-side only
 - ✅ Use Coolify's environment variable management (secure, encrypted)
-- ✅ The frontend never sees `OPENAI_API_KEY` (only backend has it)
+- ✅ The frontend never sees `GEMINI_API_KEY` (only backend has it)
 - ✅ RLS policies protect user data (each user only sees their own data)
 - ✅ Regularly update dependencies: `npm audit` and `npm update`
 
@@ -361,7 +363,7 @@ aldi_meal_planning/
 **Backend (Node.js - no prefix needed):**
 - `SUPABASE_URL` - Used by `server/index.js` for JWT verification
 - `SUPABASE_SERVICE_ROLE_KEY` - Used by `server/index.js` (fallback: `VITE_SUPABASE_ANON_KEY`)
-- `OPENAI_API_KEY` - Used by `server/index.js` for AI endpoints
+- `GEMINI_API_KEY` - Used by `server/index.js` for AI endpoints (Gemini 1.5 Flash)
 - `PORT` - Server port (default: 3000)
 - `NODE_ENV` - Set to `production`
 

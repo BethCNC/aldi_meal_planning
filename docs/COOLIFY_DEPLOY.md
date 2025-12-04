@@ -27,13 +27,36 @@ This guide walks you through deploying the **aldi-meal-planner** React + Express
 9. You should see: "Success. No rows returned"
 10. Verify in **Table Editor** that `meal_plans`, `user_pantry`, and `grocery_lists` now have `user_id` columns
 
-## Step 2: Enable Email/Password Authentication
+## Step 2: Enable Authentication Providers
+
+### Enable Email/Password Authentication
 
 1. In Supabase Dashboard, go to **Authentication** → **Providers**
 2. Find **Email** provider
 3. Toggle it **ON**
 4. (Optional) Disable "Confirm email" for faster testing
 5. Click **Save**
+
+### Enable Google OAuth (Optional but Recommended)
+
+1. In Supabase Dashboard, go to **Authentication** → **Providers**
+2. Find **Google** provider
+3. Toggle it **ON**
+4. You'll need to configure Google OAuth credentials:
+   - **Client ID:** From Google Cloud Console
+   - **Client Secret:** From Google Cloud Console
+5. **Important:** Add your production URL to Google Cloud Console:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Navigate to **APIs & Services** → **Credentials**
+   - Edit your OAuth 2.0 Client ID
+   - Add to **Authorized redirect URIs:**
+     - `https://YOUR-SUPABASE-PROJECT.supabase.co/auth/v1/callback`
+     - Replace `YOUR-SUPABASE-PROJECT` with your actual Supabase project ID
+6. In Supabase, go to **Authentication** → **URL Configuration**
+7. Add your production URL to **Redirect URLs:**
+   - `https://your-production-domain.com`
+   - `https://your-production-domain.com/**`
+8. Click **Save**
 
 ## Step 3: Prepare Your Repository
 
@@ -241,6 +264,27 @@ The Dockerfile will:
 - Verify Email/Password provider is enabled in Supabase
 - Check that you're using the correct email/password
 - Try creating a new account to test
+
+**Error: "Failed to sign in with Google" or "redirect_uri_mismatch"**
+- **This is the most common Google OAuth issue in production**
+- Verify Google OAuth is enabled in Supabase (Step 2)
+- Check Google Cloud Console:
+  1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+  2. Navigate to **APIs & Services** → **Credentials**
+  3. Edit your OAuth 2.0 Client ID
+  4. In **Authorized redirect URIs**, add:
+     - `https://YOUR-SUPABASE-PROJECT.supabase.co/auth/v1/callback`
+     - Replace `YOUR-SUPABASE-PROJECT` with your actual Supabase project ID
+  5. **Important:** No trailing slash, exact case, exact path
+- Check Supabase URL Configuration:
+  1. In Supabase Dashboard → **Authentication** → **URL Configuration**
+  2. **Site URL:** Should be your production URL (e.g., `https://your-app.com`)
+  3. **Redirect URLs:** Must include:
+     - `https://your-app.com`
+     - `https://your-app.com/**`
+- Wait 1-2 minutes after making changes for them to propagate
+- Clear browser cache or try incognito mode
+- Check browser console for specific error messages
 
 ### AI Features Not Working
 

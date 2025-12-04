@@ -102,10 +102,19 @@ export function AuthView() {
     setMessage(null);
 
     try {
+      // Get the current origin (works for both dev and production)
+      const redirectTo = `${window.location.origin}/`;
+      
+      // Verify Supabase is configured
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+        throw new Error('Supabase is not configured. Please check your environment variables.');
+      }
+
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -113,14 +122,28 @@ export function AuthView() {
         },
       });
 
-      if (oauthError) throw oauthError;
+      if (oauthError) {
+        console.error('Google OAuth Error:', oauthError);
+        throw oauthError;
+      }
 
       // The redirect will happen automatically, but we can show a message
       if (data) {
         setMessage('Redirecting to Google...');
       }
     } catch (err) {
-      setError(err.message || 'Failed to sign in with Google. Please try again.');
+      console.error('Google sign-in error:', err);
+      const errorMessage = err.message || 'Failed to sign in with Google. Please try again.';
+      
+      // Provide more helpful error messages
+      if (errorMessage.includes('redirect_uri_mismatch')) {
+        setError('Google OAuth configuration error. Please contact support or check Supabase settings.');
+      } else if (errorMessage.includes('Supabase is not configured')) {
+        setError('Application configuration error. Please check environment variables.');
+      } else {
+        setError(errorMessage);
+      }
+      
       setGoogleLoading(false);
     }
   };

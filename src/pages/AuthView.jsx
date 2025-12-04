@@ -111,6 +111,12 @@ export function AuthView() {
         throw new Error('Supabase is not configured. Please check your environment variables.');
       }
 
+      // Debug logging (helpful for production troubleshooting)
+      console.log('🔐 Google OAuth Configuration:');
+      console.log('  - Redirect URL:', redirectTo);
+      console.log('  - Supabase URL:', supabaseUrl);
+      console.log('  - Make sure this redirect URL is in Supabase → Authentication → URL Configuration → Redirect URLs');
+
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

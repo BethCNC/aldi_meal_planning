@@ -52,11 +52,16 @@ This guide walks you through deploying the **aldi-meal-planner** React + Express
    - Add to **Authorized redirect URIs:**
      - `https://YOUR-SUPABASE-PROJECT.supabase.co/auth/v1/callback`
      - Replace `YOUR-SUPABASE-PROJECT` with your actual Supabase project ID
-6. In Supabase, go to **Authentication** → **URL Configuration**
+6. **CRITICAL:** In Supabase, go to **Authentication** → **URL Configuration**
 7. Add your production URL to **Redirect URLs:**
-   - `https://your-production-domain.com`
+   - `https://your-production-domain.com` (replace with your actual Coolify domain)
    - `https://your-production-domain.com/**`
-8. Click **Save**
+   - **Example:** If your app is at `https://aldi-meal-planner.yourdomain.com`, add:
+     - `https://aldi-meal-planner.yourdomain.com`
+     - `https://aldi-meal-planner.yourdomain.com/**`
+8. Set **Site URL** to your production URL (same as above)
+9. Click **Save**
+10. **Note:** The callback URL `https://lekyfdszxebftrnpwwhm.supabase.co/auth/v1/callback` is already configured in Google Cloud Console - you don't need to change that.
 
 ## Step 3: Prepare Your Repository
 

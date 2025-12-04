@@ -4,6 +4,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Accept build arguments for Vite environment variables
+# These must be passed during docker build (Coolify will do this automatically)
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# Set as environment variables for Vite to pick up during build
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 # Copy package files
 COPY package*.json ./
 COPY yarn.lock* ./
@@ -22,7 +31,7 @@ COPY src ./src
 COPY public ./public
 COPY index.html ./
 
-# Build the frontend
+# Build the frontend (Vite will embed the VITE_ env vars at build time)
 RUN npm run build
 
 # Stage 2: Production server

@@ -93,6 +93,7 @@ In Coolify's **Environment Variables** section, add these **exact** variable nam
 
 ```bash
 # Supabase Configuration (Frontend - Vite needs VITE_ prefix)
+# ⚠️ IMPORTANT: These are embedded at BUILD TIME, not runtime
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-public-key-here
 
@@ -107,6 +108,12 @@ GEMINI_API_KEY=your-gemini-api-key-here
 PORT=3000
 NODE_ENV=production
 ```
+
+**Important Notes:**
+- **VITE_ prefixed variables** are embedded into the frontend code during the Docker build
+- Coolify automatically passes environment variables as build arguments to Docker
+- **After adding/updating VITE_ variables, you MUST rebuild the application** (they won't work if just restarted)
+- The Dockerfile is configured to accept these as build arguments automatically
 
 ### Where to Find These Values
 
@@ -231,10 +238,17 @@ The Dockerfile will:
 - Check that `package.json` includes `"express": "^4.18.2"`
 - Verify Dockerfile copies `package.json` correctly
 
-**Error: "Missing Supabase environment variables"**
-- Check Step 5 - all 4 Supabase variables must be set
-- Verify variable names match exactly (case-sensitive)
+**Error: "Missing Supabase environment variables" or "VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set"**
+- **This is a build-time issue** - Vite embeds these variables during the Docker build
+- Check Step 5 - `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` must be set in Coolify
+- Verify variable names match exactly (case-sensitive, must have `VITE_` prefix)
 - Check for typos in URLs (should end with `.supabase.co`)
+- **CRITICAL:** After adding/updating `VITE_` variables, you MUST rebuild (not just restart):
+  1. Go to your application in Coolify
+  2. Click **"Rebuild"** or **"Redeploy"** button
+  3. Wait for the build to complete
+  4. The new variables will be embedded in the frontend code
+- If still not working, check build logs to verify variables were passed during build
 
 ### Application Won't Start
 

@@ -1,0 +1,74 @@
+---
+alwaysApply: true
+---
+
+# Aldi Meal Planner 2.0 – Product Requirements Document
+
+## Overview
+Aldi Meal Planner 2.0 is a web and mobile application designed to remove the friction from weekly meal planning and grocery shopping. The product generates budget‑friendly weekly meal plans and grocery lists using Aldi‑only ingredients and a growing library of simple, healthy recipes. It aims to reduce decision fatigue and help users stay within their grocery budgets, while continuously discovering or generating new recipes that fit cost, health and variety criteria. Supabase serves as the primary data store for recipes, ingredients, prices, meal plans and user preferences.
+
+## Goals
+- **Reduce decision fatigue** and executive function load associated with meal planning.
+- **Keep weekly grocery spending** under user‑defined budgets while maintaining variety and nutrition.
+- **Provide a self‑sustaining recipe library** that grows through scraping and generative AI.
+- **Deliver a smooth, accessible user experience** across web and mobile.
+- **Maintain accurate ingredient prices and recipe cost estimates** to inform planning.
+
+## Target audience
+- Individuals or families seeking to minimise grocery costs.
+- People with ADHD or limited bandwidth who benefit from structured, low‑effort planning.
+- Users who shop primarily at Aldi and value simple, wholesome meals.
+
+## Features
+### Data ingestion and management
+- **Supabase schema**: store recipes, ingredients, prices, meal plans and user preferences. Each ingredient row records price per package, package size, package unit and base unit (g/ml/each), as well as optional macro data.
+- **Price updates**: maintain a store of current Aldi prices; update monthly using receipts or web scraping.
+- **Recipe and ingredient editing**: provide UI and API endpoints to add, edit and delete recipes and ingredients.
+
+### AI‑driven recipe discovery
+- **Scraper**: parse budget‑friendly recipes from approved community sites and blogs, extracting title, ingredients, instructions, category and approximate cost.
+- **Generative module**: call a generative model with structured prompts to produce new recipes that meet cost and nutritional constraints. Generated recipes are flagged for review before inclusion.
+- **Moderation queue**: interface for reviewing scraped or generated recipes and editing them before publishing.
+
+### Meal plan engine
+- Generate weekly meal plans based on user budget, dietary preferences and desired variety.  
+- Enforce category diversity (e.g. chicken, beef, vegetarian, etc.) and avoid repeating the same dish within four weeks.  
+- Calculate total cost per meal and aggregate grocery list quantities; round up to nearest package as needed.
+
+### Feedback and learning
+- Collect user ratings on recipes and track leftover usage to refine selection heuristics.
+- Adjust recipe weighting and suggestions based on popularity, budget compliance and health goals.
+- Persist cost adjustments when prices change.
+
+### User experience
+- Responsive React UI with accessible components aligned with the Figma design system.
+- Authentication for multiple users with isolated preferences and histories.
+- Clear onboarding explaining the mission and how to interpret meal plans and grocery lists.
+
+## Technical requirements
+- **Back‑end**: Node.js/Express server interfacing with Supabase via its SDK. Cron/scheduled functions to perform price refresh, recipe scraping and weekly plan generation.
+- **Front‑end**: React with component library. Use state management (Redux/Context) to handle meal plans and user data.
+- **AI integration**: connect to generative model API for recipe generation. Provide environment variables for API keys.
+- **Data migration**: scripts to import existing Notion recipes and ingredients into Supabase.
+- **Testing**: unit tests for data parsing, cost calculation and plan generation; integration tests for API endpoints.
+
+## Non‑functional requirements
+- **Performance**: meal plan generation should complete within a few seconds.
+- **Reliability**: ensure price updates and scheduled tasks run successfully.
+- **Accessibility**: follow WCAG guidelines for colour contrast, keyboard navigation and ARIA attributes.
+- **Maintainability**: modular code with clear separation between scraping, generation, planning and UI.
+
+## Milestones
+1. **Schema and migration**: finalise Supabase schema and migrate Notion data.
+2. **Recipe ingestion**: implement scraping and moderation pipeline; seed initial data.
+3. **Generative module**: integrate AI model and implement recipe generation prompts and acceptance logic.
+4. **Meal plan engine**: develop planning algorithm using Supabase data; create grocery list generator.
+5. **Front‑end UI**: build pages for meal plans, recipes, ingredient management and user settings.
+6. **Feedback loop**: implement rating system and leftover tracking to adjust plans.
+7. **Release & iterate**: deploy to production, collect user feedback and refine features.
+
+## Success metrics
+- ≥ 80 % of recipes and ingredients have complete price and unit data.
+- Meal plans stay within budget for > 90 % of users.
+- At least 3 new recipes added per week via scraping or generation.
+- User satisfaction increases over time, measured through ratings and retention.

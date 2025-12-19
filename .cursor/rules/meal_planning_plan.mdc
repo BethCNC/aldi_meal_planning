@@ -1,0 +1,84 @@
+---
+alwaysApply: true
+---
+
+# Aldi Meal Planner 2.0 – Plan and Operating Rules
+
+This document describes the new plan for the Aldi Meal Planner and the operating rules that govern recipe and ingredient management, AI agent workflows and costing logic.
+
+## Mission
+
+The app’s mission is to relieve the burden of meal planning and grocery shopping by producing weekly dinner plans and consolidated shopping lists using Aldi‑only ingredients and a growing collection of simple, healthy recipes. By focusing on cost, variety and ease of preparation, the product aims to help users stay on budget while avoiding decision fatigue.
+
+## Data model overview
+
+- **Ingredients**
+  - Fields: name, price per package, package size (numeric), package unit (lb, oz, g, ml, cup, tbsp, tsp, each), base unit (g, ml or each), optional macros.
+  - Prices should reflect the total cost of the package. Package size must be numeric only, with units stored separately.
+  - Base unit is the unit used for cost calculations; use g for weight, ml for volume and each for count items.
+
+- **Recipes**
+  - Fields: title, category (e.g. Beef, Chicken, Pork, Vegetarian, Seafood, Other), ingredients (list of {ingredientId, quantity, unit}), instructions (ordered list of steps), servings, source URL, notes, estimated cost, AI‑generated flag.
+  - All ingredient names should match entries in the Ingredients table. If an ingredient does not exist, create it with just the name and fill pricing fields later.
+
+- **Meal Plans**
+  - Fields: week start date, daily recipe IDs, total estimated cost, userId, notes.
+  - Plans are generated algorithmically and can be adjusted manually.
+
+- **User Preferences**
+  - Fields: userId, weekly budget, dietary preferences (tags), disliked ingredients, rating history.
+
+## Operating rules
+
+1. **Recipe and ingredient quality**
+   - Each ingredient row is considered complete only when price per package, package size, package unit and base unit have been filled out.
+   - Each recipe page is ready for planning when it contains a clear ingredients list and instructions, a category, and all ingredients are linked to items in the Ingredients table.
+   - Servings and source URL are optional but recommended.
+   - Keep ingredient names simple and generic (“ground beef”, not brand names) to improve matching.
+
+2. **Cost calculations**
+   - To calculate recipe cost, convert the required quantity of each ingredient into its base unit. Divide by the package size in the same base unit to compute the number of packages needed and multiply by the package price.
+   - If a partial package is needed, round up to the nearest whole package; leftovers are not tracked.
+   - Ensure unit conversions follow the standards listed above. Densities for cup‑to‑weight conversions may use approximate values and should be improved over time.
+
+3. **Recipe curation and generation**
+   - When scraping recipes from external sites, extract title, ingredients, instructions, category and approximate cost. Store scraped recipes as unverified and review them for completeness before adding them to the main library.
+   - Generative AI prompts should define budget, serving size and allowed ingredients. All generated recipes must be reviewed to confirm they fit cost and health criteria.
+   - Maintain a moderation queue. Only published recipes are available for planning.
+
+4. **Meal plan generation**
+   - Generate plans weekly (e.g. on Sunday). Input parameters include weekly budget, dietary preferences, desired variety and avoidances.
+   - Use a weighted random or greedy algorithm to select recipes that fit within the budget and meet the variety constraints. Limit high‑cost recipes to a small fraction of the total.
+   - Avoid repeating the same dish within a four‑week window.
+   - Produce a grocery list that aggregates ingredient quantities across the week. Group items by aisle if using a physical list.
+
+5. **Feedback and learning**
+   - Allow users to rate meals on a 1–5 scale and provide comments. Use these ratings to adjust the probability that a recipe is selected in future plans.
+   - Track leftover quantities (future enhancement) to refine package rounding and recipe selection.
+   - Schedule a monthly review to update ingredient prices and refresh recipe cost estimates.
+
+6. **Project scope boundaries**
+   - The app is focused on dinner planning; expansion to other meals is a future possibility.
+   - The product does not provide nutrition or health advice beyond basic macros.
+   - Budgeting calculations are advisory; users should verify costs locally as Aldi prices may vary.
+
+## Workflows
+
+### Data migration
+
+- Export existing recipes and ingredients from Notion as CSV or JSON.
+- Write a script to import these into Supabase tables using the defined schema.
+- Validate that unit fields and price fields are correctly mapped.
+
+### Regular maintenance
+
+- **Price update**: At the start of each month, collect receipts or scrape current prices. Update the price fields in Ingredients and re-run cost calculations.
+- **Recipe review**: Weekly, review scraped and AI-generated recipes. Approve or edit before publishing to the library.
+- **Meal plan generation**: Schedule an automated run every Sunday to produce the coming week’s plan. Send notifications to users (e.g. email or in-app) with the meal plan and grocery list.
+
+### Future enhancements
+
+- Pantry inventory tracking to incorporate leftovers and reduce waste.
+- Nutrition tracking and macros analysis.
+- Support for multiple grocery stores and dynamic price comparison.
+- Voice assistant integration for adding ingredients or checking the plan.

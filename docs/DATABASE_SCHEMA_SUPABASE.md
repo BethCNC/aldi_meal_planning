@@ -61,7 +61,11 @@ CREATE TABLE recipes (
     tags TEXT,
     notion_url TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    -- New PRD columns
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_ai_generated BOOLEAN DEFAULT FALSE,
+    moderation_status TEXT DEFAULT 'pending' -- 'pending', 'approved', 'rejected', 'needs_edit'
 );
 
 CREATE INDEX idx_recipes_name ON recipes(name);
@@ -69,6 +73,9 @@ CREATE INDEX idx_recipes_category ON recipes(category);
 CREATE INDEX idx_recipes_cost ON recipes(cost_per_serving);
 
 COMMENT ON TABLE recipes IS 'Recipe metadata and calculated costs';
+COMMENT ON COLUMN recipes.is_verified IS 'True if recipe has been reviewed by a human';
+COMMENT ON COLUMN recipes.is_ai_generated IS 'True if recipe was created by AI';
+COMMENT ON COLUMN recipes.moderation_status IS 'Current status in the moderation workflow';
 
 -- ============================================
 -- RECIPE INGREDIENTS TABLE (Junction Table)
@@ -124,6 +131,63 @@ CREATE INDEX idx_conversions_to ON unit_conversions(to_unit);
 COMMENT ON TABLE unit_conversions IS 'Conversion factors between units';
 
 -- ============================================
+-- USER RATINGS TABLE (New PRD Feature)
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_ratings (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id TEXT NOT NULL, -- Links to auth.users (or separate user profile)
+  recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  meal_plan_id TEXT, -- Optional link to meal plan (need meal_plans table first if referencing)
+  rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, recipe_id, meal_plan_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_ratings_recipe ON user_ratings(recipe_id);
+CREATE INDEX IF NOT EXISTS idx_user_ratings_user ON user_ratings(user_id);
+
+COMMENT ON TABLE user_ratings IS 'User ratings and feedback for recipes';
+
+-- ============================================
+-- RECIPE HISTORY TABLE (New PRD Feature)
+-- ============================================
+CREATE TABLE IF NOT EXISTS recipe_history (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id TEXT NOT NULL,
+  recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  meal_plan_id TEXT,
+  week_start_date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recipe_history_user_date ON recipe_history(user_id, week_start_date);
+CREATE INDEX IF NOT EXISTS idx_recipe_history_recipe ON recipe_history(recipe_id);
+
+COMMENT ON TABLE recipe_history IS 'Tracks when recipes were used to prevent recent repeats';
+
+-- ============================================
+-- MODERATION QUEUE TABLE (New PRD Feature)
+-- ============================================
+CREATE TABLE IF NOT EXISTS moderation_queue (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  source TEXT, -- 'scraped', 'ai_generated', 'user_submission'
+  source_url TEXT,
+  submitted_at TIMESTAMP DEFAULT NOW(),
+  reviewed_at TIMESTAMP,
+  reviewed_by TEXT,
+  status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected', 'needs_edit'
+  admin_notes TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_moderation_queue_status ON moderation_queue(status);
+
+COMMENT ON TABLE moderation_queue IS 'Queue for reviewing new recipes before publishing';
+
+
+-- ============================================
 -- INSERT STANDARD UNITS
 -- ============================================
 INSERT INTO units (unit, unit_type, is_base_unit) VALUES
@@ -141,7 +205,8 @@ INSERT INTO units (unit, unit_type, is_base_unit) VALUES
     ('pint', 'volume', FALSE),
     ('quart', 'volume', FALSE),
     ('ml', 'volume', FALSE),
-    ('l', 'volume', FALSE);
+    ('l', 'volume', FALSE)
+ON CONFLICT (unit) DO NOTHING;
 
 -- ============================================
 -- INSERT UNIT CONVERSIONS
@@ -171,7 +236,7 @@ INSERT INTO unit_conversions (from_unit, to_unit, conversion_factor, ingredient_
 -- ============================================
 -- CREATE VIEW: RECIPE COST SUMMARY
 -- ============================================
-CREATE VIEW recipe_cost_summary AS
+CREATE OR REPLACE VIEW recipe_cost_summary AS
 SELECT 
     r.id,
     r.name,
@@ -195,22 +260,3 @@ COMMENT ON VIEW recipe_cost_summary IS 'Pre-calculated cost summary for each rec
 -- SUCCESS MESSAGE
 -- ============================================
 -- You should see "Success. No rows returned" if everything worked!
-
-```
-
----
-
-## After Running
-
-1. ✅ You should see "Success. No rows returned"
-2. ✅ Go to **Table Editor** in Supabase dashboard
-3. ✅ You should see 5 tables: `ingredients`, `recipes`, `recipe_ingredients`, `units`, `unit_conversions`
-4. ✅ Run: `node scripts/setup-supabase.js --check` to verify
-
----
-
-## Next Steps
-
-After the schema is created:
-1. Run: `node scripts/migrate-to-supabase.js` to import data from Notion
-2. Use the SQL queries in `docs/SQL_QUERIES.md` to calculate costs

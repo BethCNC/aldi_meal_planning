@@ -1,7 +1,8 @@
 import { supabase } from './client.js';
 
-export async function createMealPlan(weekStartDate, meals) {
+export async function createMealPlan(weekStartDate, meals, userId) {
   const entries = meals.map(meal => ({
+    user_id: userId,
     week_start_date: weekStartDate,
     day_of_week: meal.dayOfWeek,
     meal_type: 'dinner',
@@ -20,8 +21,8 @@ export async function createMealPlan(weekStartDate, meals) {
   return data;
 }
 
-export async function getMealPlan(weekStartDate) {
-  const { data, error } = await supabase
+export async function getMealPlan(weekStartDate, userId) {
+  let query = supabase
     .from('meal_plans')
     .select(`
       *,
@@ -29,8 +30,18 @@ export async function getMealPlan(weekStartDate) {
     `)
     .eq('week_start_date', weekStartDate)
     .order('day_of_week');
-  
-  if (error) throw error;
+
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching meal plan:', error);
+    throw error;
+  }
+
   return data;
 }
 

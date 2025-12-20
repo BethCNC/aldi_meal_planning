@@ -25,12 +25,16 @@ aldi_meal_planning/
 │   └── utils/             # Frontend utilities
 │
 ├── backend/                # Backend scripts and services
-│   ├── index.js           # Main backend entry
+│   ├── ai/                # AI-powered agents (LangChain + Gemini)
+│   │   ├── agents/        # AI agents (meal planning, recipe discovery)
+│   │   ├── chains/        # LangChain chains (variety analysis, parsing)
+│   │   ├── tools/         # LangChain tools (Supabase queries)
+│   │   ├── prompts/       # Prompt templates for LLM
+│   │   └── memory/        # User preference memory
+│   ├── supabase/          # Supabase backend clients
 │   ├── scrapers/          # Web scraping logic
 │   ├── notion/            # Notion API integration
-│   ├── supabase/          # Supabase backend clients
-│   ├── ai/                # AI/OpenAI integration
-│   ├── algorithms/        # Business logic (matching, generation)
+│   ├── scheduled/         # Cron jobs (weekly plan generation)
 │   └── utils/             # Backend utilities
 │
 ├── scripts/                # CLI automation scripts

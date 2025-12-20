@@ -34,7 +34,10 @@
     "grocery:list": "node scripts/generate-grocery-list.js",
     "verify:supabase": "node scripts/verify-supabase-setup.js",
     "check:recipe-data": "node scripts/check-recipe-data-quality.js",
-    "test:rpc": "node scripts/test-rpc-function.js"
+    "test:rpc": "node scripts/test-rpc-function.js",
+    "cron:plans": "node backend/scheduled/weeklyPlanGenerator.js",
+    "cron:prices": "node backend/scheduled/priceUpdater.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [
     "aldi",
@@ -50,6 +53,9 @@
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
+    "@langchain/community": "^1.1.1",
+    "@langchain/core": "^1.1.7",
+    "@langchain/google-genai": "^2.1.2",
     "@notionhq/client": "^2.2.15",
     "@react-pdf/renderer": "^4.3.1",
     "@supabase/supabase-js": "^2.79.0",
@@ -61,11 +67,13 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
+    "langchain": "^1.2.2",
     "openai": "^6.8.0",
     "puppeteer": "^22.0.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.5"
+    "react-router-dom": "^7.9.5",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

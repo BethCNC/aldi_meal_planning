@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { MenuDrawer } from './MenuDrawer';
 import { NavBar } from './NavBar';
+import { AIChatAssistant } from './chat/AIChatAssistant';
 
 function StatusBar() {
   return (
@@ -42,6 +43,7 @@ export function Layout() {
       </div>
 
       <MenuDrawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <AIChatAssistant />
     </>
   );
 }

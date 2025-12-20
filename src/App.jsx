@@ -2,8 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { ScheduleProvider, useSchedule } from './contexts/ScheduleContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LoadingSpinner } from './components/ui/LoadingSpinner';
 import { Layout } from './components/Layout';
 import { HomeView } from './pages/HomeView';
+import { AIHomeView } from './pages/AIHomeView';
 import { PantryInputView } from './pages/PantryInputView';
 import { RecipeSuggestionsView } from './pages/RecipeSuggestionsView';
 import { WeeklyPlanView } from './pages/WeeklyPlanView';
@@ -17,7 +19,9 @@ import { SettingsView } from './pages/SettingsView';
 import { AuthView } from './pages/AuthView';
 import { ButtonTest } from './pages/ButtonTest';
 import { InputTest } from './pages/InputTest';
-import { LoadingSpinner } from './components/ui/LoadingSpinner';
+import { ModerationQueueView } from './pages/ModerationQueueView';
+import { MealRatingView } from './pages/MealRatingView';
+import { PreferencesView } from './pages/PreferencesView';
 
 function AuthGuard({ children }) {
   const { user, loading } = useSupabase();
@@ -71,16 +75,20 @@ function App() {
                   </AuthGuard>
                 }
               >
-                <Route index element={<HomeView />} />
+                <Route index element={<AIHomeView />} />
+                <Route path="home-classic" element={<HomeView />} />
                 <Route path="pantry-input" element={<PantryInputView />} />
                 <Route path="recipe-suggestions" element={<RecipeSuggestionsView />} />
                 <Route path="recipe-discovery" element={<RecipeDiscoveryView />} />
                 <Route path="weekly-plan" element={<WeeklyPlanView />} />
                 <Route path="grocery-list" element={<GroceryListView />} />
                 <Route path="recipe/:id" element={<RecipeDetailView />} />
+                <Route path="rate-meal/:id" element={<MealRatingView />} />
                 <Route path="pantry" element={<PantryView />} />
                 <Route path="case-study" element={<CaseStudyView />} />
                 <Route path="settings" element={<SettingsView />} />
+                <Route path="preferences" element={<PreferencesView />} />
+                <Route path="moderation" element={<ModerationQueueView />} />
                 <Route path="button-test" element={<ButtonTest />} />
                 <Route path="input-test" element={<InputTest />} />
               </Route>

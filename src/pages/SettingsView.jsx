@@ -112,22 +112,16 @@ export function SettingsView() {
 
         <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-card px-4 py-5 shadow-sm">
           <h2 className="text-lg font-semibold text-text-body">Dietary Preferences</h2>
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={chickenBreastOnly}
-                onChange={(e) => setChickenBreastOnly(e.target.checked)}
-                className="mt-1 h-5 w-5 rounded border-border-subtle text-surface-primary focus:ring-2 focus:ring-border-focus"
-              />
-              <div>
-                <p className="text-sm font-medium text-text-body">Chicken breast only</p>
-                <p className="text-xs text-icon-subtle">
-                  Only use chicken breast in recipes. Dark meat (thighs, drumsticks, wings) will be filtered out or substituted.
-                </p>
-              </div>
-            </label>
-          </div>
+          <p className="text-sm text-icon-subtle">
+            Manage your dietary goals, likes, and dislikes to get better recipe suggestions.
+          </p>
+          <Button 
+            variant="secondary" 
+            className="w-full justify-center"
+            onClick={() => navigate('/preferences')}
+          >
+            Manage Preferences
+          </Button>
         </div>
       </section>
 

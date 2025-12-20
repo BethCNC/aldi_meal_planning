@@ -1,9 +1,10 @@
 import { findRecipesWithPantry } from '../supabase/pantryClient.js';
 import { getRecipes } from '../supabase/recipeClient.js';
 import { suggestRecipesFromPantry } from '../ai/geminiClient.js';
+import { getUserRatings } from '../supabase/ratingClient.js';
 
 export async function findBestRecipes(pantryItems, options = {}) {
-  const { budget = 100, servings = 4, minMatches = 3 } = options;
+  const { budget = 100, servings = 4, minMatches = 3, userId } = options;
   
   // Step 1: Rule-based matching (fast)
   const pantryIngredientIds = pantryItems.map(item => item.ingredient_id || item.id);
@@ -21,7 +22,23 @@ export async function findBestRecipes(pantryItems, options = {}) {
   console.log(`Only ${strongMatches.length} matches found, using Gemini fallback...`);
   
   const allRecipes = await getRecipes({ maxCostPerServing: budget / 7 / servings });
-  const aiSuggestions = await suggestRecipesFromPantry(pantryItems, allRecipes, {
+  
+  // Identify "safe" recipes (rated 4+) if user is known
+  let safeRecipes = allRecipes;
+  if (userId) {
+    try {
+      const ratings = await getUserRatings(userId);
+      const safeIds = new Set(ratings.filter(r => r.rating >= 4).map(r => r.recipe_id));
+      const filtered = allRecipes.filter(r => safeIds.has(r.id));
+      if (filtered.length > 0) {
+        safeRecipes = filtered;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch ratings for AI context:', e);
+    }
+  }
+
+  const aiSuggestions = await suggestRecipesFromPantry(pantryItems, safeRecipes, {
     budget,
     servings
   });

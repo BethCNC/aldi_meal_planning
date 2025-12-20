@@ -4,6 +4,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import dotenv from 'dotenv';
+import scheduledTasksRouter from './scheduledTasks.js';
+import aiChatRouter from './aiChat.js';
 
 dotenv.config();
 
@@ -35,6 +37,8 @@ const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 // Middleware
 app.use(express.json());
+app.use('/api/cron', scheduledTasksRouter);
+app.use('/api/ai/chat', aiChatRouter);
 app.use(express.static(join(__dirname, '../dist')));
 
 // JWT Verification Middleware
@@ -281,6 +285,150 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
     res.status(500).json({ 
       error: 'Failed to generate meal plan',
       message: error.message 
+    });
+  }
+});
+
+// Conversational AI Endpoint: Natural Language Planning (NEW - Homepage)
+app.post('/api/ai/conversational-plan', verifyAuth, async (req, res) => {
+  try {
+    const { userInput, context } = req.body;
+
+    if (!userInput) {
+      return res.status(400).json({ error: 'userInput is required' });
+    }
+
+    console.log(`\n🤖 [Conversational AI] Processing: "${userInput}"`);
+
+    // Step 1: Parse natural language to extract date range and intent
+    const dateParsingPrompt = `You are a date range parser. Today is ${context?.currentDate || new Date().toISOString().split('T')[0]}.
+
+User said: "${userInput}"
+
+Extract:
+1. Start date (YYYY-MM-DD)
+2. End date or duration
+3. Budget (if mentioned)
+4. Other constraints (quick meals, vegetarian, etc.)
+
+Examples:
+- "Plan from today through end of year" → start: ${context?.currentDate}, end: 2025-12-31
+- "Next 4 days" → start: tomorrow, duration: 4
+- "5 dinners under $60" → duration: 7, meals: 5, budget: 60
+
+Return JSON:
+{
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "duration": number,
+  "budget": number (or null),
+  "constraints": string[],
+  "humanReadable": "12 days (Dec 20-31)"
+}`;
+
+    // Use Gemini to parse intent
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const parseResult = await model.generateContent(dateParsingPrompt);
+    const parseResponse = await parseResult.response;
+    let parseText = parseResponse.text().trim();
+
+    // Extract JSON from response
+    if (parseText.startsWith('```json')) {
+      parseText = parseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (parseText.startsWith('```')) {
+      parseText = parseText.replace(/```\n?/g, '');
+    }
+
+    const interpretation = JSON.parse(parseText);
+
+    console.log(`   📅 Parsed: ${interpretation.humanReadable}`);
+    console.log(`   💰 Budget: $${interpretation.budget || 'default'}`);
+
+    // Step 2: Generate meal plan using our LangChain agent
+    const { generateMealPlan } = await import('../backend/ai/agents/mealPlanningAgent.js');
+
+    const plan = await generateMealPlan({
+      userId: req.user.id,
+      weekStart: interpretation.startDate,
+      budget: interpretation.budget || 75
+    });
+
+    // Step 3: Format response for conversation
+    const summary = `Planning ${interpretation.humanReadable} for $${plan.plan.totalCost.toFixed(2)}.
+
+I've selected ${plan.plan.meals.length} meals:
+${plan.plan.meals.slice(0, 3).map(m => `- ${m.day}: ${m.recipe_name} ($${m.estimated_cost.toFixed(2)})`).join('\n')}
+${plan.plan.meals.length > 3 ? `... and ${plan.plan.meals.length - 3} more` : ''}
+
+Total: $${plan.plan.totalCost.toFixed(2)}
+Remaining: $${plan.plan.budgetRemaining.toFixed(2)}
+
+${plan.aiAnalysis.variety_analysis}`;
+
+    const agentSteps = [
+      { agent: 'Date Parser', status: 'completed', icon: '📅', message: `Parsed: ${interpretation.humanReadable}` },
+      { agent: 'Meal Planner', status: 'completed', icon: '🍽️', message: `Selected ${plan.plan.meals.length} recipes` },
+      { agent: 'Pricing Agent', status: 'completed', icon: '💰', message: `Calculated total: $${plan.plan.totalCost.toFixed(2)}` },
+      { agent: 'Recipe Matcher', status: 'completed', icon: '🔍', message: 'Matched recipes to Aldi catalog' }
+    ];
+
+    res.json({
+      success: true,
+      interpretation,
+      plan: plan.plan,
+      summary,
+      agentSteps
+    });
+
+  } catch (error) {
+    console.error('❌ [Conversational AI] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process your request',
+      message: error.message
+    });
+  }
+});
+
+// LangChain AI Endpoint: Generate Weekly Meal Plan (NEW - AI-Native)
+app.post('/api/ai/plan-langchain', verifyAuth, async (req, res) => {
+  try {
+    const {
+      budget = 75,
+      weekStartDate
+    } = req.body;
+
+    if (!weekStartDate) {
+      return res.status(400).json({ error: 'weekStartDate is required (YYYY-MM-DD format)' });
+    }
+
+    // Validate budget
+    if (budget < 20 || budget > 500) {
+      return res.status(400).json({ error: 'Budget must be between $20 and $500' });
+    }
+
+    // Import the LangChain agent
+    const { generateMealPlan } = await import('../backend/ai/agents/mealPlanningAgent.js');
+
+    console.log(`\n🚀 [LangChain] Generating meal plan for user ${req.user.id}`);
+    console.log(`   Week: ${weekStartDate}, Budget: $${budget}`);
+
+    // Call the LangChain agent
+    const result = await generateMealPlan({
+      userId: req.user.id,
+      weekStart: weekStartDate,
+      budget: budget
+    });
+
+    console.log(`✅ [LangChain] Meal plan generated successfully`);
+
+    res.json(result);
+  } catch (error) {
+    console.error('❌ [LangChain] Meal plan generation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate meal plan',
+      message: error.message
     });
   }
 });

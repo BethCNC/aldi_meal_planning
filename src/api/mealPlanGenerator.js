@@ -37,7 +37,7 @@ export async function generateWeeklyMealPlan(options) {
   // Get user dietary preferences
   const { data: preferences } = await supabase
     .from('user_preferences')
-    .select('dietary_restrictions')
+    .select('dietary_restrictions, liked_ingredients, disliked_ingredients, dietary_tags')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -53,11 +53,24 @@ export async function generateWeeklyMealPlan(options) {
   }
 
   const chickenBreastOnly = dietaryRestrictions?.chicken_breast_only || dietaryRestrictions?.no_dark_meat_chicken;
+  const { liked_ingredients: likes = [], disliked_ingredients: dislikes = [], dietary_tags: tags = [] } = preferences || {};
+
+  // Fetch user ratings for weighting
+  const { data: userRatings } = await supabase
+    .from('user_ratings')
+    .select('recipe_id, rating')
+    .eq('user_id', user.id);
+    
+  const ratingsMap = new Map();
+  if (userRatings) {
+    userRatings.forEach(r => ratingsMap.set(r.recipe_id, r.rating));
+  }
 
   // 1. Fetch Recipes with Ingredients for Overlap Calculation
   let { data: allRecipes, error: recipesError } = await supabase
     .from('recipes')
     .select('*, recipe_ingredients(ingredient_id)')
+    .neq('moderation_status', 'rejected') // Exclude rejected recipes
     .lte('cost_per_serving', budgetPerMeal / servings)
     .not('total_cost', 'is', null)
     .not('cost_per_serving', 'is', null);
@@ -74,6 +87,13 @@ export async function generateWeeklyMealPlan(options) {
     const invalidCategories = ['Dessert', 'Breakfast', 'Snack', 'Side', 'Beverage'];
     const isDinnerAppropriate = !invalidCategories.includes(r.category);
     
+    // HARD FILTER: Dislikes
+    if (dislikes.length > 0) {
+      const recipeText = (JSON.stringify(r) + (r.recipe_ingredients || []).map(i => i.ingredient_name).join(' ')).toLowerCase();
+      const hasDislike = dislikes.some(d => recipeText.includes(d.toLowerCase()));
+      if (hasDislike) return false;
+    }
+
     // Apply dietary restrictions: Filter out dark meat chicken recipes if preference is set
     if (chickenBreastOnly && r.category === 'Chicken') {
       const recipeName = (r.name || '').toLowerCase();
@@ -141,6 +161,23 @@ export async function generateWeeklyMealPlan(options) {
     const baseRandom = Math.random() * 20; 
     let score = baseRandom;
     
+    // Rating Weighting
+    const userRating = ratingsMap.get(recipe.id);
+    if (userRating) {
+      if (userRating === 5) score += 50;      // 5 stars: High priority
+      else if (userRating === 4) score += 20; // 4 stars: Boost
+      else if (userRating === 3) score += 0;  // 3 stars: Neutral
+      else if (userRating <= 2) score -= 100; // 1-2 stars: Avoid
+    }
+
+    // Preference Weighting (Likes)
+    if (likes.length > 0) {
+      const recipeText = (JSON.stringify(recipe) + (recipe.recipe_ingredients || []).map(i => i.ingredient_name).join(' ')).toLowerCase();
+      if (likes.some(l => recipeText.includes(l.toLowerCase()))) {
+        score += 30;
+      }
+    }
+
     // Variety Intelligence: Penalize recently used recipes
     const usageCount = recipeUsageCount.get(recipe.id) || 0;
     const lastUsedWeek = recipeLastUsed.get(recipe.id);
@@ -379,9 +416,10 @@ export async function generateWeeklyMealPlan(options) {
 /**
  * Replaces a recipe in an existing meal plan with a new one.
  * @param {string} mealPlanId - The ID of the meal plan entry to update
+ * @param {Object} options - Optional constraints { query: string }
  * @returns {Promise<Object>} - The new recipe object
  */
-export async function replaceMealPlanRecipe(mealPlanId) {
+export async function replaceMealPlanRecipe(mealPlanId, options = {}) {
   // 1. Get current meal plan entry details
   const { data: currentPlan, error: fetchError } = await supabase
     .from('meal_plans')
@@ -406,12 +444,22 @@ export async function replaceMealPlanRecipe(mealPlanId) {
 
   // 3. Fetch potential replacement recipes
   // Limit to recipes with cost <= $15 (arbitrary budget guard) and not "Side", "Dessert", etc.
-  const { data: candidates, error: candidateError } = await supabase
+  let query = supabase
     .from('recipes')
     .select('*')
     .lte('total_cost', 15)
     .not('category', 'in', '("Side","Dessert","Beverage","Breakfast","Snack")')
     .not('total_cost', 'is', null);
+
+  // If query provided, use text search (simple ilike for now, could be vector search later)
+  if (options.query) {
+    // Simple: check name or category or ingredients
+    // Supabase simple search:
+    const term = `%${options.query}%`;
+    query = query.or(`name.ilike.${term},category.ilike.${term}`);
+  }
+
+  const { data: candidates, error: candidateError } = await query;
 
   if (candidateError || !candidates) {
     throw new Error('Failed to fetch replacement candidates');
@@ -421,10 +469,11 @@ export async function replaceMealPlanRecipe(mealPlanId) {
   const validCandidates = candidates.filter(r => !usedRecipeIds.has(r.id));
 
   if (validCandidates.length === 0) {
-    throw new Error('No other suitable recipes found to swap.');
+    throw new Error('No suitable recipes found matching your criteria.');
   }
 
-  // 5. Pick a random winner
+  // 5. Pick a random winner from valid candidates
+  // (Could be improved with scoring if needed)
   const randomIndex = Math.floor(Math.random() * validCandidates.length);
   const newRecipe = validCandidates[randomIndex];
 

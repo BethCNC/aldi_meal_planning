@@ -60,7 +60,15 @@ Return ONLY a valid JSON object with a "recipes" array: { "recipes": [{ "recipeN
     }
     
     const responseData = JSON.parse(jsonText);
-    return responseData.recipes || [];
+    const suggestions = responseData.recipes || [];
+    
+    // Add verification flags
+    return suggestions.map(r => ({
+      ...r,
+      is_verified: false,
+      is_ai_generated: true,
+      moderation_status: 'pending'
+    }));
   } catch (error) {
     console.error('Gemini Suggestion Error:', error);
     return [];

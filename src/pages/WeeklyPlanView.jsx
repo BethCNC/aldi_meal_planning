@@ -13,6 +13,8 @@ import { getDayName, sortDaysMondayFirst } from '../utils/days';
 import { WeekHeader } from '../components/week/WeekHeader';
 import { generateWeeklyPlanPDF } from '../utils/pdfGenerator';
 import { IconDownload } from '@tabler/icons-react';
+import { LeftoverModal } from '../components/pantry/LeftoverModal';
+import { SwapRecipeModal } from '../components/week/SwapRecipeModal';
 
 const STATUS_FLOW = ['planned', 'shopped', 'completed'];
 
@@ -27,7 +29,12 @@ export function WeeklyPlanView() {
   const [generating, setGenerating] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
   const [swappingId, setSwappingId] = useState(null);
+  const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [swapTargetDay, setSwapTargetDay] = useState(null);
   const [showMealPrompt, setShowMealPrompt] = useState(false);
+  
+  // Leftover Modal State
+  const [leftoverRecipe, setLeftoverRecipe] = useState(null);
   
   const changeWeek = (direction) => {
     const current = new Date(weekStartDate);
@@ -101,6 +108,11 @@ export function WeeklyPlanView() {
         .update({ status: nextStatus })
         .eq('id', day.id);
       await loadMealPlan();
+      
+      // If completed, prompt for leftovers
+      if (nextStatus === 'completed' && day.recipe) {
+        setLeftoverRecipe(day.recipe);
+      }
     } catch (error) {
       console.error('Error updating status:', error);
     } finally {
@@ -110,19 +122,22 @@ export function WeeklyPlanView() {
 
   const handleSwap = async (day) => {
     if (!day?.id || !day?.recipe?.id) return;
-    
-    const confirmed = window.confirm(`Swap "${day.recipe.name}" with a different recipe?`);
-    if (!confirmed) return;
+    setSwapTargetDay(day);
+    setSwapModalOpen(true);
+  };
 
-    setSwappingId(day.id);
+  const executeSwap = async (options = {}) => {
+    if (!swapTargetDay) return;
+    setSwappingId(swapTargetDay.id);
     try {
-      await replaceMealPlanRecipe(day.id);
+      await replaceMealPlanRecipe(swapTargetDay.id, options);
       await loadMealPlan();
     } catch (error) {
       console.error('Error swapping recipe:', error);
       alert(`Failed to swap recipe: ${error.message}`);
     } finally {
       setSwappingId(null);
+      setSwapTargetDay(null);
     }
   };
 
@@ -258,6 +273,7 @@ export function WeeklyPlanView() {
                   isToday={isTodayDay}
                   onUpdateStatus={() => advanceStatus(day)}
                   onSwap={handleSwap}
+                  onRate={(d) => navigate(`/rate-meal/${d.recipe.id}`, { state: { mealPlanId: d.id } })}
                 />
               );
             })}
@@ -296,6 +312,20 @@ export function WeeklyPlanView() {
           </div>
         </div>
       )}
+      
+      {/* Leftover Modal */}
+      <LeftoverModal
+        isOpen={!!leftoverRecipe}
+        onClose={() => setLeftoverRecipe(null)}
+        recipe={leftoverRecipe}
+      />
+
+      <SwapRecipeModal
+        isOpen={swapModalOpen}
+        onClose={() => setSwapModalOpen(false)}
+        onSwap={executeSwap}
+        currentRecipe={swapTargetDay?.recipe}
+      />
     </div>
   );
 }

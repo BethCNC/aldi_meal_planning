@@ -36,7 +36,9 @@ async function scrapeMealPlan(source, url) {
       mealCount,
       ingredients,
       recipes: recipes.slice(0, 15),
-      scrapedAt: new Date().toISOString()
+      scrapedAt: new Date().toISOString(),
+      is_verified: false,
+      moderation_status: 'pending'
     };
     
   } catch (error) {

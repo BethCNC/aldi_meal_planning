@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { IconRefresh } from '@tabler/icons-react';
+import { IconRefresh, IconStar } from '@tabler/icons-react';
 import { DayChip } from './week/DayChip';
 import { getDayName } from '../utils/days';
 
@@ -8,11 +8,12 @@ function formatCurrency(value) {
   return `$${Number(value).toFixed(2)}`;
 }
 
-export function DayCard({ day, isToday, onUpdateStatus, onSwap, className = '' }) {
+export function DayCard({ day, isToday, onUpdateStatus, onSwap, onRate, className = '' }) {
   const navigate = useNavigate();
   const dayName = day.dayName || getDayName(day.day_of_week || 0);
   const recipe = day.recipe;
   const actionable = Boolean(recipe);
+  const isCompleted = day.status === 'completed' || day.status === 'cooked';
 
   const handleStatusAdvance = (event) => {
     event.stopPropagation();
@@ -47,17 +48,34 @@ export function DayCard({ day, isToday, onUpdateStatus, onSwap, className = '' }
         }
       }}
     >
-      {/* Swap Button - Top Right Overlay */}
-      {actionable && onSwap && (
-        <button
-          onClick={handleSwap}
-          className="absolute top-1 right-1 z-10 rounded-full bg-surface-page p-1 shadow-sm border border-border-subtle hover:bg-surface-hover opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
-          aria-label="Swap meal"
-          title="Swap meal"
-        >
-          <IconRefresh size={14} className="text-icon-subtle" />
-        </button>
-      )}
+      <div className="absolute top-1 right-1 z-10 flex gap-1">
+        {/* Rate Button */}
+        {actionable && onRate && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRate(day);
+            }}
+            className="rounded-full bg-surface-page p-1 shadow-sm border border-border-subtle hover:bg-surface-hover opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+            aria-label="Rate meal"
+            title="Rate meal"
+          >
+            <IconStar size={14} className="text-yellow-500" />
+          </button>
+        )}
+
+        {/* Swap Button */}
+        {actionable && onSwap && (
+          <button
+            onClick={handleSwap}
+            className="rounded-full bg-surface-page p-1 shadow-sm border border-border-subtle hover:bg-surface-hover opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+            aria-label="Swap meal"
+            title="Swap meal"
+          >
+            <IconRefresh size={14} className="text-icon-subtle" />
+          </button>
+        )}
+      </div>
 
       {/* Top section: Day Chip */}
       <DayChip dayName={dayName} isToday={isToday} className="w-full" />

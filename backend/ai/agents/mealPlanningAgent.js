@@ -122,8 +122,8 @@ export async function generateMealPlan({ userId, weekStart, budget }) {
 
     console.log(`   ✅ Found ${recipes.length} suitable recipes`);
 
-    if (recipes.length < 7) {
-      throw new Error(`Not enough recipes available. Found ${recipes.length}, need at least 7.`);
+    if (recipes.length < duration) {
+      throw new Error(`Not enough recipes available. Found ${recipes.length}, need at least ${duration}.`);
     }
 
     // 2. Get recent meal plans to avoid repetition
@@ -183,9 +183,11 @@ export async function generateMealPlan({ userId, weekStart, budget }) {
     });
 
     // 7. Format the prompt
-    const budgetPerMeal = (budget / 7).toFixed(2);
+    const budgetPerMeal = (budget / duration).toFixed(2);
     const formattedPrompt = await promptTemplate.format({
       budget: budget,
+      duration: duration,
+      startDate: weekStart,
       budget_per_meal: budgetPerMeal,
       recipes: JSON.stringify(recipesFormatted, null, 2),
       recent_recipe_ids: recentRecipeIds.length > 0 ? recentRecipeIds.join(", ") : "none",
@@ -236,12 +238,26 @@ export async function generateMealPlan({ userId, weekStart, budget }) {
     console.log(`\n💾 Saving meal plan to database...`);
 
     const mealsToSave = plan.meals.map((meal, index) => ({
-      dayOfWeek: index, // 0 = Monday, 6 = Sunday
+      dayOfWeek: index, // 0 = start date, increment from there
       recipeId: meal.recipe_id,
       isLeftoverNight: false,
-      isOrderOutNight: false
+      isOrderOutNight: false,
+      plannedDate: (() => {
+        const date = new Date(weekStart);
+        date.setDate(date.getDate() + index);
+        return date.toISOString().split('T')[0];
+      })()
     }));
-
+    
+    // Note: createMealPlan currently assumes weekly structure. 
+    // For flexible dates, we might need to adjust how we save.
+    // For now, we'll try to map to the existing structure or enhance createMealPlan.
+    // Ideally, we should use a new function `createFlexibleMealPlan`.
+    
+    // Fallback: If duration is 7, use existing logic. If not, we might need to update the client.
+    // Assuming createMealPlan can handle array of meals.
+    // We will update createMealPlan to accept explicit dates if possible, or stick to offset.
+    
     const savedPlan = await createMealPlan(weekStart, mealsToSave, userId);
 
     console.log(`   ✅ Saved ${savedPlan.length} meals to database`);

@@ -66,6 +66,10 @@ async function verifyAuth(req, res, next) {
   }
 }
 
+// ==========================================
+// LEGACY AI ENDPOINTS (To be migrated to LangChain)
+// ==========================================
+
 // AI Endpoint: Generate Weekly Meal Plan
 app.post('/api/ai/plan', verifyAuth, async (req, res) => {
   try {
@@ -289,6 +293,10 @@ app.post('/api/ai/plan', verifyAuth, async (req, res) => {
   }
 });
 
+// ==========================================
+// MODERN AI ENDPOINTS (LangChain / Agentic)
+// ==========================================
+
 // Conversational AI Endpoint: Natural Language Planning (NEW - Homepage)
 app.post('/api/ai/conversational-plan', verifyAuth, async (req, res) => {
   try {
@@ -350,7 +358,8 @@ Return JSON:
     const plan = await generateMealPlan({
       userId: req.user.id,
       weekStart: interpretation.startDate,
-      budget: interpretation.budget || 75
+      budget: interpretation.budget || 75,
+      duration: interpretation.duration || 7
     });
 
     // Step 3: Format response for conversation

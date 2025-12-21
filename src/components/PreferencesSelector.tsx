@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserPreferences } from '../types';
+import { Heart, ThumbsDown, AlertTriangle, Sparkles } from 'lucide-react'; // New import
 
 interface PreferencesSelectorProps {
   onComplete: (prefs: UserPreferences) => void;
@@ -46,19 +47,19 @@ const PreferencesSelector: React.FC<PreferencesSelectorProps> = ({ onComplete })
     options, 
     selected, 
     onToggle, 
-    icon, 
+    Icon, // Changed from icon: string to Icon: React.ElementType
     activeClass 
   }: { 
     title: string, 
     options: string[], 
     selected: Set<string>, 
     onToggle: (opt: string) => void,
-    icon: string,
+    Icon: React.ElementType, // Changed type
     activeClass: string
   }) => (
     <div className="space-y-4">
       <div className="flex items-center gap-3 px-2">
-        <span className="material-symbols-outlined text-stone-900">{icon}</span>
+        <Icon className="text-stone-900 w-6 h-6" /> {/* Render Icon component */}
         <h3 className="text-sm font-black text-stone-900 uppercase tracking-widest">{title}</h3>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -97,7 +98,7 @@ const PreferencesSelector: React.FC<PreferencesSelectorProps> = ({ onComplete })
           options={LIKE_OPTIONS} 
           selected={selectedLikes} 
           onToggle={(opt) => toggleOption(opt, selectedLikes, setSelectedLikes)}
-          icon="favorite"
+          Icon={Heart} // Pass Heart component
           activeClass="bg-primary text-stone-900"
         />
 
@@ -106,7 +107,7 @@ const PreferencesSelector: React.FC<PreferencesSelectorProps> = ({ onComplete })
           options={DISLIKE_OPTIONS} 
           selected={selectedDislikes} 
           onToggle={(opt) => toggleOption(opt, selectedDislikes, setSelectedDislikes)}
-          icon="thumb_down"
+          Icon={ThumbsDown} // Pass ThumbsDown component
           activeClass="bg-stone-300 text-stone-900"
         />
 
@@ -115,17 +116,17 @@ const PreferencesSelector: React.FC<PreferencesSelectorProps> = ({ onComplete })
           options={EXCLUSION_OPTIONS} 
           selected={selectedExclusions} 
           onToggle={(opt) => toggleOption(opt, selectedExclusions, setSelectedExclusions)}
-          icon="warning"
+          Icon={AlertTriangle} // Pass AlertTriangle component
           activeClass="bg-red-500 text-white"
         />
 
         <div className="pt-8 sticky bottom-0 bg-stone-50 py-6">
           <button
             onClick={handleFinish}
-            className="w-full py-6 bg-stone-900 text-white font-black text-2xl rounded-[2rem] shadow-2xl border-4 border-stone-800 transition-all active:scale-[0.98] flex items-center justify-center gap-3 hover:bg-stone-800"
+            className="w-full py-6 bg-stone-900 hover:bg-stone-800 text-white font-black text-2xl rounded-[2rem] shadow-2xl border-4 border-stone-800 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
           >
             GENERATE MY PLAN
-            <span className="material-symbols-outlined text-3xl">auto_awesome</span>
+            <Sparkles className="w-7 h-7" />
           </button>
         </div>
       </div>

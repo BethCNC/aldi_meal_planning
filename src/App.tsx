@@ -5,9 +5,14 @@ import PreferencesSelector from './components/PreferencesSelector';
 import ConversationUI from './components/ConversationUI';
 import GroceryList from './components/GroceryList';
 import RecipeCard from './components/RecipeCard';
+import Welcome from './components/Welcome';
+import Auth from './components/Auth';
+import OnboardingIntro from './components/OnboardingIntro';
+import { useSupabase } from './SupabaseProvider';
+import { Home, ArrowLeft, Settings, RefreshCcw, RotateCcw } from 'lucide-react'; // New import for Lucide icons
 
 // This function will call our backend, not Gemini directly.
-const generateMealPlan = async (days: number, preferences: UserPreferences): Promise<MealPlan> => {
+const generateMealPlan = async (days: number, budget: number | undefined, preferences: UserPreferences, userId: string | undefined): Promise<MealPlan> => {
   const response = await fetch('/api/v1/plan/generate', {
     method: 'POST',
     headers: {
@@ -17,6 +22,8 @@ const generateMealPlan = async (days: number, preferences: UserPreferences): Pro
     },
     body: JSON.stringify({
       day_count: days,
+      user_id: userId, // Pass userId
+      budget: budget, // Pass budget
       sensory_preferences: { // Mapping preferences to the backend schema
         likes: preferences.likes,
         dislikes: preferences.dislikes,
@@ -56,8 +63,10 @@ const generateMealPlan = async (days: number, preferences: UserPreferences): Pro
 };
 
 const App: React.FC = () => {
-  const [stage, setStage] = useState<AppStage>(AppStage.INPUT);
+  const { user } = useSupabase(); // Get user from Supabase context
+  const [stage, setStage] = useState<AppStage>(AppStage.WELCOME); // Initial stage to WELCOME
   const [days, setDays] = useState<number>(7);
+  const [budget, setBudget] = useState<number | undefined>(undefined); // New state for budget
   const [preferences, setPreferences] = useState<UserPreferences>({
     likes: '',
     dislikes: '',
@@ -65,8 +74,9 @@ const App: React.FC = () => {
   });
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
 
-  const handleDaysSelected = (selectedDays: number) => {
+  const handleDaysSelected = (selectedDays: number, selectedBudget: number | undefined) => {
     setDays(selectedDays);
+    setBudget(selectedBudget); // Set budget
     setStage(AppStage.PREFERENCES);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -75,14 +85,15 @@ const App: React.FC = () => {
     setPreferences(selectedPrefs);
     setStage(AppStage.GENERATING);
     
-    const plan = await generateMealPlan(days, selectedPrefs);
+    const plan = await generateMealPlan(days, budget, selectedPrefs, user?.id); // Pass budget and userId
     setMealPlan(plan);
     setStage(AppStage.RESULT);
   };
 
   const handleRestart = () => {
-    setStage(AppStage.INPUT);
+    setStage(AppStage.WELCOME); // Restart to Welcome screen
     setMealPlan(null);
+    setBudget(undefined); // Clear budget on restart
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -96,9 +107,7 @@ const App: React.FC = () => {
             className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border-2 border-stone-300 text-stone-900 shadow-sm active:scale-90 transition-all"
             aria-label="Home"
           >
-            <span className="material-symbols-outlined">
-              {stage === AppStage.INPUT ? 'house' : 'arrow_back'}
-            </span>
+            {stage === AppStage.WELCOME ? <Home className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
           </button>
           
           <div className="text-center">
@@ -108,19 +117,29 @@ const App: React.FC = () => {
             {stage === AppStage.RESULT && (
               <p className="text-[10px] font-black text-primary-dark uppercase tracking-[0.3em]">Ready to shop</p>
             )}
-            {stage === AppStage.PREFERENCES && (
+            {(stage === AppStage.PREFERENCES || stage === AppStage.GENERATING) && (
               <p className="text-[10px] font-black text-primary-dark uppercase tracking-[0.3em]">Step 2 of 2</p>
+            )}
+            {stage === AppStage.AUTH && (
+              <p className="text-[10px] font-black text-primary-dark uppercase tracking-[0.3em]">Sign in or Register</p>
+            )}
+             {stage === AppStage.ONBOARDING_INTRO && (
+              <p className="text-[10px] font-black text-primary-dark uppercase tracking-[0.3em]">How it works</p>
             )}
           </div>
 
           <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border-2 border-stone-300 text-stone-900 shadow-sm opacity-0 pointer-events-none">
-            <span className="material-symbols-outlined">settings</span>
+            <Settings className="w-6 h-6" />
           </div>
         </div>
       </header>
 
       {/* Main Container */}
       <main className="flex-1 w-full max-w-4xl mx-auto print:max-w-none">
+        {stage === AppStage.WELCOME && <Welcome setStage={setStage} />}
+        {stage === AppStage.AUTH && <Auth setStage={setStage} />}
+        {stage === AppStage.ONBOARDING_INTRO && <OnboardingIntro setStage={setStage} />}
+
         {stage === AppStage.INPUT && (
           <div /* className="animate-in fade-in zoom-in-95 duration-500" */>
             <DaysSelector onSelect={handleDaysSelected} />
@@ -172,7 +191,7 @@ const App: React.FC = () => {
                   onClick={() => handlePreferencesCompleted(preferences)}
                   className="w-full py-6 bg-white border-4 border-dashed border-stone-200 text-stone-400 font-black rounded-[2rem] flex flex-col items-center justify-center gap-2 hover:bg-stone-100 hover:border-stone-300 transition-all active:scale-[0.98]"
                 >
-                  <span className="material-symbols-outlined text-4xl">refresh</span>
+                  <RefreshCcw className="w-8 h-8" />
                   <span className="uppercase tracking-widest text-xs">Don't like this plan? Generate a new one</span>
                 </button>
               </div>
@@ -188,7 +207,7 @@ const App: React.FC = () => {
             onClick={handleRestart}
             className="px-8 py-5 bg-stone-900 text-white font-black rounded-3xl shadow-xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all border-2 border-stone-700"
           >
-            <span className="material-symbols-outlined">restart_alt</span>
+            <RotateCcw className="w-6 h-6" />
             NEW START
           </button>
         </div>

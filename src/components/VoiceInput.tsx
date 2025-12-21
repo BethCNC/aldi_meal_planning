@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Mic } from 'lucide-react'; // New import
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -53,9 +54,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onTranscript, label = "Voice in
         isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-stone-200 text-stone-700 hover:bg-stone-300'
       }`}
     >
-      <span className="material-symbols-outlined">
-        {isListening ? 'mic' : 'mic'}
-      </span>
+      <Mic className="w-6 h-6" />
     </button>
   );
 };

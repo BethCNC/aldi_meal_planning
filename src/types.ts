@@ -34,6 +34,9 @@ export interface MealPlan {
 }
 
 export enum AppStage {
+  WELCOME = 'WELCOME',
+  AUTH = 'AUTH',
+  ONBOARDING_INTRO = 'ONBOARDING_INTRO',
   INPUT = 'INPUT',
   PREFERENCES = 'PREFERENCES',
   GENERATING = 'GENERATING',

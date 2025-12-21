@@ -7,14 +7,16 @@ import { getRecentRecipeIds } from '../../supabase/userHistoryClient.js';
  * @param {Object} params
  * @param {string} params.userId
  * @param {number} params.dayCount
- * @param {Object} params.preferences
+ * @param {number} params.budget - Optional budget for meal plan
+ * @param {Object} params.preferences - User preferences for meal selection
+ * @param {Array<Object>} params.allRecipes - Full catalog of all available recipe objects.
  * @returns {Promise<Array<string>>} Array of recipe UUIDs
  */
-export async function selectRecipes({ userId, dayCount = 7, preferences = {} }) {
+export async function selectRecipes({ userId, dayCount = 7, budget, preferences = {}, allRecipes }) {
   console.log(`\n🤖 [AI Agent] Selecting ${dayCount} recipes for user ${userId}`);
 
-  // 1. Fetch Context
-  const allRecipes = await getRecipes();
+  // 1. Fetch Context (allRecipes now passed as param)
+  // const allRecipes = await getRecipes(); // Removed this line
   const exclusionList = await getRecentRecipeIds(userId);
 
   // Minify recipes for context window
@@ -24,6 +26,7 @@ export async function selectRecipes({ userId, dayCount = 7, preferences = {} }) 
     p: r.proteinCategory || 'other', // protein
     x: r.textureProfile || 'mixed', // texture
     c: Math.ceil(r.costPerServing || 0), // cost (rounded)
+    r: r.rating || 3, // rating
     tag: r.tags || ''
   }));
 
@@ -34,12 +37,14 @@ export async function selectRecipes({ userId, dayCount = 7, preferences = {} }) 
   const prompt = `
 Role: You are an expert meal planner for neurodivergent individuals.
 Task: Select exactly ${dayCount} distinct recipes from the provided 'Available Catalog'.
+${budget ? `IMPORTANT: The TOTAL combined cost ('c' field) of the ${dayCount} selected recipes MUST NOT exceed $${budget}. Focus on lower-cost options.` : ''}
 
-Constraints:
+Constraints & Preferences:
 1. Variety: Never select the same 'p' (protein) two days in a row.
-2. Sensory Balance: Ensure a mix of 'x' (texture).
-3. History: DO NOT select any recipes listed in the 'Exclusion List'.
-4. Output: Return ONLY a JSON array of ${dayCount} UUID strings.
+2. Preference: Prefer recipes with a higher 'r' (rating) value.
+3. Sensory Balance: Ensure a mix of 'x' (texture).
+4. History: DO NOT select any recipes listed in the 'Exclusion List'.
+5. Output: Return ONLY a JSON array of ${dayCount} UUID strings.
 
 Available Catalog (JSON):
 ${JSON.stringify(catalog)}

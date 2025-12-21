@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import scheduledTasksRouter from './scheduledTasks.js';
 import aiChatRouter from './aiChat.js';
 import planRoutes from '../backend/routes/planRoutes.js';
+import recipeRoutes from '../backend/routes/recipeRoutes.js'; // New import
 
 dotenv.config();
 
@@ -68,7 +69,8 @@ async function verifyAuth(req, res, next) {
 // Routes
 app.use('/api/cron', scheduledTasksRouter);
 app.use('/api/ai/chat', aiChatRouter);
-app.use('/api/v1/plan', verifyAuth, planRoutes);
+app.use('/api/v1/plan', /* verifyAuth, */ planRoutes);
+app.use('/api/v1/recipes', verifyAuth, recipeRoutes); // New route
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

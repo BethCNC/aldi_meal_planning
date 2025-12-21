@@ -62,7 +62,8 @@ export function normalizeRecipeRow(row) {
     proteinCategory: row.protein_category,
     textureProfile: row.texture_profile,
     prepEffortLevel: row.prep_effort_level,
-    description: row.description
+    description: row.description,
+    rating: row.rating // Add rating field
   };
 }
 
@@ -199,4 +200,24 @@ export async function replaceRecipeIngredients(recipeId, ingredients) {
   await deleteRecipeIngredients(recipeId);
   if (!ingredients?.length) return [];
   return insertRecipeIngredients(recipeId, ingredients);
+}
+
+export async function updateRecipeRating(recipeId, rating) {
+  if (!recipeId || rating === undefined) {
+    throw new Error('Recipe ID and rating are required.');
+  }
+
+  const { data, error } = await supabase
+    .from('recipes')
+    .update({ rating: rating, updated_at: new Date().toISOString() })
+    .eq('id', recipeId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating rating for recipe ${recipeId}:`, error);
+    throw error;
+  }
+
+  return normalizeRecipeRow(data);
 }

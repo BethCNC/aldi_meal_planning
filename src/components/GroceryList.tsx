@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Ingredient, MealPlan } from '../types';
+import { PiggyBank, Printer, CookingPot, Apple, Beef, ShoppingBag, Check } from 'lucide-react'; // New import
 
 interface GroceryListProps {
   mealPlan: MealPlan;
@@ -40,7 +41,7 @@ const GroceryList: React.FC<GroceryListProps> = ({ mealPlan }) => {
               </div>
             </div>
             <div className="p-4 bg-stone-800 rounded-3xl border-2 border-stone-700">
-              <span className="material-symbols-outlined text-primary text-3xl">savings</span>
+              <PiggyBank className="text-primary w-8 h-8" />
             </div>
           </div>
           
@@ -66,14 +67,14 @@ const GroceryList: React.FC<GroceryListProps> = ({ mealPlan }) => {
           onClick={() => window.print()}
           className="flex-1 py-5 bg-white border-4 border-stone-200 text-stone-900 font-black rounded-2xl flex items-center justify-center gap-3 hover:border-stone-900 transition-all active:scale-[0.97]"
         >
-          <span className="material-symbols-outlined">print</span>
+          <Printer className="w-6 h-6" />
           PRINT LIST
         </button>
         <button 
           onClick={scrollToRecipes}
           className="flex-1 py-5 bg-primary text-stone-900 font-black rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary/10 border-4 border-primary-dark hover:bg-primary-dark transition-all active:scale-[0.97]"
         >
-          <span className="material-symbols-outlined">restaurant</span>
+          <CookingPot className="w-6 h-6" />
           VIEW RECIPES
         </button>
       </div>
@@ -87,9 +88,13 @@ const GroceryList: React.FC<GroceryListProps> = ({ mealPlan }) => {
             <section key={cat} className="/* animate-in fade-in slide-in-from-bottom-4 */">
               <div className="flex items-center gap-3 mb-6 px-2 sticky top-24 bg-stone-50 z-10 py-2">
                 <div className="w-10 h-10 bg-stone-200 rounded-xl flex items-center justify-center border-2 border-stone-300">
-                  <span className="material-symbols-outlined text-stone-600">
-                    {cat === 'Produce' ? 'nutrition' : cat === 'Meat' ? 'egg_alt' : 'grocery'}
-                  </span>
+                  {cat === 'Produce' ? (
+                    <Apple className="text-stone-600 w-6 h-6" />
+                  ) : cat === 'Meat' ? (
+                    <Beef className="text-stone-600 w-6 h-6" />
+                  ) : (
+                    <ShoppingBag className="text-stone-600 w-6 h-6" />
+                  )}
                 </div>
                 <h3 className="text-2xl font-black text-stone-900 tracking-tight">{cat}</h3>
                 <div className="h-1 bg-stone-200 flex-1 ml-2 rounded-full" />
@@ -115,7 +120,7 @@ const GroceryList: React.FC<GroceryListProps> = ({ mealPlan }) => {
                       <div className={`w-8 h-8 rounded-xl border-4 mr-5 flex items-center justify-center transition-all ${
                         isChecked ? 'bg-primary border-primary scale-105' : 'bg-white border-stone-300 group-hover:border-primary'
                       }`}>
-                        {isChecked && <span className="material-symbols-outlined text-stone-900 text-xl font-black">check</span>}
+                        {isChecked && <Check className="text-stone-900 w-5 h-5" />}
                       </div>
                       
                       <div className="flex-1">

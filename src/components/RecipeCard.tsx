@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { Recipe } from '../types';
+import { useSupabase } from '../SupabaseProvider';
+import { Wallet, ShoppingCart, ChevronUp, ChevronDown, ReceiptText, Flame, Check, Star } from 'lucide-react'; // New import
 
 interface RecipeCardProps {
-  recipe: Recipe;
+  recipe: Recipe & { rating?: number }; // Add rating to recipe type
   day: number;
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
+  const { session } = useSupabase(); // Get session for auth
   const [isExpanded, setIsExpanded] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [currentRating, setCurrentRating] = useState(recipe.rating || 3);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleStep = (idx: number) => {
     const next = new Set(completedSteps);
@@ -17,7 +22,54 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
     setCompletedSteps(next);
   };
 
+  const handleRating = async (rating: number) => {
+    if (!session || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setCurrentRating(rating); // Optimistic UI update
+
+    try {
+      const response = await fetch(`/api/v1/recipes/${recipe.id}/rate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ rating }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit rating.');
+      }
+      // Optionally handle success, e.g., show a 'Saved!' message
+    } catch (error) {
+      console.error(error);
+      setCurrentRating(recipe.rating || 3); // Revert on error
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const totalRecipeCost = recipe.ingredients.reduce((sum, ing) => sum + ing.price, 0);
+
+  const StarRating = () => (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          onClick={() => handleRating(star)}
+          disabled={isSubmitting}
+          className="transition-transform active:scale-90"
+        >
+          <Star
+            className={`w-6 h-6 ${
+              star <= currentRating ? 'text-primary' : 'text-stone-300'
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div id={`recipe-day-${day}`} className={`bg-white rounded-3xl border-4 transition-all duration-300 ${isExpanded ? 'border-primary shadow-xl scale-[1.01]' : 'border-stone-200 shadow-sm'}`}>
@@ -35,18 +87,18 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
             <h4 className="font-extrabold text-2xl text-stone-900 leading-tight">{recipe.name}</h4>
             <div className="flex gap-4 mt-2">
               <span className="text-sm font-bold text-stone-600 flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">payments</span>
+                <Wallet className="w-4 h-4" />
                 ${recipe.costPerServing.toFixed(2)}/ea
               </span>
               <span className="text-sm font-bold text-stone-400 flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">shopping_basket</span>
+                <ShoppingCart className="w-4 h-4" />
                 ${totalRecipeCost.toFixed(2)} total
               </span>
             </div>
           </div>
         </div>
-        <span className={`material-symbols-outlined text-4xl transition-transform duration-500 ${isExpanded ? 'rotate-180 text-primary' : 'text-stone-300'}`}>
-          {isExpanded ? 'keyboard_arrow_up' : 'expand_circle_down'}
+        <span className={`text-4xl transition-transform duration-500 ${isExpanded ? 'rotate-180 text-primary' : 'text-stone-300'}`}>
+          {isExpanded ? <ChevronUp className="w-8 h-8" /> : <ChevronDown className="w-8 h-8" />}
         </span>
       </button>
 
@@ -58,7 +110,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
             {/* Ingredients Column */}
             <div>
               <h5 className="font-extrabold text-xl text-stone-900 mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary-dark">receipt_long</span>
+                <ReceiptText className="text-primary-dark w-6 h-6" />
                 Ingredients Needed
               </h5>
               <div className="space-y-3">
@@ -79,7 +131,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
             {/* Steps Column */}
             <div>
               <h5 className="font-extrabold text-xl text-stone-900 mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary-dark">outdoor_grill</span>
+                <Flame className="text-primary-dark w-6 h-6" />
                 Step-by-Step Instructions
               </h5>
               <div className="space-y-4">
@@ -97,7 +149,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
                       completedSteps.has(i) ? 'bg-primary text-stone-900 border-primary-dark' : 'bg-stone-100 text-stone-500 border-stone-200'
                     }`}>
                       {completedSteps.has(i) ? (
-                        <span className="material-symbols-outlined text-sm font-black">check</span>
+                        <Check className="w-5 h-5" />
                       ) : (
                         i + 1
                       )}
@@ -113,8 +165,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
 
           <div className="mt-12 p-8 bg-stone-900 rounded-[2rem] text-white flex items-center justify-between border-4 border-stone-800">
             <div>
-              <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mb-1">Recipe Ready?</p>
-              <h6 className="text-2xl font-black">Enjoy your meal!</h6>
+              <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mb-1">Rate this recipe</p>
+              <StarRating />
             </div>
             <button 
               onClick={() => setIsExpanded(false)}

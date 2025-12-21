@@ -30,25 +30,80 @@ function resolveTokenValue(raw) {
   }
 
   const path = match[1].split('.')
-  // Search in both Theme and Primitives
-  const root = path[0] in tokens.Theme ? tokens.Theme : tokens.Primitives
-
-  // Navigate path
-  let current = root
-  for (const segment of path) {
-    if (current && typeof current === 'object' && segment in current) {
-      current = current[segment]
-    } else {
-      return raw // Return raw if path resolution fails
+  
+  // Try to resolve from various possible locations in the token structure
+  let current = null
+  
+  // Try colors first (e.g., {colors.stone.950})
+  if (path[0] === 'colors' && tokens['primitives/colors']?.colors) {
+    current = tokens['primitives/colors'].colors
+    for (let i = 1; i < path.length; i++) {
+      if (current && typeof current === 'object' && path[i] in current) {
+        current = current[path[i]]
+      } else {
+        current = null
+        break
+      }
     }
   }
-
-  // If result has a 'value' property, it might be another reference or final value
+  // Try dimensions (e.g., {dimensions.fixed.4})
+  else if (path[0] === 'dimensions' && tokens['primitives/dimensions']?.dimensions) {
+    current = tokens['primitives/dimensions'].dimensions
+    for (let i = 1; i < path.length; i++) {
+      if (current && typeof current === 'object' && path[i] in current) {
+        current = current[path[i]]
+      } else {
+        current = null
+        break
+      }
+    }
+  }
+  // Try theme-colors (e.g., {theme-colors.primary.default})
+  else if (path[0] === 'theme-colors') {
+    // Look in theme/color-light or theme/color-dark
+    const themeColors = tokens['theme/color-light']?.theme-colors || tokens['theme/color-dark']?.theme-colors
+    if (themeColors) {
+      current = themeColors
+      for (let i = 1; i < path.length; i++) {
+        if (current && typeof current === 'object' && path[i] in current) {
+          current = current[path[i]]
+        } else {
+          current = null
+          break
+        }
+      }
+    }
+  }
+  // Try font-related tokens
+  else if (path[0] === 'fontWeights' || path[0] === 'fontFamilies') {
+    const typefaceSection = tokens['typeface/plus-jakarta-sans']
+    if (typefaceSection) {
+      const sectionKey = path[0] === 'fontWeights' ? 'fontWeights' : 'fontFamilies'
+      if (typefaceSection[sectionKey]) {
+        current = typefaceSection[sectionKey]
+        for (let i = 1; i < path.length; i++) {
+          if (current && typeof current === 'object' && path[i] in current) {
+            current = current[path[i]]
+          } else {
+            current = null
+            break
+          }
+        }
+      }
+    }
+  }
+  
+  // If we found a value, resolve it recursively
   if (current && typeof current === 'object' && 'value' in current) {
     return resolveTokenValue(current.value)
   }
+  
+  // If current is not an object with a value property, return it directly (might be a string/number already)
+  if (current !== null) {
+    return current
+  }
 
-  return current
+  return raw // Return raw if path resolution fails
 }
 
 function toRem(value) {
@@ -94,45 +149,58 @@ const borderWidth = {}
 const boxShadow = {}
 
 // 1. Process Primitives (Colors, Spacing, etc.)
-for (const [key, group] of Object.entries(tokens.Primitives)) {
-  // Colors (stone, neutral, apple, etc.)
-  if (['stone', 'neutral', 'grape', 'strawberry', 'blueberry', 'apple', 'lemon', 'clementine', 'tomato', 'white', 'black', 'transparent'].includes(key)) {
-    if (typeof group.value === 'string') {
+// Access colors from the actual structure: tokens["primitives/colors"].colors
+const primitivesColors = tokens["primitives/colors"]?.colors || {}
+const primitivesDimensions = tokens["primitives/dimensions"]?.dimensions || {}
+
+// Process colors
+const colorNames = ['stone', 'neutral', 'apple', 'blueberry', 'clementine', 'grape', 'strawberry', 'lemon', 'tomato', 'error', 'success', 'warning', 'white', 'black', 'transparent']
+for (const [colorName, colorGroup] of Object.entries(primitivesColors)) {
+  if (colorNames.includes(colorName)) {
+    if (typeof colorGroup.value === 'string') {
       // Single color value (white, black)
-      colors[key] = resolveTokenValue(group.value)
-    } else {
+      colors[colorName] = resolveTokenValue(colorGroup.value)
+    } else if (typeof colorGroup === 'object') {
       // Color scale
-      colors[key] = {}
-      for (const [shade, token] of Object.entries(group)) {
-        colors[key][shade] = resolveTokenValue(token.value)
+      colors[colorName] = {}
+      for (const [shade, token] of Object.entries(colorGroup)) {
+        if (token && typeof token === 'object' && 'value' in token) {
+          colors[colorName][shade] = resolveTokenValue(token.value)
+        }
       }
-    }
-  }
-  // Spacing
-  else if (key === 'Spacing') {
-    for (const [scale, token] of Object.entries(group)) {
-      // Handle dots in keys (e.g. "0.5") if necessary, mostly they are "1", "2"...
-      spacing[scale.replace('․', '.')] = resolveTokenValue(token.value)
-    }
-  }
-  // Border Radius
-  else if (key === 'Border Radius') {
-    for (const [name, token] of Object.entries(group)) {
-      // Map "rounded-lg" -> "lg", "rounded" -> "DEFAULT"
-      const tailwindKey = name.replace('rounded-', '') || 'DEFAULT'
-      borderRadius[tailwindKey === 'rounded' ? 'DEFAULT' : tailwindKey] = resolveTokenValue(token.value)
-    }
-  }
-  // Border Width
-  else if (key === 'Border Width') {
-    for (const [name, token] of Object.entries(group)) {
-      borderWidth[name] = resolveTokenValue(token.value)
     }
   }
 }
 
+// Process Spacing
+if (primitivesDimensions.fixed) {
+  for (const [scale, token] of Object.entries(primitivesDimensions.fixed)) {
+    spacing[scale.replace('․', '.')] = resolveTokenValue(token.value)
+  }
+}
+
+// Process Border Radius
+if (primitivesDimensions['border-radius']) {
+  for (const [name, token] of Object.entries(primitivesDimensions['border-radius'])) {
+    // Map "rounded-lg" -> "lg", "rounded" -> "DEFAULT"
+    const tailwindKey = name.replace('rounded-', '') || 'DEFAULT'
+    borderRadius[tailwindKey === 'rounded' ? 'DEFAULT' : tailwindKey] = resolveTokenValue(token.value)
+  }
+}
+
+// Process Border Width
+if (primitivesDimensions['border-width']) {
+  for (const [name, token] of Object.entries(primitivesDimensions['border-width'])) {
+    borderWidth[name] = resolveTokenValue(token.value)
+  }
+}
+
 // 2. Process Theme (Semantic Colors, Component Tokens)
-for (const [key, group] of Object.entries(tokens.Theme)) {
+// Access theme sections - they use keys like "theme/typography", "theme/color-light", etc.
+const themeSections = Object.keys(tokens).filter(key => key.startsWith('theme/'))
+for (const themeKey of themeSections) {
+  const group = tokens[themeKey]
+  const key = themeKey.replace('theme/', '')
   // Semantic Colors (text, border, surface, icon)
   if (['text', 'border', 'surface', 'icon'].includes(key)) {
     colors[key] = {}
@@ -182,44 +250,52 @@ for (const [key, group] of Object.entries(tokens.Theme)) {
 
 const textStyleUtilities = {}
 
-for (const [styleKey, styleValue] of Object.entries(tokens.Theme)) {
-  if (!styleKey.startsWith('text-') || typeof styleValue !== 'object') continue
+// Process typography styles
+const typographySection = tokens["theme/typography"]
+if (typographySection) {
+  for (const [sectionKey, sectionValue] of Object.entries(typographySection)) {
+    if (typeof sectionValue !== 'object') continue
+    
+    for (const [styleKey, styleValue] of Object.entries(sectionValue)) {
+      if (typeof styleValue !== 'object') continue
 
-  for (const [weightKey, tokenValue] of Object.entries(styleValue)) {
-    if (!tokenValue || typeof tokenValue !== 'object' || !tokenValue.value) continue
+      for (const [weightKey, tokenValue] of Object.entries(styleValue)) {
+        if (!tokenValue || typeof tokenValue !== 'object' || !tokenValue.value) continue
 
-    const { fontFamily, fontWeight, lineHeight, fontSize, letterSpacing } = tokenValue.value
+        const { fontFamily, fontWeight, lineHeight, fontSize, letterSpacing } = tokenValue.value
 
-    const className = `.text-style-${styleKey}-${weightKey.replace('font-', '')}`
-    const resolvedFontSize = toRem(resolveTokenValue(fontSize))
-    const resolvedLineHeight = toRem(resolveTokenValue(lineHeight))
-    const resolvedFontFamily = resolveTokenValue(fontFamily) || FONT_STACK
-    const resolvedFontWeight = mapFontWeight(resolveTokenValue(fontWeight))
-    const resolvedLetterSpacing = toLetterSpacing(resolveTokenValue(letterSpacing))
+        const className = `.text-style-${sectionKey}-${styleKey}-${weightKey.replace('font-', '')}`
+        const resolvedFontSize = toRem(resolveTokenValue(fontSize))
+        const resolvedLineHeight = toRem(resolveTokenValue(lineHeight))
+        const resolvedFontFamily = resolveTokenValue(fontFamily) || FONT_STACK
+        const resolvedFontWeight = mapFontWeight(resolveTokenValue(fontWeight))
+        const resolvedLetterSpacing = toLetterSpacing(resolveTokenValue(letterSpacing))
 
-    const utility = {}
+        const utility = {}
 
-    if (resolvedFontFamily) {
-      utility.fontFamily = Array.isArray(resolvedFontFamily)
-        ? resolvedFontFamily.join(', ')
-        : resolvedFontFamily === 'Plus Jakarta Sans'
-          ? FONT_STACK
-          : resolvedFontFamily
+        if (resolvedFontFamily) {
+          utility.fontFamily = Array.isArray(resolvedFontFamily)
+            ? resolvedFontFamily.join(', ')
+            : resolvedFontFamily === 'Plus Jakarta Sans'
+              ? FONT_STACK
+              : resolvedFontFamily
+        }
+        if (resolvedFontSize) {
+          utility.fontSize = resolvedFontSize
+        }
+        if (resolvedLineHeight) {
+          utility.lineHeight = resolvedLineHeight
+        }
+        if (resolvedFontWeight) {
+          utility.fontWeight = resolvedFontWeight
+        }
+        if (resolvedLetterSpacing !== undefined) {
+          utility.letterSpacing = resolvedLetterSpacing
+        }
+
+        textStyleUtilities[className] = utility
+      }
     }
-    if (resolvedFontSize) {
-      utility.fontSize = resolvedFontSize
-    }
-    if (resolvedLineHeight) {
-      utility.lineHeight = resolvedLineHeight
-    }
-    if (resolvedFontWeight) {
-      utility.fontWeight = resolvedFontWeight
-    }
-    if (resolvedLetterSpacing !== undefined) {
-      utility.letterSpacing = resolvedLetterSpacing
-    }
-
-    textStyleUtilities[className] = utility
   }
 }
 

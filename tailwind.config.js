@@ -154,7 +154,7 @@ const primitivesColors = tokens["primitives/colors"]?.colors || {}
 const primitivesDimensions = tokens["primitives/dimensions"]?.dimensions || {}
 
 // Process colors
-const colorNames = ['stone', 'neutral', 'apple', 'blueberry', 'clementine', 'grape', 'strawberry', 'lemon', 'tomato', 'error', 'success', 'warning', 'white', 'black', 'transparent']
+const colorNames = ['stone', 'neutral', 'grape', 'strawberry', 'sky', 'willow', 'lemon', 'orange', 'tomato', 'error', 'success', 'warning', 'info', 'white', 'black', 'transparent']
 for (const [colorName, colorGroup] of Object.entries(primitivesColors)) {
   if (colorNames.includes(colorName)) {
     if (typeof colorGroup.value === 'string') {

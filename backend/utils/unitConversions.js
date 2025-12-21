@@ -52,7 +52,7 @@ function isWeightUnit(unit) {
  * Check if unit is a volume unit
  */
 function isVolumeUnit(unit) {
-  return ['ml', 'l', 'cup', 'cups', 'tbsp', 'tsp', 'tablespoon', 'teaspoon', 'fl oz', 'oz'].includes(unit.toLowerCase());
+  return ['ml', 'l', 'cup', 'cups', 'tbsp', 'tsp', 'tablespoon', 'teaspoon', 'fl oz', 'oz', 'pint', 'pints', 'quart', 'quarts', 'gallon', 'gallons'].includes(unit.toLowerCase());
 }
 
 /**
@@ -94,6 +94,12 @@ function convertVolume(quantity, from, to) {
     'l': 1000,
     'cup': 236.6,
     'cups': 236.6,
+    'pint': 473.18,
+    'pints': 473.18,
+    'quart': 946.35,
+    'quarts': 946.35,
+    'gallon': 3785.41,
+    'gallons': 3785.41,
     'tbsp': 14.79,
     'tsp': 4.93,
     'tablespoon': 14.79,
@@ -107,6 +113,12 @@ function convertVolume(quantity, from, to) {
     'l': 1000,
     'cup': 236.6,
     'cups': 236.6,
+    'pint': 473.18,
+    'pints': 473.18,
+    'quart': 946.35,
+    'quarts': 946.35,
+    'gallon': 3785.41,
+    'gallons': 3785.41,
     'tbsp': 14.79,
     'tsp': 4.93,
     'tablespoon': 14.79,
@@ -127,9 +139,9 @@ function convertWeightToVolume(quantity, from, to, ingredient) {
   const densities = {
     // Dry ingredients (cups per pound approximate)
     'rice': {cup: 2.5, lb: 1}, // ~2.5 cups per lb
-    'pasta': {cup: 2.5, lb: 1},
-    'flour': {cup: 3.5, lb: 1},
-    'sugar': {cup: 2, lb: 1},
+    'pasta': {cup: 4, lb: 1},
+    'flour': {cup: 3.75, lb: 1}, // Adjusted: ~120g/cup => ~3.78 cups/lb.
+    'sugar': {cup: 2.25, lb: 1},
     'cheese': {cup: 4, lb: 1}, // shredded
     
     // Liquids (approximately 1:1 for water-based)
@@ -294,7 +306,13 @@ export function normalizeUnit(unit) {
     'pieces': 'each',
     'item': 'each',
     'items': 'each',
-    'count': 'each'
+    'count': 'each',
+    'pint': 'pint',
+    'pints': 'pint',
+    'quart': 'quart',
+    'quarts': 'quart',
+    'gallon': 'gallon',
+    'gallons': 'gallon'
   };
   
   return mappings[normalized] || normalized;

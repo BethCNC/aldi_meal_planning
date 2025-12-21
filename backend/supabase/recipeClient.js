@@ -18,7 +18,11 @@ function mapRecipeToDbColumns(recipe) {
     tags: Array.isArray(recipe.tags)
       ? recipe.tags.filter(Boolean).join(', ')
       : recipe.tags ?? null,
-    notion_url: recipe.notionUrl ?? null
+    notion_url: recipe.notionUrl ?? null,
+    protein_category: recipe.proteinCategory ?? null,
+    texture_profile: recipe.textureProfile ?? null,
+    prep_effort_level: recipe.prepEffortLevel ?? null,
+    description: recipe.description ?? null
   };
 }
 
@@ -54,7 +58,11 @@ export function normalizeRecipeRow(row) {
     tags: row.tags,
     notionUrl: row.notion_url,
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    proteinCategory: row.protein_category,
+    textureProfile: row.texture_profile,
+    prepEffortLevel: row.prep_effort_level,
+    description: row.description
   };
 }
 

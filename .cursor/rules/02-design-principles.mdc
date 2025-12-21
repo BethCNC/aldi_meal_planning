@@ -1,0 +1,214 @@
+# 02 - Design Principles
+
+**How to Make Decisions**
+
+These five principles guide every design and development choice. When in doubt, refer to these principles.
+
+---
+
+## 🎯 Principle 1: Automation Over Customization
+
+**Make decisions FOR users, not WITH them.**
+
+### What It Means
+- The app makes all choices automatically
+- Users only answer: "How many days?"
+- No recipe selection, no day assignment, no ingredient swaps
+- AI agent handles all decision-making
+
+### Why It Matters
+- Reduces decision fatigue (15-20 decisions → 1)
+- Eliminates choice paralysis
+- Faster completion (30 sec vs 30 min)
+- Higher success rate (95% vs 10%)
+
+### Implementation Examples
+✅ **DO**: AI selects recipes based on variety, cost, and preferences  
+✅ **DO**: Automatically assign meals to days  
+✅ **DO**: Generate complete grocery list  
+❌ **DON'T**: Ask "Which recipes do you want?"  
+❌ **DON'T**: Show recipe cards for selection  
+❌ **DON'T**: Require manual day assignment
+
+### When to Break This Rule
+- User explicitly requests a change (e.g., "I don't like chicken")
+- Accessibility requires alternative input method
+- Error recovery (e.g., ingredient unavailable)
+
+---
+
+## ♿ Principle 2: Accessibility-First
+
+**WCAG AAA compliance, triple input modality, zero barriers.**
+
+### What It Means
+- **WCAG AAA** compliance (not just AA)
+- **Triple input modality**: Voice, button, text
+- **Keyboard navigation** for all interactions
+- **Screen reader** optimized
+- **High contrast** mode available
+- **Reduced motion** support
+
+### Why It Matters
+- Neurodivergent users often have multiple accessibility needs
+- Voice input reduces typing barriers
+- Keyboard navigation supports motor disabilities
+- High contrast helps visual processing
+
+### Implementation Examples
+✅ **DO**: Every action has voice, button, and keyboard shortcut  
+✅ **DO**: All text has 4.5:1 contrast ratio minimum  
+✅ **DO**: Focus indicators visible and clear  
+✅ **DO**: ARIA labels on all interactive elements  
+❌ **DON'T**: Rely on color alone for information  
+❌ **DON'T**: Auto-play animations  
+❌ **DON'T**: Require mouse/touch for core functions
+
+### When to Break This Rule
+Never. Accessibility is non-negotiable.
+
+---
+
+## 📱 Principle 3: Single-Screen Flow
+
+**No navigation, no tabs, vertical scroll only.**
+
+### What It Means
+- One screen, one purpose
+- Vertical scroll for content
+- No hamburger menus
+- No tab navigation
+- No back buttons
+- Progressive disclosure (show more as needed)
+
+### Why It Matters
+- Reduces cognitive load
+- Eliminates navigation decisions
+- Clearer mental model
+- Faster task completion
+- Less overwhelming
+
+### Implementation Examples
+✅ **DO**: All content on one page, scroll down  
+✅ **DO**: Show grocery list immediately after generation  
+✅ **DO**: Expand details on click/tap  
+❌ **DON'T**: Multiple pages or routes  
+❌ **DON'T**: Tab navigation  
+❌ **DON'T**: Modal overlays for core content
+
+### When to Break This Rule
+- Print view (separate optimized layout)
+- Error states (temporary overlay)
+- Settings (minimal, rarely accessed)
+
+---
+
+## ⚡ Principle 4: Instant Value
+
+**Grocery list first, details second.**
+
+### What It Means
+- Show grocery list immediately after generation
+- Recipe details are secondary
+- Print button prominent
+- Total cost visible upfront
+- Minimal loading states
+
+### Why It Matters
+- Users want the list, not the process
+- Faster time to value (30 seconds)
+- Reduces anxiety (see results quickly)
+- Builds confidence (immediate success)
+
+### Implementation Examples
+✅ **DO**: Show grocery list as soon as it's ready  
+✅ **DO**: Print button at top of list  
+✅ **DO**: Total cost prominently displayed  
+✅ **DO**: Recipe details expandable, not default  
+❌ **DON'T**: Show "generating..." for more than 2 seconds  
+❌ **DON'T**: Hide grocery list behind tabs  
+❌ **DON'T**: Require scrolling to see total cost
+
+### When to Break This Rule
+- First-time user onboarding (brief explanation)
+- Error states (need to explain what went wrong)
+
+---
+
+## 🛡️ Principle 5: Graceful Degradation
+
+**Works even if components fail.**
+
+### What It Means
+- App functions if AI fails (fallback recipes)
+- Works without voice input (button/text always available)
+- Functions offline (cached recipes)
+- Handles API errors gracefully
+- No single point of failure
+
+### Why It Matters
+- Reliability builds trust
+- Reduces anxiety about failures
+- Supports users with unreliable internet
+- Professional, polished experience
+
+### Implementation Examples
+✅ **DO**: Fallback to pre-selected recipes if AI fails  
+✅ **DO**: Cache recipes locally  
+✅ **DO**: Show error message, suggest retry  
+✅ **DO**: Voice input optional, not required  
+❌ **DON'T**: Show blank screen on error  
+❌ **DON'T**: Require internet for core functions  
+❌ **DON'T**: Crash if one component fails
+
+### When to Break This Rule
+- Critical security issues (must fail securely)
+- Data corruption (must prevent, not degrade)
+
+---
+
+## 🎨 Applying Principles Together
+
+### Example: DaysSelector Component
+
+**Principle 1 (Automation)**: Auto-selects 7 days as default  
+**Principle 2 (Accessibility)**: Voice input, keyboard shortcuts, screen reader labels  
+**Principle 3 (Single-Screen)**: Inline on main page, no modal  
+**Principle 4 (Instant Value)**: Shows immediately, no loading  
+**Principle 5 (Graceful Degradation)**: Works without voice, fallback to buttons
+
+### Example: Grocery List Display
+
+**Principle 1 (Automation)**: Auto-generated, no manual editing  
+**Principle 2 (Accessibility)**: Print-optimized, high contrast, keyboard accessible  
+**Principle 3 (Single-Screen)**: Same page, scroll to see  
+**Principle 4 (Instant Value)**: Shown immediately after generation  
+**Principle 5 (Graceful Degradation)**: Cached if API fails, shows last generated list
+
+---
+
+## 🤔 Decision Framework
+
+When making any design or development decision, ask:
+
+1. **Does this automate a decision?** (Principle 1)
+2. **Is this accessible to all users?** (Principle 2)
+3. **Does this keep everything on one screen?** (Principle 3)
+4. **Does this provide value immediately?** (Principle 4)
+5. **Does this work if something fails?** (Principle 5)
+
+If the answer to all 5 is "yes" → ✅ Proceed  
+If any answer is "no" → 🤔 Reconsider or justify exception
+
+---
+
+## 📚 Related Documents
+
+- [01-problem-definition.mdc](./01-problem-definition.mdc) - Why these principles exist
+- [05-accessibility-requirements.mdc](./05-accessibility-requirements.mdc) - Detailed accessibility guide
+- [11-component-library.mdc](./11-component-library.mdc) - Component implementations
+
+---
+
+**Last updated**: December 20, 2024
+

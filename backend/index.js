@@ -1,30 +1,20 @@
-import scrapePrices from './scrapers/pricesScraper.js';
-import scrapeRecipes from './scrapers/recipesScraper.js';
-import {syncAll} from './notion/syncToNotion.js';
-import {log} from './utils/scraper.js';
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
-async function runPipeline() {
-  log('Starting Aldi meal planning data pipeline...');
-  
-  try {
-    log('Step 1: Scraping prices...');
-    await scrapePrices();
-    
-    log('Step 2: Scraping recipes...');
-    await scrapeRecipes();
-    
-    log('Step 3: Syncing to Notion...');
-    await syncAll();
-    
-    log('Pipeline complete!', 'success');
-  } catch (error) {
-    log(`Pipeline failed: ${error.message}`, 'error');
-    throw error;
-  }
-}
+dotenv.config();
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runPipeline();
-}
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-export default runPipeline;
+app.use(cors());
+app.use(express.json());
+
+// Health check
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', version: '2.0.0', message: 'Aldi Meal Planner V2 API' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

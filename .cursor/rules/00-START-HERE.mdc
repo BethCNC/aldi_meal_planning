@@ -1,0 +1,100 @@
+# 👋 START HERE
+
+**Welcome to the Aldi Meal Planner 2.0 Documentation**
+
+This is your complete guide to redesigning the meal planner with a conversational AI agent focused on eliminating decision fatigue for neurodivergent users.
+
+---
+
+## 📍 You Are Here
+
+```
+Desktop/
+└── docs/
+    ├── 📖 00-START-HERE.md ← YOU ARE HERE
+    ├── 📋 README.md (documentation index)
+    ├── ⚡ QUICK-REFERENCE.md (cheat sheet)
+    └── 📁 11 detailed guides (see below)
+```
+
+---
+
+## 🎯 What You're Building
+
+**A meal planning app that**:
+- Asks ONE question: "How many days?"
+- Makes ALL decisions automatically
+- Delivers a print-ready grocery list in 30 seconds
+- Reduces weekly food spending from $200 → $100
+- Eliminates decision paralysis for neurodivergent users
+
+**Why it matters**:
+- Traditional apps fail because they assume users CAN decide
+- This app removes decisions entirely, not just organizes them
+- Portfolio-worthy UX case study demonstrating systematic design thinking
+
+---
+
+## 🚦 Read These First (In Order)
+
+### 1️⃣ [README.mdc](./README.mdc) - 5 minutes
+**Quick overview** of all 11 documents and what each contains.  
+Read this to understand the documentation structure.
+
+### 2️⃣ [01-problem-definition.mdc](./01-problem-definition.mdc) - 10 minutes
+**Why this project exists**. Core issue, user pain points, validation data.  
+Read this to understand the problem you're solving.
+
+### 3️⃣ [02-design-principles.mdc](./02-design-principles.mdc) - 5 minutes
+**How to make decisions**. Five principles guide every choice.  
+Read this before designing or coding anything.
+
+### 4️⃣ [07-implementation-roadmap.mdc](./07-implementation-roadmap.mdc) - 10 minutes
+**What to build and when**. 12-week plan broken into 6 phases.  
+Read this to know where to start development.
+
+---
+
+## 📚 Deep Dive (Read As Needed)
+
+### User Experience
+- **03-journey-mapping-before.md**: Current state pain points
+- **04-journey-mapping-after.md**: Improved flow metrics
+- **08-user-testing-protocol.md**: How to validate with users
+
+### Technical Implementation
+- **06-technical-architecture.md**: Stack, database, API endpoints
+- **10-gemini-integration-guide.md**: AI agent setup
+- **11-component-library.md**: React components reference
+
+### Accessibility & Portfolio
+- **05-accessibility-requirements.md**: WCAG compliance
+- **09-portfolio-case-study-outline.md**: Presentation structure
+
+---
+
+## ✅ Your First Actions
+
+**Right now (next 60 minutes)**:
+1. ☐ Read this entire document
+2. ☐ Skim README.md to see all available docs
+3. ☐ Read 01-problem-definition.md carefully
+4. ☐ Read 02-design-principles.md
+5. ☐ Open QUICK-REFERENCE.md and bookmark it
+
+**Today**:
+1. ☐ Read 03 & 04 (journey maps)
+2. ☐ Read 07 (roadmap) - understand Phase 1
+3. ☐ Create Git branch: `redesign/conversational-agent`
+
+**This week**:
+1. ☐ Set up React project
+2. ☐ Get Gemini API key
+3. ☐ Build DaysSelector component
+4. ☐ Integrate basic Gemini conversation
+
+---
+
+**Let's build something that actually helps people! 🚀**
+
+*Last updated: December 20, 2024*

@@ -1,0 +1,286 @@
+# 09 - Portfolio Case Study Outline
+
+**20-Slide Presentation Structure**
+
+This document outlines the structure for presenting the Aldi Meal Planner 2.0 as a portfolio case study.
+
+---
+
+## 🎯 Case Study Goals
+
+### Primary Objectives
+1. **Demonstrate systematic thinking** - Show problem → research → solution
+2. **Highlight accessibility expertise** - WCAG AAA compliance
+3. **Show UX innovation** - Removing decisions, not organizing them
+4. **Prove impact** - Measurable user outcomes
+
+### Target Audience
+- Potential employers
+- UX/Product Design teams
+- Accessibility advocates
+- Portfolio reviewers
+
+---
+
+## 📊 20-Slide Structure
+
+### Section 1: The Problem (Slides 1-4)
+
+#### Slide 1: Title Slide
+- **Title**: "Eliminating Decision Fatigue: A Meal Planning App for Neurodivergent Users"
+- **Subtitle**: "Reducing 15 decisions to 1, 30 minutes to 30 seconds"
+- **Your Name**: Portfolio presentation
+- **Visual**: App screenshot or hero image
+
+#### Slide 2: The Problem
+- **Headline**: "Traditional meal planning apps fail neurodivergent users"
+- **Content**:
+  - 90% abandonment rate
+  - 15-20 decisions required
+  - 30+ minutes to complete
+  - Decision paralysis
+- **Visual**: Before/after comparison chart
+
+#### Slide 3: User Pain Points
+- **Headline**: "Why users abandon meal planning"
+- **Content**:
+  - Decision overload
+  - Perfectionism prevents completion
+  - Anxiety from too many choices
+  - Time investment creates pressure
+- **Visual**: User quote cards or journey map
+
+#### Slide 4: Research Data
+- **Headline**: "Validating the problem"
+- **Content**:
+  - 8 user interviews
+  - 50+ survey responses
+  Competitive analysis
+  - Key insight: "Users don't need more options, they need fewer decisions"
+- **Visual**: Research methodology diagram
+
+---
+
+### Section 2: The Solution (Slides 5-10)
+
+#### Slide 5: Solution Overview
+- **Headline**: "One question, automatic planning"
+- **Content**:
+  - Ask: "How many days?"
+  - AI makes all decisions
+  - Grocery list in 30 seconds
+- **Visual**: App flow diagram
+
+#### Slide 6: Design Principles
+- **Headline**: "Five principles guide every decision"
+- **Content**:
+  1. Automation over customization
+  2. Accessibility-first
+  3. Single-screen flow
+  4. Instant value
+  5. Graceful degradation
+- **Visual**: Icon grid or principle cards
+
+#### Slide 7: User Journey: Before
+- **Headline**: "Current state: 90% abandon"
+- **Content**:
+  - 6 stages, 5 abandonment points
+  - 30+ minutes
+  - 15-20 decisions
+  - High anxiety
+- **Visual**: Journey map with pain points
+
+#### Slide 8: User Journey: After
+- **Headline**: "Target state: 95% complete"
+- **Content**:
+  - 5 stages, 0 abandonment points
+  - 30 seconds
+  - 1 decision
+  - Low anxiety
+- **Visual**: Journey map with improvements
+
+#### Slide 9: Key Innovation
+- **Headline**: "Removing decisions, not organizing them"
+- **Content**:
+  - Traditional apps: Organize choices
+  - This app: Eliminate choices
+  - AI makes decisions automatically
+  - User only answers: "How many days?"
+- **Visual**: Comparison diagram
+
+#### Slide 10: Success Metrics
+- **Headline**: "Measurable improvements"
+- **Content**:
+  - Completion: 10% → 95% (85% increase)
+  - Time: 30 min → 30 sec (97% faster)
+  - Decisions: 15-20 → 1 (95% reduction)
+  - Anxiety: 8/10 → 2/10 (75% reduction)
+- **Visual**: Metrics dashboard or before/after chart
+
+---
+
+### Section 3: Implementation (Slides 11-15)
+
+#### Slide 11: Technical Architecture
+- **Headline**: "Modern stack, accessible architecture"
+- **Content**:
+  - Frontend: React 19, Tailwind CSS
+  - Backend: Node.js, Express
+  - AI: Google Gemini 1.5 Pro
+  - Database: Supabase (PostgreSQL)
+- **Visual**: Architecture diagram
+
+#### Slide 12: AI Agent Flow
+- **Headline**: "Conversational AI makes decisions"
+- **Content**:
+  - User input → AI agent
+  - Recipe selection with constraints
+  - Budget optimization
+  - Variety enforcement
+- **Visual**: AI flow diagram
+
+#### Slide 13: Accessibility Implementation
+- **Headline**: "WCAG AAA compliance"
+- **Content**:
+  - Triple input modality (voice/button/keyboard)
+  - Screen reader optimized
+  - High contrast mode
+  - Keyboard navigation
+- **Visual**: Accessibility features showcase
+
+#### Slide 14: Component Highlights
+- **Headline**: "Key components"
+- **Content**:
+  - DaysSelector: Simple, accessible
+  - GroceryList: Print-optimized
+  - Conversation UI: Clear, friendly
+- **Visual**: Component screenshots
+
+#### Slide 15: Development Process
+- **Headline**: "12-week iterative development"
+- **Content**:
+  - 6 phases
+  - User testing at week 9-10
+  - Continuous iteration
+  - Accessibility-first approach
+- **Visual**: Timeline or phase diagram
+
+---
+
+### Section 4: Results (Slides 16-18)
+
+#### Slide 16: User Testing Results
+- **Headline**: "Validated with real users"
+- **Content**:
+  - 6-8 neurodivergent users tested
+  - 95% completion rate achieved
+  - 30-second average time
+  - Positive qualitative feedback
+- **Visual**: Test results chart or user quotes
+
+#### Slide 17: Impact
+- **Headline**: "Real-world impact"
+- **Content**:
+  - Time saved: 29.5 min/week
+  - Money saved: $100/week ($5,200/year)
+  - Stress reduced: 75%
+  - Confidence gained
+- **Visual**: Impact metrics or user testimonial
+
+#### Slide 18: Lessons Learned
+- **Headline**: "Key takeaways"
+- **Content**:
+  - Automation > Customization for neurodivergent users
+  - Accessibility is a feature, not a constraint
+  - Removing decisions is more valuable than organizing them
+  - User testing is essential
+- **Visual**: Key insights cards
+
+---
+
+### Section 5: Conclusion (Slides 19-20)
+
+#### Slide 19: Future Enhancements
+- **Headline**: "What's next?"
+- **Content**:
+  - Expand recipe database
+  - Add dietary preference learning
+  - Integrate with grocery delivery
+  - Mobile app version
+- **Visual**: Future roadmap or mockups
+
+#### Slide 20: Thank You
+- **Headline**: "Thank you"
+- **Content**:
+  - Contact information
+  - Portfolio link
+  - GitHub repository
+  - Demo video link
+- **Visual**: Your photo or app logo
+
+---
+
+## 🎨 Visual Guidelines
+
+### Color Palette
+- **Primary**: Accessible, high contrast
+- **Accent**: Complementary colors
+- **Text**: Dark on light, light on dark
+- **Charts**: Colorblind-friendly palette
+
+### Typography
+- **Headings**: Bold, sans-serif
+- **Body**: Readable, 16px minimum
+- **Code**: Monospace for technical content
+
+### Images
+- **Screenshots**: High quality, annotated
+- **Diagrams**: Clear, labeled
+- **Charts**: Accessible, data-driven
+- **Icons**: Consistent style
+
+---
+
+## 📝 Storytelling Framework
+
+### Narrative Arc
+1. **Hook**: Start with the problem (90% abandon)
+2. **Build**: Show research and insights
+3. **Reveal**: Present the solution
+4. **Prove**: Show results and impact
+5. **Close**: Future vision
+
+### Key Messages
+- **Problem**: Traditional apps assume users can decide
+- **Insight**: Users need fewer decisions, not more options
+- **Solution**: AI makes all decisions automatically
+- **Impact**: 95% completion, 30 seconds, 1 decision
+
+---
+
+## 🎬 Presentation Tips
+
+### Delivery
+- **Pace**: 1-2 minutes per slide
+- **Engagement**: Ask questions, tell stories
+- **Visuals**: Let images speak, minimal text
+- **Practice**: Rehearse timing
+
+### Accessibility
+- **Alt text**: Describe all images
+- **Font size**: Large, readable
+- **Contrast**: High contrast for visibility
+- **Captions**: If video included
+
+---
+
+## 📚 Related Documents
+
+- [01-problem-definition.mdc](./01-problem-definition.mdc) - Problem details
+- [04-journey-mapping-after.mdc](./04-journey-mapping-after.mdc) - User journey
+- [08-user-testing-protocol.mdc](./08-user-testing-protocol.mdc) - Testing results
+
+---
+
+**Last updated**: December 20, 2024
+

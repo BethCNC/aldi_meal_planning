@@ -1,0 +1,361 @@
+# ⚡ Quick Reference
+
+**Cheat Sheet for Development**
+
+This is your go-to reference for common tasks, troubleshooting, and shortcuts.
+
+---
+
+## 🚀 Quick Start
+
+### First Time Setup
+```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your keys
+
+# Start development server
+npm run dev
+
+# Start backend server (separate terminal)
+npm run dev:server
+```
+
+### Environment Variables Needed
+```bash
+# Supabase
+VITE_SUPABASE_URL=https://[project].supabase.co
+VITE_SUPABASE_ANON_KEY=[anon-key]
+SUPABASE_SERVICE_ROLE_KEY=[service-role-key]
+
+# Gemini AI
+GEMINI_API_KEY=[api-key]
+GOOGLE_API_KEY=[api-key]  # Alternative name
+
+# Server
+PORT=3001
+```
+
+---
+
+## 📁 Common File Locations
+
+### Frontend
+- **Main App**: `src/App.jsx`
+- **Components**: `src/components/`
+- **API Calls**: `src/lib/supabase.js`
+- **Styles**: `src/index.css`
+
+### Backend
+- **Server**: `server/index.js`
+- **AI Agent**: `backend/ai/agents/mealPlanningAgent.js`
+- **Database Clients**: `backend/supabase/`
+- **API Routes**: `backend/index.js`
+
+### Documentation
+- **Start Here**: `.cursor/rules/00-START-HERE.md`
+- **All Docs**: `.cursor/rules/`
+- **Database Schema**: `docs/DATABASE_SCHEMA_SUPABASE.md`
+
+---
+
+## 🔧 Common Tasks
+
+### Generate Meal Plan
+```bash
+# Via CLI
+npm run plan:generate
+
+# Via API
+POST http://localhost:3001/api/meal-plan/generate
+Body: { days: 7, userId: "user-id", budget: 100 }
+```
+
+### Generate Grocery List
+```bash
+# Via CLI
+npm run grocery:list
+
+# Via API
+GET http://localhost:3001/api/grocery-list/:planId
+```
+
+### Add Recipe
+```bash
+npm run add:recipe
+```
+
+### Test Database Connection
+```bash
+npm run verify:supabase
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### "Missing GEMINI_API_KEY"
+**Problem**: API key not found  
+**Solution**: 
+1. Check `.env` file exists
+2. Verify key is set: `GEMINI_API_KEY=your-key`
+3. Restart server after adding key
+
+### "Failed to parse AI output"
+**Problem**: AI returned invalid format  
+**Solution**:
+1. Check prompt template
+2. Verify Zod schema matches expected output
+3. Add error logging to see raw response
+4. Consider fallback algorithm
+
+### "Plan exceeds budget"
+**Problem**: AI generated plan over budget  
+**Solution**:
+1. Check budget constraint in prompt
+2. Verify recipe costs in database
+3. Add stricter validation
+4. Use fallback algorithm if needed
+
+### "Recipe ID not found"
+**Problem**: AI suggested invalid recipe  
+**Solution**:
+1. Validate recipe IDs before saving
+2. Filter available recipes before sending to AI
+3. Add error handling for invalid IDs
+
+### Supabase Connection Issues
+**Problem**: Can't connect to database  
+**Solution**:
+1. Verify `VITE_SUPABASE_URL` and keys
+2. Check Supabase project is active
+3. Verify network connection
+4. Check Supabase dashboard for errors
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+### Development
+- **Ctrl/Cmd + K**: Focus search (VS Code)
+- **Ctrl/Cmd + P**: Quick file open
+- **Ctrl/Cmd + `**: Toggle terminal
+
+### App (When Built)
+- **Tab**: Navigate forward
+- **Shift + Tab**: Navigate backward
+- **Enter/Space**: Activate button
+- **Escape**: Cancel/close
+- **Ctrl/Cmd + P**: Print grocery list
+- **Ctrl/Cmd + R**: Regenerate plan
+
+---
+
+## 📊 Database Queries
+
+### Get Recipes
+```javascript
+import { getRecipes } from './backend/supabase/recipeClient.js';
+
+const recipes = await getRecipes({
+  category: 'Chicken',
+  maxCostPerServing: 10,
+  limit: 20
+});
+```
+
+### Get Meal Plan
+```javascript
+import { getMealPlan } from './backend/supabase/mealPlanClient.js';
+
+const plan = await getMealPlan('2025-01-06', userId);
+```
+
+### Create Meal Plan
+```javascript
+import { createMealPlan } from './backend/supabase/mealPlanClient.js';
+
+const plan = await createMealPlan('2025-01-06', meals, userId);
+```
+
+---
+
+## 🤖 AI Agent Usage
+
+### Generate Meal Plan
+```javascript
+import { generateMealPlan } from './backend/ai/agents/mealPlanningAgent.js';
+
+const result = await generateMealPlan({
+  userId: 'user-123',
+  days: 7,
+  budget: 100
+});
+
+console.log(result.plan.meals);
+console.log(result.aiAnalysis.variety_analysis);
+```
+
+### Test Gemini Connection
+```javascript
+import { getModel } from './backend/ai/geminiClient.js';
+
+const model = getModel();
+const response = await model.generateContent('Hello!');
+console.log(response.response.text());
+```
+
+---
+
+## 🎨 Styling
+
+### Tailwind Classes
+```jsx
+// Button
+<button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+  Click me
+</button>
+
+// Card
+<div className="p-6 bg-white rounded-lg shadow">
+  Content
+</div>
+
+// Input
+<input className="px-3 py-2 border rounded focus:outline-none focus:ring-2" />
+```
+
+### Accessibility Classes
+```jsx
+// Screen reader only
+<span className="sr-only">Hidden text for screen readers</span>
+
+// Focus indicator
+<button className="focus:outline-none focus:ring-2 focus:ring-blue-500">
+  Accessible button
+</button>
+```
+
+---
+
+## 🧪 Testing
+
+### Run Tests
+```bash
+npm test
+```
+
+### Test Specific File
+```bash
+npm test -- mealPlanningAgent.test.js
+```
+
+### Watch Mode
+```bash
+npm test -- --watch
+```
+
+---
+
+## 📝 Code Snippets
+
+### React Component Template
+```jsx
+import { useState } from 'react';
+
+export function MyComponent({ prop1, prop2 }) {
+  const [state, setState] = useState(null);
+  
+  const handleClick = () => {
+    // Handle click
+  };
+  
+  return (
+    <div className="p-4">
+      <button onClick={handleClick}>
+        Click me
+      </button>
+    </div>
+  );
+}
+```
+
+### API Route Template
+```javascript
+import express from 'express';
+const router = express.Router();
+
+router.post('/api/endpoint', async (req, res) => {
+  try {
+    const { param1, param2 } = req.body;
+    
+    // Process request
+    const result = await processData(param1, param2);
+    
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;
+```
+
+---
+
+## 🔗 Useful Links
+
+### Documentation
+- [Start Here](./00-START-HERE.mdc)
+- [Problem Definition](./01-problem-definition.mdc)
+- [Design Principles](./02-design-principles.mdc)
+- [Implementation Roadmap](./07-implementation-roadmap.mdc)
+
+### External Resources
+- [React Docs](https://react.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Supabase Docs](https://supabase.com/docs)
+- [Gemini API](https://ai.google.dev/docs)
+- [LangChain Docs](https://js.langchain.com/)
+
+### Tools
+- [Google AI Studio](https://makersuite.google.com/app/apikey) - Get API key
+- [Supabase Dashboard](https://app.supabase.com/) - Database management
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/) - Accessibility
+
+---
+
+## 📞 Getting Help
+
+### Check Documentation First
+1. [00-START-HERE.mdc](./00-START-HERE.mdc) - Overview
+2. [QUICK-REFERENCE.mdc](./QUICK-REFERENCE.mdc) - This file
+3. [06-technical-architecture.mdc](./06-technical-architecture.mdc) - Technical details
+4. [10-gemini-integration-guide.mdc](./10-gemini-integration-guide.mdc) - AI setup
+
+### Common Issues
+- **API Key Issues**: Check `.env` file, restart server
+- **Database Errors**: Verify Supabase connection, check keys
+- **Build Errors**: Clear `node_modules`, reinstall
+- **Component Issues**: Check props, verify imports
+
+---
+
+## ✅ Pre-Deployment Checklist
+
+- [ ] All environment variables set
+- [ ] API keys valid and working
+- [ ] Database schema up to date
+- [ ] Tests passing
+- [ ] Accessibility audit complete
+- [ ] Build succeeds (`npm run build`)
+- [ ] No console errors
+- [ ] Documentation updated
+
+---
+
+**Last updated**: December 20, 2024
+

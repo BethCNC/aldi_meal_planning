@@ -71,7 +71,16 @@ export async function createMealPlan({ day_count, user_id, budget, sensory_prefe
       image_url: recipe.imageUrl,
       protein_category: recipe.proteinCategory,
       texture_profile: recipe.textureProfile,
-      prep_effort_level: recipe.prepEffortLevel
+      prep_effort_level: recipe.prepEffortLevel,
+      cost_per_serving: recipe.costPerServing,
+      instructions: recipe.instructions 
+        ? recipe.instructions.split('\n').filter(line => line.trim().length > 0 && !line.toLowerCase().startsWith('ingredients:')) 
+        : ['Instructions not available.'],
+      ingredients: recipe.recipe_ingredients?.map(ri => ({
+        name: ri.ingredient_name || ri.ingredient?.item,
+        quantity: `${ri.quantity || ''} ${ri.unit || ''}`.trim(),
+        price: ri.calculated_cost || 0
+      })) || []
     }
   }));
 

@@ -19,8 +19,8 @@ const COMMON_ALIASES = {
   'red onion': 'purple onions',
   'garlic': 'garlic',
   'salt': 'salt',
-  'pepper': 'bananas, per lb', // Wait, pepper matched bananas? That's a bad data in DB. 
-  'black pepper': 'bananas, per lb', // I should probably fix the DB entry for pepper later.
+  'pepper': 'black pepper', 
+  'black pepper': 'black pepper', 
   'olive oil': 'olive oil',
   'butter': 'butter',
   'milk': 'milk',

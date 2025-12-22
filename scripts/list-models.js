@@ -12,7 +12,7 @@ async function listModels() {
     // Actually, it's typically a separate API call.
     // However, I can try to generate content with 'gemini-1.5-flash' which is usually available.
     
-    const modelsToCheck = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+    const modelsToCheck = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-pro', 'gemini-1.5-flash'];
     
     for (const modelName of modelsToCheck) {
       console.log(`Checking ${modelName}...`);

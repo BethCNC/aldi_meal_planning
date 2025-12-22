@@ -24,17 +24,21 @@ export function generateGroceryList(flatList) {
     // item.ingredient.item is name.
     // item.cost is total cost.
 
-    const count = item.packagesToBuy;
+    const count = item.packagesToBuy || 0;
     const unitSize = item.ingredient.unitSize || 
                      (item.ingredient.packageSize ? `${item.ingredient.packageSize} ${item.ingredient.packageUnit}` : '');
     const name = item.ingredient.item;
     const cost = item.cost.toFixed(2);
 
-    let displayString = `${count}x `;
+    let displayString = count > 0 ? `${count}x ` : '';
     if (unitSize) {
       displayString += `${unitSize} `;
     }
     displayString += `${name} ($${cost})`;
+    
+    if (item.missingPrice) {
+      displayString += ' [Price Unknown]';
+    }
 
     grouped[category].push({
       item: name,

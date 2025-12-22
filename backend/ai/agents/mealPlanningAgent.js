@@ -62,7 +62,7 @@ Example: ["uuid-1", "uuid-2", ...]
 
   // 3. Call Gemini
   try {
-    const model = getModel('gemini-1.5-pro', {
+    const model = getModel('gemini-2.5-pro', {
       generationConfig: {
         temperature: 0.4,
         responseMimeType: "application/json"

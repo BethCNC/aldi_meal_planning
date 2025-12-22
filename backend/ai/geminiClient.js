@@ -11,7 +11,7 @@ if (!apiKey) {
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
-export function getModel(modelName = 'gemini-1.5-pro', config = {}) {
+export function getModel(modelName = 'gemini-2.5-pro', config = {}) {
   if (!genAI) {
     throw new Error('Gemini API key not found');
   }
@@ -34,7 +34,7 @@ export async function suggestRecipesFromPantry(pantryItems, safeRecipes, constra
     return [];
   }
 
-  const model = getModel('gemini-1.5-pro');
+  const model = getModel('gemini-2.5-pro');
 
   const prompt = `You are a meal planning assistant for a user with ADHD/ARFID who needs familiar, safe recipes.
 

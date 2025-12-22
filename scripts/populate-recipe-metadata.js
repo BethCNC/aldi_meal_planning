@@ -12,22 +12,20 @@ function categorizeRecipe(name, ingredients) {
   const lowerIngs = ingredients.toLowerCase();
   const text = `${lowerName} ${lowerIngs}`;
 
-  let protein = 'Other';
+  let protein = 'vegetarian'; // Default to vegetarian if nothing else matches
   let texture = 'Mixed';
 
-  // Protein
-  if (text.includes('chicken') || text.includes('poultry') || text.includes('turkey')) protein = 'Chicken';
-  else if (text.includes('beef') || text.includes('steak') || text.includes('burger') || text.includes('meatball')) protein = 'Beef';
-  else if (text.includes('pork') || text.includes('ham') || text.includes('sausage') || text.includes('bacon') || text.includes('chops')) protein = 'Pork';
-  else if (text.includes('fish') || text.includes('shrimp') || text.includes('salmon') || text.includes('crab') || text.includes('seafood')) protein = 'Fish';
-  else if (text.includes('tofu') || text.includes('bean') || text.includes('lentil') || text.includes('chickpea') || text.includes('vegetable') || text.includes('vegetarian')) protein = 'Vegetarian';
+  // Protein mapping to DB allowed values: 'poultry', 'beef', 'pork', 'vegetarian', 'fish'
+  if (text.includes('chicken') || text.includes('poultry') || text.includes('turkey')) protein = 'poultry';
+  else if (text.includes('beef') || text.includes('steak') || text.includes('burger') || text.includes('meatball')) protein = 'beef';
+  else if (text.includes('pork') || text.includes('ham') || text.includes('sausage') || text.includes('bacon') || text.includes('chops')) protein = 'pork';
+  else if (text.includes('fish') || text.includes('shrimp') || text.includes('salmon') || text.includes('crab') || text.includes('seafood')) protein = 'fish';
+  else if (text.includes('egg') || text.includes('tofu') || text.includes('bean') || text.includes('lentil') || text.includes('chickpea') || text.includes('vegetable') || text.includes('vegetarian') || text.includes('pasta') || text.includes('cheese')) protein = 'vegetarian';
 
   // Texture
   if (text.includes('soup') || text.includes('stew') || text.includes('curry') || text.includes('mashed')) texture = 'Soft';
   else if (text.includes('salad') || text.includes('crunch') || text.includes('taco') || text.includes('fried') || text.includes('chip')) texture = 'Crunchy';
   else if (text.includes('steak') || text.includes('chop') || text.includes('roast')) texture = 'Chewy';
-  
-  // Default to Mixed if not distinct
   
   return { protein, texture };
 }

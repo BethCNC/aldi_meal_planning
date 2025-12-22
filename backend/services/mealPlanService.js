@@ -28,10 +28,10 @@ export async function createMealPlan({ day_count, user_id, budget, sensory_prefe
   let method = 'gemini-1.5-pro';
 
   try {
-    // 10s Timeout for AI
+    // 30s Timeout for AI
     selectedRecipeIds = await Promise.race([
       selectRecipes({ userId: user_id, dayCount: day_count, budget: budget, preferences: sensory_preferences, allRecipes: allRecipes }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('AI Timeout')), 10000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AI Timeout')), 30000))
     ]);
     console.log(`   - AI agent returned ${selectedRecipeIds.length} recipe IDs:`, selectedRecipeIds);
   } catch (error) {

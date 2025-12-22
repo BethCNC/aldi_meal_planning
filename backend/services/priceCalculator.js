@@ -21,9 +21,11 @@ export async function calculateRecipeCost(recipeId) {
     if (!ingredient) continue;
 
     // Use integer pricing if available, fallback to float
-    const priceCents = ingredient.aldiPriceCents ?? (ingredient.pricePerPackage * 100);
-    const packageSize = ingredient.packageSize;
-    const packageUnit = ingredient.packageUnit;
+    const priceCents = ingredient.aldiPriceCents ?? 
+                       ingredient.aldi_price_cents ?? 
+                       (ingredient.pricePerPackage || ingredient.price_per_package || 0) * 100;
+    const packageSize = ingredient.packageSize ?? ingredient.package_size;
+    const packageUnit = ingredient.packageUnit ?? ingredient.package_unit;
 
     if (!priceCents || !packageSize) {
       breakdown.push({
@@ -87,13 +89,16 @@ export async function calculatePlanCost(recipeIds) {
   for (const item of aggregated) {
     const { ingredient, totalQuantity, units } = item;
     
-    const priceCents = ingredient.aldiPriceCents ?? (ingredient.pricePerPackage * 100);
-    const packageSize = ingredient.packageSize;
-    const packageUnit = ingredient.packageUnit;
+    const priceCents = ingredient.aldiPriceCents ?? 
+                       ingredient.aldi_price_cents ?? 
+                       (ingredient.pricePerPackage || ingredient.price_per_package || 0) * 100;
+    const packageSize = ingredient.packageSize ?? ingredient.package_size;
+    const packageUnit = ingredient.packageUnit ?? ingredient.package_unit;
 
     if (!priceCents || !packageSize) {
       pricedIngredients.push({
         ...item,
+        packagesToBuy: 0,
         cost: 0,
         missingPrice: true
       });
@@ -152,9 +157,11 @@ export async function aggregateIngredients(recipeIds) {
       
       // Normalize to package unit
       let normalizedQty = ri.quantity;
-      if (ri.unit && ingredient.packageUnit && ri.unit.toLowerCase() !== ingredient.packageUnit.toLowerCase()) {
+      const pkgUnit = ingredient.packageUnit ?? ingredient.package_unit;
+      
+      if (ri.unit && pkgUnit && ri.unit.toLowerCase() !== pkgUnit.toLowerCase()) {
         try {
-          normalizedQty = convertUnit(ri.quantity, ri.unit, ingredient.packageUnit, ingredient.item);
+          normalizedQty = convertUnit(ri.quantity, ri.unit, pkgUnit, ingredient.item);
         } catch (e) {
           console.warn(`Aggregation conversion failed: ${e.message}`);
         }
@@ -168,7 +175,7 @@ export async function aggregateIngredients(recipeIds) {
   return Array.from(ingredientMap.values()).map(entry => ({
     ingredient: entry.ingredient,
     totalQuantity: entry.quantity, // In package units
-    unit: entry.ingredient.packageUnit,
+    unit: entry.ingredient.packageUnit ?? entry.ingredient.package_unit,
     usageDetails: entry.originalUnits
   }));
 }

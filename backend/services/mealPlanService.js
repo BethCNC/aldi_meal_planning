@@ -25,7 +25,7 @@ export async function createMealPlan({ day_count, user_id, budget, sensory_prefe
 
   // 1. Select Recipes (AI with Fallback)
   let selectedRecipeIds = [];
-  let method = 'gemini-1.5-pro';
+  let method = 'gemini-2.5-pro';
 
   try {
     // 30s Timeout for AI

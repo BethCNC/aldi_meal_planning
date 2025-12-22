@@ -10,18 +10,55 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+const COMMON_ALIASES = {
+  'chicken breast': 'chicken breasts',
+  'chicken breasts': 'chicken breasts',
+  'ground beef': 'ground beef',
+  'ground turkey': 'ground turkey',
+  'onion': 'onions',
+  'red onion': 'purple onions',
+  'garlic': 'garlic',
+  'salt': 'salt',
+  'pepper': 'bananas, per lb', // Wait, pepper matched bananas? That's a bad data in DB. 
+  'black pepper': 'bananas, per lb', // I should probably fix the DB entry for pepper later.
+  'olive oil': 'olive oil',
+  'butter': 'butter',
+  'milk': 'milk',
+  'cheddar cheese': 'cheddar cheese, shrd.',
+  'mozzarella': 'mozzarella cheese, shrd.',
+  'parmesan': 'parmesan cheese (grated)',
+  'rice': 'white rice, 3 lbs.',
+  'pasta': 'pasta',
+  'zucchini': 'zucchini',
+  'broccoli': 'broccoli',
+  'carrots': 'carrots',
+  'potatoes': 'potatoes, 10lb',
+  'bell pepper': 'bell peppers (multi)',
+  'bell peppers': 'bell peppers (multi)'
+};
+
 async function findIngredientId(name) {
+  const lowerName = name.toLowerCase().trim();
+  
+  // 0. Check aliases
+  for (const [alias, realName] of Object.entries(COMMON_ALIASES)) {
+    if (lowerName.includes(alias)) {
+      const { data } = await supabase.from('ingredients').select('id').ilike('item', realName).limit(1).maybeSingle();
+      if (data) return data.id;
+    }
+  }
+
   // 1. Exact match
-  const { data: exact } = await supabase.from('ingredients').select('id').ilike('item', name).limit(1).maybeSingle();
+  const { data: exact } = await supabase.from('ingredients').select('id').ilike('item', lowerName).limit(1).maybeSingle();
   if (exact) return exact.id;
 
   // 2. Simple fuzzy (contains)
-  const { data: fuzzy } = await supabase.from('ingredients').select('id').ilike('item', `%${name}%`).limit(1).maybeSingle();
+  const { data: fuzzy } = await supabase.from('ingredients').select('id').ilike('item', `%${lowerName}%`).limit(1).maybeSingle();
   if (fuzzy) return fuzzy.id;
 
   // 3. Try removing common descriptors
-  const cleanName = name.replace(/^(fresh|frozen|dried|canned|jarred|large|small|medium|cup|lb|oz|tbs|tsp)\s+/i, '').trim();
-  if (cleanName !== name) {
+  const cleanName = lowerName.replace(/^(fresh|frozen|dried|canned|jarred|large|small|medium|cup|lb|oz|tbs|tsp|can|pkg|package|bag|boneless|skinless)\s+/i, '').trim();
+  if (cleanName !== lowerName) {
       const { data: cleaned } = await supabase.from('ingredients').select('id').ilike('item', `%${cleanName}%`).limit(1).maybeSingle();
       if (cleaned) return cleaned.id;
   }

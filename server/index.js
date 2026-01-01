@@ -3,11 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 import dotenv from 'dotenv';
 import scheduledTasksRouter from './scheduledTasks.js';
 import aiChatRouter from './aiChat.js';
 import planRoutes from '../backend/routes/planRoutes.js';
-import recipeRoutes from '../backend/routes/recipeRoutes.js'; // New import
+import recipeRoutes from '../backend/routes/recipeRoutes.js';
+import imageRoutes from '../backend/routes/imageRoutes.js';
 
 dotenv.config();
 
@@ -38,8 +40,38 @@ if (!geminiApiKey) {
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 // Middleware
-app.use(express.json());
-app.use(express.static(join(__dirname, '../dist')));
+app.use(express.json({ limit: '10mb' })); // Increase limit for image uploads
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// CORS configuration (if needed for API access)
+if (process.env.CORS_ORIGIN) {
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+}
+
+// Serve static files from dist (if it exists)
+const distPath = join(__dirname, '../dist');
+if (existsSync(distPath)) {
+  app.use(express.static(distPath));
+  console.log('✅ Serving static files from dist/');
+} else {
+  console.warn('⚠️  Warning: dist/ folder not found. Run "npm run build" first.');
+}
 
 // JWT Verification Middleware
 async function verifyAuth(req, res, next) {
@@ -71,6 +103,7 @@ app.use('/api/cron', scheduledTasksRouter);
 app.use('/api/ai/chat', aiChatRouter);
 app.use('/api/v1/plan', /* verifyAuth, */ planRoutes);
 app.use('/api/v1/recipes', verifyAuth, recipeRoutes); // New route
+app.use('/api/v1/images', verifyAuth, imageRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -79,7 +112,15 @@ app.get('/api/health', (req, res) => {
 
 // Serve React app for all other routes (SPA routing)
 app.get('*', (req, res) => {
-  res.sendFile(join(__dirname, '../dist/index.html'));
+  const indexPath = join(__dirname, '../dist/index.html');
+  if (existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(503).json({
+      error: 'Application not built',
+      message: 'Please run "npm run build" to build the frontend application'
+    });
+  }
 });
 
 // Global Error Handler

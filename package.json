@@ -37,7 +37,8 @@
     "test:rpc": "node scripts/test-rpc-function.js",
     "cron:plans": "node backend/scheduled/weeklyPlanGenerator.js",
     "cron:prices": "node backend/scheduled/priceUpdater.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "verify:deploy": "node scripts/verify-build.js"
   },
   "keywords": [
     "aldi",

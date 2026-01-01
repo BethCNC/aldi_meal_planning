@@ -2,7 +2,15 @@
 
 Follow these steps to get your Aldi Meal Planner back online.
 
-## Step 1: Get Your Server Ready
+**Choose your method:**
+- **Option A: PM2 (No Docker)** - Simpler, what you probably used before
+- **Option B: Docker** - More isolated, easier updates
+
+---
+
+## Option A: PM2 (No Docker) - Recommended
+
+### Step 1: Get Your Server Ready
 
 If you're using **Hetzner Cloud**:
 
@@ -13,38 +21,41 @@ If you're using **Hetzner Cloud**:
 3. Note your server IP address
 4. SSH into server: `ssh root@YOUR_SERVER_IP`
 
-## Step 2: Install Docker
+### Step 2: Install Node.js and PM2
 
 ```bash
 # Update system
 apt update && apt upgrade -y
 
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
+# Install Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
 
-# Install Docker Compose
-apt install -y docker-compose-plugin
+# Install PM2 (keeps app running)
+npm install -g pm2
 ```
 
-## Step 3: Clone Your Code
+### Step 3: Clone Your Code
 
 ```bash
-cd /opt
+cd /var/www  # or /opt
 git clone https://github.com/YOUR_USERNAME/aldi_meal_planning.git
 cd aldi_meal_planning
 git checkout v2-new  # or your branch
 ```
 
-## Step 4: Set Environment Variables
+### Step 4: Install Dependencies & Build
 
 ```bash
-# Create .env file
+# Install dependencies
+npm install
+
+# Set environment variables
 cp env.template .env
-nano .env
+nano .env  # Fill in your keys (see below)
 ```
 
-**Fill in these values:**
+**Fill in these values in .env:**
 
 ```env
 SUPABASE_URL=https://your-project.supabase.co
@@ -58,39 +69,32 @@ NODE_ENV=production
 
 Save and exit (Ctrl+X, Y, Enter)
 
-## Step 5: Deploy
+### Step 5: Build Frontend
 
 ```bash
-# Make deploy script executable
-chmod +x deploy.sh
-
-# Deploy with Docker
-./deploy.sh docker
+# Build the React app
+npm run build
 ```
 
-Or manually:
+### Step 6: Start with PM2
 
 ```bash
-# Build
-docker build \
-  --build-arg VITE_SUPABASE_URL=$(grep VITE_SUPABASE_URL .env | cut -d '=' -f2) \
-  --build-arg VITE_SUPABASE_ANON_KEY=$(grep VITE_SUPABASE_ANON_KEY .env | cut -d '=' -f2) \
-  -t aldi-meal-planner:latest .
+# Start the app
+pm2 start ecosystem.config.js
 
-# Run
-docker run -d \
-  --name aldi-meal-planner \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  --env-file .env \
-  aldi-meal-planner:latest
+# Save PM2 config (so it restarts on server reboot)
+pm2 save
+pm2 startup  # Follow the instructions it prints
 ```
 
-## Step 6: Test It
+### Step 7: Test It
 
 ```bash
-# Check if it's running
-docker logs aldi-meal-planner
+# Check status
+pm2 status
+
+# View logs
+pm2 logs aldi-meal-planner
 
 # Test health endpoint
 curl http://localhost:3000/api/health
@@ -98,7 +102,7 @@ curl http://localhost:3000/api/health
 
 You should see: `{"status":"ok","timestamp":"..."}`
 
-## Step 7: Point Your Domain (Optional)
+### Step 8: Point Your Domain (Optional)
 
 If you want to use a domain instead of IP:port:
 
@@ -147,7 +151,75 @@ systemctl reload nginx
 certbot --nginx -d yourdomain.com -d www.yourdomain.com
 ```
 
-## Step 8: Access Your App
+## Option B: Docker
+
+### Step 1: Get Your Server Ready
+
+Same as Option A Step 1
+
+### Step 2: Install Docker
+
+```bash
+# Update system
+apt update && apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Install Docker Compose
+apt install -y docker-compose-plugin
+```
+
+### Step 3: Clone Your Code
+
+```bash
+cd /opt
+git clone https://github.com/YOUR_USERNAME/aldi_meal_planning.git
+cd aldi_meal_planning
+git checkout v2-new
+```
+
+### Step 4: Set Environment Variables
+
+```bash
+cp env.template .env
+nano .env  # Fill in your keys
+```
+
+### Step 5: Deploy
+
+```bash
+chmod +x deploy.sh
+./deploy.sh docker
+```
+
+Or manually:
+
+```bash
+docker build \
+  --build-arg VITE_SUPABASE_URL=$(grep VITE_SUPABASE_URL .env | cut -d '=' -f2) \
+  --build-arg VITE_SUPABASE_ANON_KEY=$(grep VITE_SUPABASE_ANON_KEY .env | cut -d '=' -f2) \
+  -t aldi-meal-planner:latest .
+
+docker run -d \
+  --name aldi-meal-planner \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  --env-file .env \
+  aldi-meal-planner:latest
+```
+
+### Step 6: Test It
+
+```bash
+docker logs aldi-meal-planner
+curl http://localhost:3000/api/health
+```
+
+---
+
+## Access Your App
 
 - **By IP**: `http://YOUR_SERVER_IP:3000`
 - **By Domain**: `https://yourdomain.com`
@@ -156,15 +228,35 @@ certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 ## Troubleshooting
 
+### PM2 Method
+
 **App won't start?**
 ```bash
-docker logs aldi-meal-planner
+pm2 logs aldi-meal-planner
 # Check for missing environment variables
 ```
 
-**Port 3000 not accessible?**
-- Check Hetzner Cloud Firewall: Allow port 3000 (or 80/443 if using Nginx)
-- Check Docker: `docker ps` (should show aldi-meal-planner running)
+**Need to update?**
+```bash
+cd /var/www/aldi_meal_planning  # or wherever you cloned it
+git pull
+npm install
+npm run build
+pm2 restart aldi-meal-planner
+```
+
+**View logs?**
+```bash
+pm2 logs aldi-meal-planner
+pm2 status
+```
+
+### Docker Method
+
+**App won't start?**
+```bash
+docker logs aldi-meal-planner
+```
 
 **Need to update?**
 ```bash
@@ -173,13 +265,17 @@ git pull
 ./deploy.sh docker
 ```
 
-**View logs?**
-```bash
-docker logs -f aldi-meal-planner
-```
+### Both Methods
+
+**Port 3000 not accessible?**
+- Check Hetzner Cloud Firewall: Allow port 3000 (or 80/443 if using Nginx)
+- PM2: `pm2 status` (should show app running)
+- Docker: `docker ps` (should show container running)
 
 ---
 
 ## That's It!
 
-Your app should now be running. Need n8n workflows? See `docs/HETZNER_N8N_SETUP.md` for that setup.
+Your app should now be running. **PM2 (Option A) is simpler and what you probably used before.**
+
+Need n8n workflows? See `docs/HETZNER_N8N_SETUP.md` for that setup.

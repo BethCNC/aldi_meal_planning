@@ -28,6 +28,9 @@ Your application is now ready for deployment to a production server with a custo
 
 ## 🚀 Quick Start (3 Steps)
 
+**Note**: If you were previously using **Hetzner Cloud** and **n8n**, see the detailed guide:
+- **[Hetzner + n8n Setup Guide](./docs/HETZNER_N8N_SETUP.md)** - Complete Hetzner Cloud deployment with n8n workflows
+
 ### Step 1: Set Up Environment Variables
 
 ```bash

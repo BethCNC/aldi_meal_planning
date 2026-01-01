@@ -6,7 +6,8 @@ Get your app running on a server in 5 minutes!
 
 - [ ] Supabase project created (get URL and API keys)
 - [ ] Google Gemini API key
-- [ ] Server/VPS access OR platform account (Railway, Render, Fly.io)
+- [ ] Server/VPS access (Hetzner Cloud, DigitalOcean, etc.) OR platform account (Railway, Render, Fly.io)
+- [ ] n8n setup (optional, for automated workflows)
 
 ---
 
@@ -107,10 +108,29 @@ If you just want to test quickly:
 
 ```bash
 # Make sure port 3000 is open in your firewall
-sudo ufw allow 3000
+# On Hetzner Cloud: Configure in Cloud Console → Firewall
+sudo ufw allow 3000  # Or use Hetzner Cloud Firewall UI
 
 # Access at: http://your-server-ip:3000
 ```
+
+### Option C: Hetzner Cloud Quick Deploy
+
+**Hetzner Cloud** (recommended for EU hosting):
+
+1. **Create VPS in Hetzner Cloud Console:**
+   - Choose Ubuntu 22.04 or later
+   - Minimum: CX11 (1 vCPU, 2GB RAM)
+   - Recommended: CPX11 (2 vCPU, 4GB RAM)
+
+2. **Configure Firewall:**
+   - Allow ports: 22 (SSH), 80 (HTTP), 443 (HTTPS)
+   - Allow port 3000 if not using Nginx initially
+
+3. **SSH into server and follow Option A (Docker) above**
+
+4. **For n8n workflows** (optional):
+   - See "n8n Workflow Automation Setup" in [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ---
 

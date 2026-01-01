@@ -16,8 +16,12 @@ Before deploying, ensure you have:
    - Configure DNS records for your domain
 
 4. **Server Access**
-   - VPS (DigitalOcean, Linode, AWS EC2, etc.)
+   - VPS (Hetzner Cloud, DigitalOcean, Linode, AWS EC2, etc.)
    - Or use a platform like Railway, Render, Fly.io, Coolify
+   
+5. **n8n Workflow Automation** (optional but recommended)
+   - For automated scheduled tasks (weekly plan generation, price updates)
+   - Can be hosted on the same server or separately
 
 ---
 
@@ -81,9 +85,11 @@ curl http://localhost:3000/api/health
 
 ### Option 2: Manual Server Deployment (VPS)
 
+This option works well for **Hetzner Cloud** and other VPS providers.
+
 #### Step 1: Server Setup
 
-On your VPS (Ubuntu/Debian):
+On your VPS (Ubuntu/Debian) - **Recommended for Hetzner Cloud**:
 
 ```bash
 # Update system
@@ -98,7 +104,18 @@ sudo npm install -g pm2
 
 # Install Nginx (for reverse proxy)
 sudo apt install -y nginx
+
+# Install Docker (optional, for n8n or other services)
+sudo apt install -y docker.io docker-compose
+sudo systemctl enable docker
+sudo systemctl start docker
 ```
+
+**Hetzner Cloud Specific Notes:**
+- Hetzner Cloud instances use Ubuntu by default
+- Recommended minimum: CX11 (1 vCPU, 2GB RAM) for small deployments
+- For production: CPX11 or higher (2+ vCPU, 4GB+ RAM)
+- Enable firewall in Hetzner Cloud console: allow ports 22, 80, 443
 
 #### Step 2: Clone and Build
 
@@ -204,6 +221,42 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 ---
 
+### Option 2.5: Hetzner Cloud with Docker
+
+For Hetzner Cloud, you can also use Docker directly:
+
+```bash
+# On Hetzner Cloud VPS
+# 1. Install Docker
+sudo apt update && sudo apt install -y docker.io docker-compose
+
+# 2. Clone repository
+git clone <your-repo-url> /opt/aldi-meal-planner
+cd /opt/aldi-meal-planner
+
+# 3. Create .env file
+cp env.template .env
+nano .env  # Edit with your values
+
+# 4. Build and run (using deploy.sh or manually)
+./deploy.sh docker
+
+# Or manually:
+docker build \
+  --build-arg VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+  --build-arg VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
+  -t aldi-meal-planner:latest .
+
+docker run -d \
+  --name aldi-meal-planner \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  --env-file .env \
+  aldi-meal-planner:latest
+```
+
+---
+
 ### Option 3: Platform Deployment
 
 #### Railway
@@ -240,6 +293,127 @@ fly secrets set SUPABASE_SERVICE_ROLE_KEY=...
 fly secrets set VITE_SUPABASE_ANON_KEY=...
 fly secrets set GEMINI_API_KEY=...
 fly secrets set NODE_ENV=production
+```
+
+---
+
+## 🔄 n8n Workflow Automation Setup
+
+If you were using **n8n** for automated scheduled tasks (weekly plan generation, price updates), here's how to set it up:
+
+### Option A: n8n on Same Server (Docker)
+
+```bash
+# Create docker-compose.yml for n8n
+cat > docker-compose-n8n.yml << 'EOF'
+version: '3.8'
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      - N8N_HOST=yourdomain.com
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://yourdomain.com/
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - app-network
+
+volumes:
+  n8n_data:
+
+networks:
+  app-network:
+    external: true
+EOF
+
+# Create network (if doesn't exist)
+docker network create app-network || true
+
+# Set password and start
+export N8N_PASSWORD=$(openssl rand -base64 12)
+docker-compose -f docker-compose-n8n.yml up -d
+```
+
+### Option B: n8n on Separate Server/Cloud
+
+Use n8n Cloud or install on a separate instance.
+
+### Setting Up Workflows in n8n
+
+1. **Access n8n:**
+   - If on same server: `https://yourdomain.com:5678` (add to Nginx config)
+   - If cloud: Use n8n Cloud URL
+
+2. **Create Weekly Plan Generation Workflow:**
+   - Add **HTTP Request** node
+   - Method: `POST`
+   - URL: `https://yourdomain.com/api/cron/generate-plans`
+   - Headers:
+     ```
+     Authorization: Bearer YOUR_CRON_SECRET
+     Content-Type: application/json
+     ```
+   - Add **Schedule Trigger** node
+   - Set to run: Weekly (e.g., Monday 8:00 AM)
+
+3. **Create Price Update Workflow:**
+   - Similar setup
+   - URL: `https://yourdomain.com/api/cron/update-prices`
+   - Schedule: Daily or weekly as needed
+
+4. **Add CRON_SECRET to .env:**
+   ```bash
+   # Generate a secure secret
+   openssl rand -base64 32
+   
+   # Add to .env
+   CRON_SECRET=your-generated-secret-here
+   ```
+
+### Enabling Cron Endpoints
+
+Currently, the cron endpoints in `server/scheduledTasks.js` are commented out. To enable them:
+
+1. Uncomment the routes in `server/scheduledTasks.js`
+2. Ensure the script files exist and are working
+3. Test endpoints manually first:
+   ```bash
+   curl -X POST https://yourdomain.com/api/cron/generate-plans \
+     -H "Authorization: Bearer YOUR_CRON_SECRET"
+   ```
+
+### n8n Nginx Configuration
+
+Add to your Nginx config if n8n is on the same server:
+
+```nginx
+# n8n subdomain or path
+server {
+    listen 443 ssl;
+    server_name n8n.yourdomain.com;  # or use a path: yourdomain.com/n8n
+
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:5678;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
 ```
 
 ---

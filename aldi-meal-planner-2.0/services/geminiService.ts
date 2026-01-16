@@ -128,3 +128,100 @@ export const generateMealPlan = async (days: number, preferences: UserPreference
     };
   }
 };
+
+/**
+ * Generate a single meal replacement that fits with the existing meal plan
+ */
+export const generateSingleMeal = async (
+  day: number,
+  existingMeals: { day: number; recipe: Recipe }[],
+  preferences: UserPreferences,
+  reason?: string
+): Promise<Recipe> => {
+  // If no API key, use fallback
+  if (!ai || !apiKey) {
+    const fallback = FALLBACK_RECIPES[day % FALLBACK_RECIPES.length];
+    return fallback;
+  }
+
+  try {
+    const existingMealNames = existingMeals.map(m => m.recipe.name).join(', ');
+    const budgetConstraint = preferences.budget 
+      ? `\n- Budget: Ensure this meal fits within the overall budget of $${preferences.budget.toFixed(2)} for the entire plan.`
+      : '';
+    
+    const reasonText = reason ? `\n- User feedback: ${reason}` : '';
+    
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `You are an expert meal planner for neurodivergent users. 
+      Generate a SINGLE dinner recipe for Day ${day} using affordable Aldi ingredients.
+      
+      USER PREFERENCES:
+      - Likes: ${preferences.likes || 'None specified'}
+      - Dislikes: ${preferences.dislikes || 'None specified'}
+      - Strictly Exclude (Allergies/Dietary): ${preferences.exclusions || 'None specified'}${reasonText}
+      
+      EXISTING MEALS IN PLAN (avoid repeating these):
+      ${existingMealNames || 'None yet'}
+      
+      CRITICAL RULES:
+      1. This must be a FULL DINNER (not a side dish or snack like fried rice alone).
+      2. Instructions must be "Neurodivergent Friendly": Short, active voice, numbered steps, no walls of text.
+      3. Ingredients must include estimated Aldi pricing.
+      4. Make it different from the existing meals.
+      5. Ensure it's substantial enough for a complete dinner meal.${budgetConstraint}
+      6. IMPORTANT: Respect the Likes/Dislikes and strictly exclude any ingredients or cuisines mentioned in the exclusions list.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            id: { type: Type.STRING },
+            name: { type: Type.STRING },
+            costPerServing: { type: Type.NUMBER },
+            category: { type: Type.STRING },
+            instructions: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            ingredients: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  name: { type: Type.STRING },
+                  quantity: { type: Type.STRING },
+                  category: { type: Type.STRING },
+                  price: { type: Type.NUMBER },
+                  aisle: { type: Type.STRING }
+                },
+                required: ["name", "quantity", "category", "price"]
+              }
+            }
+          },
+          required: ["name", "ingredients", "instructions", "costPerServing"]
+        }
+      }
+    });
+
+    const data = JSON.parse(response.text || '{}');
+    
+    if (!data.name || !data.ingredients || !data.instructions) {
+      throw new Error('Invalid response from AI: missing required fields');
+    }
+    
+    return {
+      id: data.id || `meal-${day}-${Date.now()}`,
+      name: data.name,
+      costPerServing: data.costPerServing || 0,
+      category: data.category || 'Other',
+      ingredients: data.ingredients || [],
+      instructions: data.instructions || []
+    };
+  } catch (error) {
+    console.error("❌ Single meal generation failed, using fallback:", error);
+    return FALLBACK_RECIPES[day % FALLBACK_RECIPES.length];
+  }
+};

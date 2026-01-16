@@ -39,6 +39,7 @@ export enum AppStage {
   INPUT = 'INPUT',
   PREFERENCES = 'PREFERENCES',
   GENERATING = 'GENERATING',
+  REVIEW = 'REVIEW',
   RESULT = 'RESULT'
 }
 

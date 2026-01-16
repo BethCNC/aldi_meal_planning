@@ -3,6 +3,7 @@ import { AppStage, MealPlan, UserPreferences } from './types';
 import DaysSelector from './components/DaysSelector';
 import PreferencesSelector from './components/PreferencesSelector';
 import ConversationUI from './components/ConversationUI';
+import ReviewMealPlan from './components/ReviewMealPlan';
 import GroceryList from './components/GroceryList';
 import RecipeCard from './components/RecipeCard';
 import { generateMealPlan } from './services/geminiService';
@@ -33,7 +34,7 @@ const App: React.FC = () => {
         throw new Error('Failed to generate meal plan');
       }
       setMealPlan(plan);
-      setStage(AppStage.RESULT);
+      setStage(AppStage.REVIEW); // Go to review first
     } catch (error) {
       console.error('Error generating meal plan:', error);
       // Still set a fallback plan so user sees something
@@ -53,7 +54,29 @@ const App: React.FC = () => {
         totalCost: 0
       };
       setMealPlan(fallbackPlan);
-      setStage(AppStage.RESULT);
+      setStage(AppStage.REVIEW);
+    }
+  };
+
+  const handleReviewApprove = (approvedPlan: MealPlan) => {
+    setMealPlan(approvedPlan);
+    setStage(AppStage.RESULT);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRegenerateAll = async () => {
+    setStage(AppStage.GENERATING);
+    try {
+      const plan = await generateMealPlan(days, preferences);
+      if (!plan || !plan.meals || plan.meals.length === 0) {
+        throw new Error('Failed to generate meal plan');
+      }
+      setMealPlan(plan);
+      setStage(AppStage.REVIEW);
+    } catch (error) {
+      console.error('Error regenerating meal plan:', error);
+      // Keep current plan on error
+      setStage(AppStage.REVIEW);
     }
   };
 
@@ -80,7 +103,8 @@ const App: React.FC = () => {
           
           <div className="text-center">
             <h1 className="text-lg font-bold tracking-tight text-stone-900">
-              {stage === AppStage.RESULT ? 'Your Meal Plan' : 'Aldi Planner'}
+              {stage === AppStage.RESULT ? 'Your Meal Plan' : 
+               stage === AppStage.REVIEW ? 'Review Your Plan' : 'Aldi Planner'}
             </h1>
           </div>
 
@@ -92,7 +116,11 @@ const App: React.FC = () => {
           <div className="h-1 w-full bg-stone-100">
              <div 
                className="h-full bg-primary transition-all duration-500"
-               style={{ width: stage === AppStage.PREFERENCES ? '50%' : '75%' }} 
+               style={{ 
+                 width: stage === AppStage.PREFERENCES ? '33%' : 
+                        stage === AppStage.GENERATING ? '66%' : 
+                        stage === AppStage.REVIEW ? '90%' : '0%'
+               }} 
              />
           </div>
         )}
@@ -110,6 +138,15 @@ const App: React.FC = () => {
 
         {stage === AppStage.GENERATING && (
           <ConversationUI days={days} />
+        )}
+
+        {stage === AppStage.REVIEW && mealPlan && (
+          <ReviewMealPlan 
+            mealPlan={mealPlan}
+            preferences={preferences}
+            onApprove={handleReviewApprove}
+            onRegenerateAll={handleRegenerateAll}
+          />
         )}
 
         {stage === AppStage.RESULT && mealPlan && (

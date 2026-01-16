@@ -3,9 +3,29 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MealPlan, Recipe, UserPreferences } from "../types";
 import { FALLBACK_RECIPES } from "./recipeFallbacks";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY || '';
+if (!apiKey) {
+  console.error('❌ GEMINI_API_KEY is missing! Meal plan generation will use fallback recipes.');
+  console.error('   Please set GEMINI_API_KEY in your .env file');
+}
+
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generateMealPlan = async (days: number, preferences: UserPreferences): Promise<MealPlan> => {
+  // If no API key, use fallbacks immediately
+  if (!ai || !apiKey) {
+    console.warn('⚠️  Using fallback recipes - GEMINI_API_KEY not configured');
+    const fallbackMeals = Array.from({ length: days }, (_, i) => ({
+      day: i + 1,
+      recipe: FALLBACK_RECIPES[i % FALLBACK_RECIPES.length]
+    }));
+    return {
+      days,
+      meals: fallbackMeals,
+      totalCost: fallbackMeals.reduce((acc, m) => acc + (m.recipe.costPerServing * 4), 0)
+    };
+  }
+
   try {
     const budgetConstraint = preferences.budget 
       ? `\n7. BUDGET CONSTRAINT: The TOTAL cost of all ingredients across all ${days} days MUST NOT exceed $${preferences.budget.toFixed(2)}. Calculate ingredient prices carefully and ensure the sum of all ingredient prices in the "ingredients" arrays across all meals stays under this limit.`
@@ -81,13 +101,22 @@ export const generateMealPlan = async (days: number, preferences: UserPreference
     });
 
     const data = JSON.parse(response.text || '{}');
+    
+    // Validate the response
+    if (!data.meals || !Array.isArray(data.meals) || data.meals.length === 0) {
+      throw new Error('Invalid response from AI: missing or empty meals array');
+    }
+    
     return {
       days,
       meals: data.meals,
       totalCost: data.totalCost || 0
     };
   } catch (error) {
-    console.error("AI Generation failed, using fallbacks:", error);
+    console.error("❌ AI Generation failed, using fallbacks:", error);
+    if (error instanceof Error) {
+      console.error("   Error details:", error.message);
+    }
     const fallbackMeals = Array.from({ length: days }, (_, i) => ({
       day: i + 1,
       recipe: FALLBACK_RECIPES[i % FALLBACK_RECIPES.length]

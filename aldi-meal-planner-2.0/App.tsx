@@ -27,9 +27,34 @@ const App: React.FC = () => {
     setPreferences(selectedPrefs);
     setStage(AppStage.GENERATING);
     
-    const plan = await generateMealPlan(days, selectedPrefs);
-    setMealPlan(plan);
-    setStage(AppStage.RESULT);
+    try {
+      const plan = await generateMealPlan(days, selectedPrefs);
+      if (!plan || !plan.meals || plan.meals.length === 0) {
+        throw new Error('Failed to generate meal plan');
+      }
+      setMealPlan(plan);
+      setStage(AppStage.RESULT);
+    } catch (error) {
+      console.error('Error generating meal plan:', error);
+      // Still set a fallback plan so user sees something
+      const fallbackPlan = {
+        days,
+        meals: Array.from({ length: days }, (_, i) => ({
+          day: i + 1,
+          recipe: {
+            id: `fallback-${i}`,
+            name: `Meal ${i + 1}`,
+            costPerServing: 0,
+            category: 'Other',
+            ingredients: [],
+            instructions: ['Please check your GEMINI_API_KEY in .env file']
+          }
+        })),
+        totalCost: 0
+      };
+      setMealPlan(fallbackPlan);
+      setStage(AppStage.RESULT);
+    }
   };
 
   const handleRestart = () => {

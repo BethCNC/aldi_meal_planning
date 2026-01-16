@@ -7,6 +7,10 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 export const generateMealPlan = async (days: number, preferences: UserPreferences): Promise<MealPlan> => {
   try {
+    const budgetConstraint = preferences.budget 
+      ? `\n7. BUDGET CONSTRAINT: The TOTAL cost of all ingredients across all ${days} days MUST NOT exceed $${preferences.budget.toFixed(2)}. Calculate ingredient prices carefully and ensure the sum of all ingredient prices in the "ingredients" arrays across all meals stays under this limit.`
+      : '';
+    
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `You are an expert meal planner for neurodivergent users. 
@@ -16,6 +20,7 @@ export const generateMealPlan = async (days: number, preferences: UserPreference
       - Likes: ${preferences.likes || 'None specified'}
       - Dislikes: ${preferences.dislikes || 'None specified'}
       - Strictly Exclude (Allergies/Dietary): ${preferences.exclusions || 'None specified'}
+      ${preferences.budget ? `- Budget: $${preferences.budget.toFixed(2)} maximum for the entire ${days}-day plan` : ''}
 
       CRITICAL RULES:
       1. One main dinner per day.
@@ -23,7 +28,7 @@ export const generateMealPlan = async (days: number, preferences: UserPreference
       3. Rotate proteins (Chicken, Beef, Pork, Veggie, Seafood).
       4. Ingredients must include estimated Aldi pricing.
       5. Output as a single JSON object.
-      6. IMPORTANT: Respect the Likes/Dislikes and strictly exclude any ingredients or cuisines mentioned in the exclusions list.`,
+      6. IMPORTANT: Respect the Likes/Dislikes and strictly exclude any ingredients or cuisines mentioned in the exclusions list.${budgetConstraint}`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {

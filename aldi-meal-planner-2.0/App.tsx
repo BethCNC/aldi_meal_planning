@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppStage, MealPlan, UserPreferences } from './types';
 import DaysSelector from './components/DaysSelector';
@@ -40,14 +39,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col pb-32">
-      {/* Dynamic Header - Solid background, no blurs */}
-      <header className="sticky top-0 z-[60] bg-stone-100 border-b-2 border-stone-200 no-print">
-        <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
+    <div className="min-h-screen bg-stone-50 flex flex-col pb-32 font-sans text-stone-900">
+      {/* Dynamic Header - Clean and simple */}
+      <header className="sticky top-0 z-[60] bg-white/95 backdrop-blur border-b border-stone-200 no-print transition-all">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <button 
             onClick={handleRestart}
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border-2 border-stone-300 text-stone-900 shadow-sm active:scale-90 transition-all"
-            aria-label="Home"
+            className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-stone-100 text-stone-600 transition-colors focus:outline-none focus:ring-2 focus:ring-stone-400"
+            aria-label={stage === AppStage.INPUT ? "Current Step: Select Days" : "Go Back / Restart"}
           >
             <span className="material-symbols-outlined">
               {stage === AppStage.INPUT ? 'house' : 'arrow_back'}
@@ -55,29 +54,29 @@ const App: React.FC = () => {
           </button>
           
           <div className="text-center">
-            <h1 className="text-xl font-black tracking-tight text-stone-900 uppercase">
-              {stage === AppStage.RESULT ? 'Your Week Sorted' : 'Aldi Planner'}
+            <h1 className="text-lg font-bold tracking-tight text-stone-900">
+              {stage === AppStage.RESULT ? 'Your Meal Plan' : 'Aldi Planner'}
             </h1>
-            {stage === AppStage.RESULT && (
-              <p className="text-[10px] font-black text-primary-dark uppercase tracking-[0.3em]">Ready to shop</p>
-            )}
-            {stage === AppStage.PREFERENCES && (
-              <p className="text-[10px] font-black text-primary-dark uppercase tracking-[0.3em]">Step 2 of 2</p>
-            )}
           </div>
 
-          <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border-2 border-stone-300 text-stone-900 shadow-sm opacity-0 pointer-events-none">
-            <span className="material-symbols-outlined">settings</span>
-          </div>
+          <div className="w-10 h-10" aria-hidden="true" /> {/* Spacer */}
         </div>
+        
+        {/* Progress Bar (Optional context) */}
+        {stage !== AppStage.INPUT && stage !== AppStage.RESULT && (
+          <div className="h-1 w-full bg-stone-100">
+             <div 
+               className="h-full bg-primary transition-all duration-500"
+               style={{ width: stage === AppStage.PREFERENCES ? '50%' : '75%' }} 
+             />
+          </div>
+        )}
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 w-full max-w-4xl mx-auto print:max-w-none">
+      <main className="flex-1 w-full max-w-3xl mx-auto print:max-w-none p-4 md:p-6">
         {stage === AppStage.INPUT && (
-          <div className="animate-in fade-in zoom-in-95 duration-500">
-            <DaysSelector onSelect={handleDaysSelected} />
-          </div>
+          <DaysSelector onSelect={handleDaysSelected} />
         )}
 
         {stage === AppStage.PREFERENCES && (
@@ -92,41 +91,41 @@ const App: React.FC = () => {
           <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
             
             {/* Section 1: Shopping */}
-            <div id="shopping-section">
-              <div className="px-6 pt-10 text-center max-w-lg mx-auto mb-4">
-                <span className="inline-block px-4 py-1.5 bg-stone-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-4">Phase One</span>
-                <h2 className="text-4xl font-black text-stone-900 tracking-tighter">Your Grocery List</h2>
-                <p className="text-stone-500 font-medium mt-2">Everything you need from Aldi in one go.</p>
+            <div id="shopping-section" className="scroll-mt-24">
+              <div className="px-4 pt-6 text-center max-w-lg mx-auto mb-6">
+                <span className="inline-block px-3 py-1 bg-stone-100 text-stone-600 text-xs font-bold rounded-full mb-3">Step 1</span>
+                <h2 className="text-3xl font-bold text-stone-900">Grocery List</h2>
+                <p className="text-stone-600 mt-2">Everything you need for the week.</p>
               </div>
-              <GroceryList mealPlan={mealPlan} />
+              <GroceryList mealPlan={mealPlan} budget={preferences.budget} />
             </div>
 
             {/* Visual Break */}
-            <div className="flex justify-center no-print">
-              <div className="w-1 h-12 bg-stone-200 rounded-full" />
+            <div className="flex justify-center no-print opacity-50">
+              <span className="material-symbols-outlined text-stone-300 text-3xl">more_vert</span>
             </div>
 
             {/* Section 2: Cooking */}
-            <div id="recipes-section" className="px-4">
-              <div className="text-center max-w-lg mx-auto mb-10">
-                <span className="inline-block px-4 py-1.5 bg-primary text-stone-900 text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-4">Phase Two</span>
-                <h2 className="text-4xl font-black text-stone-900 tracking-tighter">Meal Instructions</h2>
-                <p className="text-stone-500 font-medium mt-2">Simple steps for a stress-free week.</p>
+            <div id="recipes-section" className="px-2 scroll-mt-24">
+              <div className="text-center max-w-lg mx-auto mb-8">
+                <span className="inline-block px-3 py-1 bg-primary/20 text-stone-900 text-xs font-bold rounded-full mb-3">Step 2</span>
+                <h2 className="text-3xl font-bold text-stone-900">Daily Meals</h2>
+                <p className="text-stone-600 mt-2">Your cooking instructions.</p>
               </div>
               
-              <div className="space-y-6 max-w-2xl mx-auto">
+              <div className="space-y-4 max-w-2xl mx-auto">
                 {mealPlan.meals.map((meal) => (
                   <RecipeCard key={meal.day} recipe={meal.recipe} day={meal.day} />
                 ))}
               </div>
 
-              <div className="max-w-2xl mx-auto mt-12 no-print">
-                <button 
+              <div className="max-w-xl mx-auto mt-16 no-print text-center">
+                 <button 
                   onClick={() => handlePreferencesCompleted(preferences)}
-                  className="w-full py-6 bg-white border-4 border-dashed border-stone-200 text-stone-400 font-black rounded-[2rem] flex flex-col items-center justify-center gap-2 hover:bg-stone-100 hover:border-stone-300 transition-all active:scale-[0.98]"
+                  className="px-6 py-4 text-stone-500 font-medium hover:text-stone-800 hover:bg-stone-100 rounded-xl transition-colors flex items-center justify-center gap-2 mx-auto focus:outline-none focus:ring-2 focus:ring-stone-300"
                 >
-                  <span className="material-symbols-outlined text-4xl">refresh</span>
-                  <span className="uppercase tracking-widest text-xs">Don't like this plan? Generate a new one</span>
+                  <span className="material-symbols-outlined">refresh</span>
+                  Generate New Plan
                 </button>
               </div>
             </div>
@@ -136,13 +135,13 @@ const App: React.FC = () => {
 
       {/* Floating Action Navigation */}
       {stage === AppStage.RESULT && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-4 no-print z-50">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 no-print z-50 w-full max-w-xs px-4">
           <button 
             onClick={handleRestart}
-            className="px-8 py-5 bg-stone-900 text-white font-black rounded-3xl shadow-xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all border-2 border-stone-700"
+            className="w-full py-4 bg-stone-900 text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all focus:ring-4 focus:ring-stone-500 focus:outline-none"
           >
             <span className="material-symbols-outlined">restart_alt</span>
-            NEW START
+            Start Over
           </button>
         </div>
       )}

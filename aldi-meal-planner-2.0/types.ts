@@ -23,6 +23,7 @@ export interface UserPreferences {
   likes: string;
   dislikes: string;
   exclusions: string;
+  budget?: number;
 }
 
 export interface MealPlan {

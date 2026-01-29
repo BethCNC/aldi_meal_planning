@@ -1,0 +1,391 @@
+# 07 - Implementation Roadmap
+
+**12-Week Development Plan**
+
+This document breaks down the development into 6 phases over 12 weeks, with specific tasks and deliverables.
+
+---
+
+## 📅 Timeline Overview
+
+| Phase | Weeks | Focus | Deliverable |
+|-------|-------|-------|-------------|
+| **Phase 1** | 1-2 | Foundation | DaysSelector + Basic AI |
+| **Phase 2** | 3-4 | Plan Generation | Full meal plan + Grocery list |
+| **Phase 3** | 5-6 | Accessibility | WCAG AAA compliance |
+| **Phase 4** | 7-8 | Recipe Expansion | 50+ recipes, cost validation |
+| **Phase 5** | 9-10 | User Testing | Validation + Iteration |
+| **Phase 6** | 11-12 | Portfolio | Case study + Documentation |
+
+---
+
+## 🚀 Phase 1: Foundation (Weeks 1-2)
+
+### Week 1: Project Setup
+
+#### Day 1-2: Environment Setup
+- [ ] Verify React project structure (Vite)
+- [ ] Install dependencies (React, Tailwind, Headless UI)
+- [ ] Set up Supabase client
+- [ ] Get Gemini API key
+- [ ] Configure environment variables
+- [ ] Test basic API connection
+
+#### Day 3-4: DaysSelector Component
+- [ ] Create `DaysSelector.jsx` component
+- [ ] Implement number input (1-14 days)
+- [ ] Add default value (7 days)
+- [ ] Style with Tailwind
+- [ ] Add keyboard navigation
+- [ ] Test accessibility (screen reader)
+
+#### Day 5: Basic AI Integration
+- [ ] Set up Gemini client in backend
+- [ ] Create simple test prompt
+- [ ] Test API connection
+- [ ] Handle API errors gracefully
+
+### Week 2: Conversation Flow
+
+#### Day 1-2: Conversational UI
+- [ ] Create conversation component
+- [ ] Display AI messages
+- [ ] Show "generating..." state
+- [ ] Add loading animations
+- [ ] Style conversation bubbles
+
+#### Day 3-4: Backend API
+- [ ] Create `/api/meal-plan/generate` endpoint
+- [ ] Connect to Gemini API
+- [ ] Return structured response
+- [ ] Add error handling
+- [ ] Test with Postman/Thunder Client
+
+#### Day 5: Integration Testing
+- [ ] Connect frontend to backend
+- [ ] Test full flow (days → AI → response)
+- [ ] Fix any integration issues
+- [ ] Document API endpoints
+
+**Phase 1 Deliverable**: User can select days and see AI response
+
+---
+
+## 🍽️ Phase 2: Plan Generation (Weeks 3-4)
+
+### Week 3: Recipe Selection
+
+#### Day 1-2: Recipe Database
+- [ ] Verify Supabase recipes table
+- [ ] Test recipe queries
+- [ ] Filter by cost, category
+- [ ] Get recent meal plans (avoid repeats)
+
+#### Day 3-4: AI Agent Enhancement
+- [ ] Enhance prompt with recipe data
+- [ ] Add budget constraints
+- [ ] Implement variety logic (no repeats)
+- [ ] Validate recipe IDs
+- [ ] Test with 7-day plan
+
+#### Day 5: Meal Plan Structure
+- [ ] Define meal plan data structure
+- [ ] Save meal plan to Supabase
+- [ ] Link meals to days
+- [ ] Test database operations
+
+### Week 4: Grocery List
+
+#### Day 1-2: Grocery List Generation
+- [ ] Aggregate ingredients from recipes
+- [ ] Sum quantities by ingredient
+- [ ] Calculate total cost
+- [ ] Group by category
+
+#### Day 3-4: Grocery List UI
+- [ ] Create `GroceryList.jsx` component
+- [ ] Display items by category
+- [ ] Show total cost
+- [ ] Add print button
+- [ ] Style for printing
+
+#### Day 5: Integration
+- [ ] Connect meal plan → grocery list
+- [ ] Test full flow
+- [ ] Fix any bugs
+- [ ] Optimize performance
+
+**Phase 2 Deliverable**: Complete meal plan + grocery list generation
+
+---
+
+## ♿ Phase 3: Accessibility (Weeks 5-6)
+
+### Week 5: Voice Input
+
+#### Day 1-2: Web Speech API
+- [ ] Integrate Web Speech API
+- [ ] Add voice input button
+- [ ] Handle speech recognition
+- [ ] Parse "seven days" → 7
+- [ ] Add visual feedback
+
+#### Day 3-4: Keyboard Navigation
+- [ ] Implement Tab navigation
+- [ ] Add keyboard shortcuts
+- [ ] Focus management
+- [ ] Skip links
+- [ ] Test with keyboard only
+
+#### Day 5: Screen Reader
+- [ ] Add ARIA labels
+- [ ] Test with NVDA/JAWS
+- [ ] Add live regions for AI status
+- [ ] Fix any issues
+
+### Week 6: Visual Accessibility
+
+#### Day 1-2: Color Contrast
+- [ ] Verify 7:1 contrast for text
+- [ ] Verify 4.5:1 for large text
+- [ ] Test with color blindness simulators
+- [ ] Add high contrast mode toggle
+
+#### Day 3-4: Reduced Motion
+- [ ] Implement `prefers-reduced-motion`
+- [ ] Disable animations when needed
+- [ ] Test with reduced motion enabled
+
+#### Day 5: Final Accessibility Audit
+- [ ] Run axe DevTools
+- [ ] Test with screen readers
+- [ ] Test keyboard navigation
+- [ ] Fix any remaining issues
+
+**Phase 3 Deliverable**: WCAG AAA compliant app
+
+---
+
+## 📚 Phase 4: Recipe Expansion (Weeks 7-8)
+
+### Week 7: Recipe Data
+
+#### Day 1-2: Recipe Migration
+- [ ] Review existing recipes in database
+- [ ] Add missing recipes (target: 50+)
+- [ ] Verify all have cost data
+- [ ] Categorize recipes properly
+
+#### Day 3-4: Cost Validation
+- [ ] Verify ingredient prices
+- [ ] Recalculate recipe costs
+- [ ] Fix any cost discrepancies
+- [ ] Test with actual Aldi shopping
+
+#### Day 5: Recipe Quality
+- [ ] Verify all recipes have instructions
+- [ ] Check ingredient matching
+- [ ] Fix any data issues
+
+### Week 8: Variety & Balance
+
+#### Day 1-2: Protein Distribution
+- [ ] Verify protein rotation logic
+- [ ] Test variety across weeks
+- [ ] Ensure no 3-day repeats
+
+#### Day 3-4: Budget Optimization
+- [ ] Test with different budgets
+- [ ] Verify budget constraints work
+- [ ] Optimize recipe selection
+
+#### Day 5: Testing
+- [ ] Generate multiple meal plans
+- [ ] Verify variety
+- [ ] Check costs
+- [ ] Fix any issues
+
+**Phase 4 Deliverable**: 50+ recipes, verified costs, good variety
+
+---
+
+## 🧪 Phase 5: User Testing (Weeks 9-10)
+
+### Week 9: Test Preparation
+
+#### Day 1-2: Test Plan
+- [ ] Recruit 6-8 neurodivergent users
+- [ ] Create test scenarios
+- [ ] Prepare consent forms
+- [ ] Set up testing environment
+
+#### Day 3-4: Test Execution
+- [ ] Conduct user tests
+- [ ] Record sessions (with permission)
+- [ ] Take notes on pain points
+- [ ] Collect feedback
+
+#### Day 5: Analysis
+- [ ] Review test results
+- [ ] Identify key issues
+- [ ] Prioritize fixes
+
+### Week 10: Iteration
+
+#### Day 1-3: Fix Critical Issues
+- [ ] Address major pain points
+- [ ] Improve UX based on feedback
+- [ ] Fix any bugs found
+
+#### Day 4-5: Validation
+- [ ] Re-test with users
+- [ ] Verify improvements
+- [ ] Collect metrics
+- [ ] Document findings
+
+**Phase 5 Deliverable**: Validated app with user feedback incorporated
+
+---
+
+## 📊 Phase 6: Portfolio (Weeks 11-12)
+
+### Week 11: Case Study
+
+#### Day 1-2: Research & Data
+- [ ] Compile before/after metrics
+- [ ] Gather user quotes
+- [ ] Document design decisions
+- [ ] Create journey maps
+
+#### Day 3-4: Presentation
+- [ ] Create 20-slide case study
+- [ ] Write narrative
+- [ ] Add visuals (screenshots, diagrams)
+- [ ] Include code examples
+
+#### Day 5: Review
+- [ ] Review case study
+- [ ] Get feedback
+- [ ] Refine presentation
+
+### Week 12: Documentation & Demo
+
+#### Day 1-2: Developer Docs
+- [ ] Write README
+- [ ] Document API
+- [ ] Add code comments
+- [ ] Create setup guide
+
+#### Day 3-4: Demo Video
+- [ ] Record screen capture
+- [ ] Add voiceover
+- [ ] Edit video
+- [ ] Upload to portfolio
+
+#### Day 5: Final Polish
+- [ ] Review all documentation
+- [ ] Fix any remaining issues
+- [ ] Prepare for presentation
+- [ ] Celebrate! 🎉
+
+**Phase 6 Deliverable**: Complete portfolio case study + documentation
+
+---
+
+## ✅ Success Criteria
+
+### Phase 1
+- ✅ DaysSelector component works
+- ✅ Basic AI conversation displays
+- ✅ No critical bugs
+
+### Phase 2
+- ✅ Meal plan generates successfully
+- ✅ Grocery list displays correctly
+- ✅ Can print grocery list
+
+### Phase 3
+- ✅ WCAG AAA compliant
+- ✅ Voice input works
+- ✅ Keyboard navigation complete
+
+### Phase 4
+- ✅ 50+ recipes in database
+- ✅ Costs verified
+- ✅ Good variety across weeks
+
+### Phase 5
+- ✅ 95% completion rate
+- ✅ 30-second average time
+- ✅ User satisfaction 8+/10
+
+### Phase 6
+- ✅ Case study complete
+- ✅ Demo video recorded
+- ✅ Documentation finished
+
+---
+
+## 🎯 Weekly Goals
+
+### Week 1
+- Set up project
+- Build DaysSelector
+- Test AI connection
+
+### Week 2
+- Complete conversation flow
+- Connect frontend/backend
+
+### Week 3
+- Implement recipe selection
+- Enhance AI agent
+
+### Week 4
+- Generate grocery lists
+- Complete meal planning flow
+
+### Week 5
+- Add voice input
+- Implement keyboard nav
+
+### Week 6
+- Complete accessibility
+- Final accessibility audit
+
+### Week 7
+- Expand recipes
+- Validate costs
+
+### Week 8
+- Optimize variety
+- Test thoroughly
+
+### Week 9
+- Conduct user tests
+- Analyze results
+
+### Week 10
+- Iterate based on feedback
+- Validate improvements
+
+### Week 11
+- Create case study
+- Write documentation
+
+### Week 12
+- Record demo
+- Final polish
+
+---
+
+## 📚 Related Documents
+
+- [06-technical-architecture.mdc](./06-technical-architecture.mdc) - Technical details
+- [10-gemini-integration-guide.mdc](./10-gemini-integration-guide.mdc) - AI setup
+- [11-component-library.mdc](./11-component-library.mdc) - Component specs
+
+---
+
+**Last updated**: December 20, 2024
+

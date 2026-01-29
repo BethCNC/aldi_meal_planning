@@ -1,0 +1,379 @@
+# 11 - Component Library
+
+**React Component Specifications**
+
+This document provides detailed specifications for all React components in the Aldi Meal Planner 2.0.
+
+---
+
+## 📦 Component Overview
+
+### Core Components
+1. **DaysSelector** - Number input for meal plan duration
+2. **ConversationUI** - AI conversation display
+3. **GroceryList** - Grocery list with print functionality
+4. **RecipeCard** - Individual recipe display
+5. **LoadingSpinner** - Loading state indicator
+
+---
+
+## 🎯 DaysSelector Component
+
+### Purpose
+Primary input component. User selects number of days for meal plan.
+
+### Props
+```typescript
+interface DaysSelectorProps {
+  value: number;              // Current selected days (1-14)
+  onChange: (days: number) => void;
+  onSubmit: () => void;       // Trigger meal plan generation
+  disabled?: boolean;         // Disable during generation
+  min?: number;               // Minimum days (default: 1)
+  max?: number;               // Maximum days (default: 14)
+}
+```
+
+### Features
+- ✅ Number input (1-14 days)
+- ✅ Voice input support
+- ✅ Keyboard navigation
+- ✅ Screen reader optimized
+- ✅ Default value: 7 days
+- ✅ Visual feedback
+
+### Accessibility
+- **ARIA Label**: "Select number of days for meal plan"
+- **Keyboard**: Tab to focus, Enter to submit
+- **Voice**: "seven days" → 7
+- **Screen Reader**: Announces value changes
+
+### Example Usage
+```jsx
+<DaysSelector
+  value={days}
+  onChange={setDays}
+  onSubmit={handleGenerate}
+  disabled={isGenerating}
+/>
+```
+
+### Implementation Notes
+- Use `<input type="number">` with proper constraints
+- Add voice input button next to input
+- Show visual feedback on change
+- Validate input range (1-14)
+
+---
+
+## 💬 ConversationUI Component
+
+### Purpose
+Displays AI conversation messages during meal plan generation.
+
+### Props
+```typescript
+interface ConversationUIProps {
+  messages: Message[];        // Array of conversation messages
+  isGenerating: boolean;      // Show loading state
+}
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+```
+
+### Features
+- ✅ Message bubbles (user/assistant)
+- ✅ Loading indicator during generation
+- ✅ Smooth animations
+- ✅ Auto-scroll to latest message
+- ✅ Accessible live regions
+
+### Accessibility
+- **ARIA Live**: "polite" for status updates
+- **Screen Reader**: Announces new messages
+- **Keyboard**: Focus management
+
+### Example Usage
+```jsx
+<ConversationUI
+  messages={conversationMessages}
+  isGenerating={isGenerating}
+/>
+```
+
+### Message Flow
+1. User: "7 days"
+2. Assistant: "Got it! Generating your 7-day meal plan..."
+3. Assistant: "I'm selecting recipes with good variety..."
+4. Assistant: "Your meal plan is ready!"
+
+---
+
+## 🛒 GroceryList Component
+
+### Purpose
+Displays aggregated grocery list with print functionality.
+
+### Props
+```typescript
+interface GroceryListProps {
+  items: GroceryItem[];       // Grocery items grouped by category
+  totalCost: number;          // Total cost
+  onPrint: () => void;         // Print handler
+}
+
+interface GroceryItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  category: string;
+  cost: number;
+}
+```
+
+### Features
+- ✅ Grouped by category
+- ✅ Print-optimized layout
+- ✅ Total cost display
+- ✅ Checkboxes for shopping
+- ✅ Print button
+- ✅ Keyboard accessible
+
+### Accessibility
+- **ARIA Label**: "Grocery list for meal plan"
+- **Keyboard**: Tab through items, Enter to print
+- **Screen Reader**: Announces categories and items
+
+### Example Usage
+```jsx
+<GroceryList
+  items={groceryItems}
+  totalCost={totalCost}
+  onPrint={handlePrint}
+/>
+```
+
+### Print Styling
+- Use `@media print` styles
+- Hide non-essential elements
+- Optimize layout for paper
+- Include total cost
+
+---
+
+## 🍽️ RecipeCard Component
+
+### Purpose
+Displays individual recipe information (expandable).
+
+### Props
+```typescript
+interface RecipeCardProps {
+  recipe: Recipe;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+}
+
+interface Recipe {
+  id: string;
+  name: string;
+  category: string;
+  cost: number;
+  servings: number;
+  ingredients: Ingredient[];
+  instructions: string;
+  imageUrl?: string;
+}
+```
+
+### Features
+- ✅ Collapsible details
+- ✅ Cost per serving
+- ✅ Ingredient list
+- ✅ Instructions
+- ✅ Image (if available)
+- ✅ Category badge
+
+### Accessibility
+- **ARIA Expanded**: Toggle state
+- **Keyboard**: Enter/Space to expand
+- **Screen Reader**: Announces recipe details
+
+### Example Usage
+```jsx
+<RecipeCard
+  recipe={recipe}
+  isExpanded={expandedRecipeId === recipe.id}
+  onToggleExpand={() => setExpandedRecipeId(recipe.id)}
+/>
+```
+
+---
+
+## ⏳ LoadingSpinner Component
+
+### Purpose
+Shows loading state during meal plan generation.
+
+### Props
+```typescript
+interface LoadingSpinnerProps {
+  message?: string;            // Optional loading message
+  size?: 'small' | 'medium' | 'large';
+}
+```
+
+### Features
+- ✅ Animated spinner
+- ✅ Optional message
+- ✅ Respects `prefers-reduced-motion`
+- ✅ Accessible to screen readers
+
+### Accessibility
+- **ARIA Live**: Announces loading state
+- **Reduced Motion**: Static indicator if motion disabled
+
+### Example Usage
+```jsx
+<LoadingSpinner message="Generating your meal plan..." />
+```
+
+---
+
+## 🎨 Shared UI Components
+
+### Button Component
+
+```typescript
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  ariaLabel?: string;
+}
+```
+
+### Input Component
+
+```typescript
+interface InputProps {
+  type: 'text' | 'number' | 'email';
+  value: string | number;
+  onChange: (value: string | number) => void;
+  label: string;
+  placeholder?: string;
+  error?: string;
+  required?: boolean;
+}
+```
+
+### Card Component
+
+```typescript
+interface CardProps {
+  children: React.ReactNode;
+  title?: string;
+  className?: string;
+}
+```
+
+---
+
+## 🎯 Component Hierarchy
+
+```
+App
+├── DaysSelector
+│   ├── Input (number)
+│   ├── VoiceInputButton
+│   └── SubmitButton
+├── ConversationUI
+│   ├── MessageBubble (user)
+│   ├── MessageBubble (assistant)
+│   └── LoadingSpinner
+├── GroceryList
+│   ├── CategorySection[]
+│   │   ├── CategoryHeader
+│   │   └── GroceryItem[]
+│   ├── TotalCost
+│   └── PrintButton
+└── RecipeList
+    └── RecipeCard[]
+        ├── RecipeHeader
+        ├── RecipeDetails (expandable)
+        │   ├── Ingredients
+        │   └── Instructions
+        └── RecipeImage
+```
+
+---
+
+## ♿ Accessibility Checklist
+
+### Every Component Must Have:
+- [ ] ARIA labels where needed
+- [ ] Keyboard navigation
+- [ ] Focus indicators
+- [ ] Screen reader support
+- [ ] High contrast support
+- [ ] Reduced motion support
+
+### Testing
+- [ ] Test with NVDA/JAWS/VoiceOver
+- [ ] Test keyboard-only navigation
+- [ ] Test with high contrast mode
+- [ ] Test with reduced motion
+
+---
+
+## 📝 Implementation Guidelines
+
+### File Structure
+```
+src/
+├── components/
+│   ├── DaysSelector.jsx
+│   ├── ConversationUI.jsx
+│   ├── GroceryList.jsx
+│   ├── RecipeCard.jsx
+│   └── LoadingSpinner.jsx
+├── components/ui/
+│   ├── Button.jsx
+│   ├── Input.jsx
+│   └── Card.jsx
+└── components/accessibility/
+    ├── ScreenReaderOnly.jsx
+    └── SkipLink.jsx
+```
+
+### Styling
+- Use Tailwind CSS for styling
+- Follow design system tokens
+- Ensure 7:1 contrast for text
+- Use semantic HTML
+
+### State Management
+- Use React hooks (useState, useEffect)
+- Consider Context API for global state
+- Keep components focused and simple
+
+---
+
+## 📚 Related Documents
+
+- [02-design-principles.mdc](./02-design-principles.mdc) - Design decisions
+- [05-accessibility-requirements.mdc](./05-accessibility-requirements.mdc) - Accessibility specs
+- [06-technical-architecture.mdc](./06-technical-architecture.mdc) - System architecture
+
+---
+
+**Last updated**: December 20, 2024
+

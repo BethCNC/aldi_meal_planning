@@ -18,7 +18,11 @@ function mapRecipeToDbColumns(recipe) {
     tags: Array.isArray(recipe.tags)
       ? recipe.tags.filter(Boolean).join(', ')
       : recipe.tags ?? null,
-    notion_url: recipe.notionUrl ?? null
+    notion_url: recipe.notionUrl ?? null,
+    protein_category: recipe.proteinCategory ?? null,
+    texture_profile: recipe.textureProfile ?? null,
+    prep_effort_level: recipe.prepEffortLevel ?? null,
+    description: recipe.description ?? null
   };
 }
 
@@ -54,7 +58,12 @@ export function normalizeRecipeRow(row) {
     tags: row.tags,
     notionUrl: row.notion_url,
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    proteinCategory: row.protein_category,
+    textureProfile: row.texture_profile,
+    prepEffortLevel: row.prep_effort_level,
+    description: row.description,
+    rating: row.rating // Add rating field
   };
 }
 
@@ -191,4 +200,24 @@ export async function replaceRecipeIngredients(recipeId, ingredients) {
   await deleteRecipeIngredients(recipeId);
   if (!ingredients?.length) return [];
   return insertRecipeIngredients(recipeId, ingredients);
+}
+
+export async function updateRecipeRating(recipeId, rating) {
+  if (!recipeId || rating === undefined) {
+    throw new Error('Recipe ID and rating are required.');
+  }
+
+  const { data, error } = await supabase
+    .from('recipes')
+    .update({ rating: rating, updated_at: new Date().toISOString() })
+    .eq('id', recipeId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating rating for recipe ${recipeId}:`, error);
+    throw error;
+  }
+
+  return normalizeRecipeRow(data);
 }

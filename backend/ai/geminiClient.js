@@ -3,13 +3,23 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GOOGLE_API_KEY;
 
 if (!apiKey) {
   console.warn('Missing GEMINI_API_KEY. AI features may not work.');
 }
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
+
+export function getModel(modelName = 'gemini-2.5-pro', config = {}) {
+  if (!genAI) {
+    throw new Error('Gemini API key not found');
+  }
+  return genAI.getGenerativeModel({ 
+    model: modelName,
+    ...config
+  });
+}
 
 /**
  * Suggest recipes from pantry items using Gemini
@@ -24,7 +34,7 @@ export async function suggestRecipesFromPantry(pantryItems, safeRecipes, constra
     return [];
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+  const model = getModel('gemini-2.5-pro');
 
   const prompt = `You are a meal planning assistant for a user with ADHD/ARFID who needs familiar, safe recipes.
 
@@ -74,4 +84,3 @@ Return ONLY a valid JSON object with a "recipes" array: { "recipes": [{ "recipeN
     return [];
   }
 }
-

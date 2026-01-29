@@ -1,0 +1,289 @@
+# 05 - Accessibility Requirements
+
+**WCAG AAA Compliance Checklist**
+
+This document outlines all accessibility requirements for the Aldi Meal Planner 2.0, targeting WCAG AAA compliance (the highest level).
+
+---
+
+## 🎯 Accessibility Goals
+
+- **WCAG AAA Compliance** (not just AA)
+- **Triple Input Modality**: Voice, button, text for all actions
+- **Zero Barriers**: App usable by everyone, regardless of ability
+- **Screen Reader Optimized**: Full compatibility with NVDA, JAWS, VoiceOver
+- **Keyboard Navigation**: All functions accessible via keyboard
+
+---
+
+## ✅ WCAG AAA Checklist
+
+### 1. Perceivable
+
+#### 1.1 Text Alternatives
+- ✅ All images have alt text
+- ✅ Decorative images marked as decorative
+- ✅ Icons have text labels or aria-labels
+- ✅ Charts/graphs have text descriptions
+
+#### 1.2 Time-based Media
+- ✅ No auto-playing audio/video
+- ✅ Captions available for any video content
+- ✅ Audio descriptions for visual content
+
+#### 1.3 Adaptable
+- ✅ Content structure with proper headings (h1-h6)
+- ✅ Lists use proper list elements
+- ✅ Tables have headers
+- ✅ Form labels associated with inputs
+- ✅ No reliance on color alone for information
+
+#### 1.4 Distinguishable
+- ✅ **Contrast Ratio**: 7:1 for normal text, 4.5:1 for large text (AAA)
+- ✅ **Text Resize**: Up to 200% without loss of functionality
+- ✅ **Images of Text**: Avoided (use actual text)
+- ✅ **Low/No Audio**: No audio-only content
+- ✅ **Visual Presentation**: Line height 1.5x, paragraph spacing
+
+---
+
+### 2. Operable
+
+#### 2.1 Keyboard Accessible
+- ✅ **All Functions**: Accessible via keyboard
+- ✅ **No Keyboard Trap**: Can navigate in and out
+- ✅ **Keyboard Shortcuts**: Documented and customizable
+- ✅ **Focus Order**: Logical tab order
+- ✅ **Focus Indicators**: Visible and clear (3px minimum)
+
+#### 2.2 Enough Time
+- ✅ **No Time Limits**: No auto-logout or session timeouts
+- ✅ **Pause/Stop**: Any animations can be paused
+- ✅ **No Timing**: No time-based interactions required
+
+#### 2.3 Seizures and Physical Reactions
+- ✅ **No Flashing**: No content flashes more than 3 times/second
+- ✅ **Reduced Motion**: Respects `prefers-reduced-motion`
+- ✅ **Animation Control**: Can disable animations
+
+#### 2.4 Navigable
+- ✅ **Skip Links**: Skip to main content
+- ✅ **Page Titles**: Descriptive and unique
+- ✅ **Focus Order**: Logical sequence
+- ✅ **Link Purpose**: Clear from link text or context
+- ✅ **Multiple Ways**: Multiple ways to find content (not needed - single page)
+- ✅ **Headings and Labels**: Descriptive and clear
+- ✅ **Focus Visible**: Clear focus indicators
+
+#### 2.5 Input Modalities
+- ✅ **Pointer Gestures**: No complex gestures required
+- ✅ **Pointer Cancellation**: Can cancel pointer actions
+- ✅ **Label in Name**: Accessible name matches visible text
+- ✅ **Motion Actuation**: Can disable motion-based interactions
+
+---
+
+### 3. Understandable
+
+#### 3.1 Readable
+- ✅ **Language**: Page language declared (`lang` attribute)
+- ✅ **Unusual Words**: Definitions available
+- ✅ **Abbreviations**: Expanded on first use
+- ✅ **Reading Level**: Lower secondary education level
+- ✅ **Pronunciation**: Pronunciation help available if needed
+
+#### 3.2 Predictable
+- ✅ **On Focus**: No context changes on focus
+- ✅ **On Input**: No unexpected context changes
+- ✅ **Consistent Navigation**: Consistent navigation (single page, not applicable)
+- ✅ **Consistent Identification**: Consistent labels and icons
+- ✅ **Change on Request**: User initiates changes
+
+#### 3.3 Input Assistance
+- ✅ **Error Identification**: Clear error messages
+- ✅ **Labels or Instructions**: Clear labels for all inputs
+- ✅ **Error Suggestion**: Suggestions for fixing errors
+- ✅ **Error Prevention**: Confirmation for important actions
+
+---
+
+### 4. Robust
+
+#### 4.1 Compatible
+- ✅ **Parsing**: Valid HTML
+- ✅ **Name, Role, Value**: Proper ARIA attributes
+- ✅ **Status Messages**: Properly announced to screen readers
+
+---
+
+## 🎤 Triple Input Modality
+
+Every action must support three input methods:
+
+### 1. Voice Input
+- ✅ Web Speech API integration
+- ✅ Voice commands for all actions
+- ✅ Visual feedback when listening
+- ✅ Error handling for voice recognition failures
+
+### 2. Button/Touch
+- ✅ Large touch targets (44x44px minimum)
+- ✅ Clear button labels
+- ✅ Visual feedback on interaction
+- ✅ Hover states (desktop)
+
+### 3. Keyboard
+- ✅ Tab navigation
+- ✅ Enter/Space to activate
+- ✅ Arrow keys for navigation
+- ✅ Escape to cancel/close
+- ✅ Keyboard shortcuts documented
+
+---
+
+## 🎨 Visual Accessibility
+
+### Color Contrast
+- ✅ **Normal Text**: 7:1 contrast ratio (AAA)
+- ✅ **Large Text**: 4.5:1 contrast ratio (AAA)
+- ✅ **UI Components**: 3:1 contrast ratio (buttons, inputs)
+- ✅ **Focus Indicators**: 3:1 contrast ratio
+
+### Typography
+- ✅ **Font Size**: Minimum 16px for body text
+- ✅ **Line Height**: 1.5x font size
+- ✅ **Letter Spacing**: Normal (not too tight)
+- ✅ **Font Choice**: Sans-serif, readable fonts
+
+### Visual Indicators
+- ✅ **Not Color Alone**: Information conveyed through multiple means
+- ✅ **Icons + Text**: Icons always have text labels
+- ✅ **Focus Indicators**: 3px solid outline, high contrast
+- ✅ **Error States**: Icon + color + text
+
+---
+
+## ⌨️ Keyboard Navigation
+
+### Standard Navigation
+- **Tab**: Move forward through interactive elements
+- **Shift+Tab**: Move backward
+- **Enter/Space**: Activate buttons/links
+- **Arrow Keys**: Navigate within components
+- **Escape**: Close modals, cancel actions
+- **Home/End**: Jump to start/end of content
+
+### Custom Shortcuts
+- **Ctrl/Cmd + K**: Focus search (if applicable)
+- **Ctrl/Cmd + P**: Print grocery list
+- **Ctrl/Cmd + R**: Regenerate plan
+- **Alt + D**: Focus days selector
+
+---
+
+## 📱 Screen Reader Support
+
+### ARIA Labels
+```html
+<!-- Days Selector -->
+<button aria-label="Select 7 days for meal plan">
+  7 Days
+</button>
+
+<!-- Voice Input -->
+<button aria-label="Speak number of days" aria-pressed="false">
+  <span aria-hidden="true">🎤</span>
+  <span class="sr-only">Voice input</span>
+</button>
+
+<!-- Grocery List -->
+<section aria-label="Grocery list for 7 days">
+  <h2>Grocery List</h2>
+  <!-- List items -->
+</section>
+```
+
+### Live Regions
+```html
+<!-- AI Status Updates -->
+<div aria-live="polite" aria-atomic="true" class="sr-only">
+  Generating your meal plan...
+</div>
+
+<!-- Error Messages -->
+<div aria-live="assertive" role="alert">
+  Error: Could not generate plan. Please try again.
+</div>
+```
+
+### Semantic HTML
+- ✅ Use proper heading hierarchy (h1-h6)
+- ✅ Use `<nav>`, `<main>`, `<section>`, `<article>`
+- ✅ Use `<button>` for actions, `<a>` for navigation
+- ✅ Use `<label>` for form inputs
+- ✅ Use `<ul>`, `<ol>` for lists
+
+---
+
+## 🎯 Implementation Checklist
+
+### Phase 1: Foundation
+- [ ] Set up ARIA labels for all interactive elements
+- [ ] Implement keyboard navigation
+- [ ] Add focus indicators (3px, high contrast)
+- [ ] Test with screen reader (NVDA/JAWS/VoiceOver)
+
+### Phase 2: Voice Input
+- [ ] Integrate Web Speech API
+- [ ] Add voice input button with proper labels
+- [ ] Handle voice recognition errors gracefully
+- [ ] Provide visual feedback during voice input
+
+### Phase 3: Visual Accessibility
+- [ ] Verify color contrast (7:1 for text, 4.5:1 for large)
+- [ ] Add high contrast mode toggle
+- [ ] Implement reduced motion support
+- [ ] Test with color blindness simulators
+
+### Phase 4: Testing
+- [ ] Test with screen readers (NVDA, JAWS, VoiceOver)
+- [ ] Test keyboard-only navigation
+- [ ] Test with voice input
+- [ ] Test with high contrast mode
+- [ ] Test with reduced motion
+
+---
+
+## 🧪 Testing Tools
+
+### Automated Testing
+- **axe DevTools**: Browser extension for accessibility testing
+- **WAVE**: Web accessibility evaluation tool
+- **Lighthouse**: Built into Chrome DevTools
+
+### Manual Testing
+- **Screen Readers**: NVDA (Windows), JAWS (Windows), VoiceOver (Mac/iOS)
+- **Keyboard Navigation**: Tab through entire app
+- **Color Contrast**: WebAIM Contrast Checker
+- **Voice Input**: Test with Web Speech API
+
+---
+
+## 📚 Resources
+
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
+- [ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
+- [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
+
+---
+
+## 📚 Related Documents
+
+- [02-design-principles.mdc](./02-design-principles.mdc) - Principle 2: Accessibility-First
+- [11-component-library.mdc](./11-component-library.mdc) - Component accessibility specs
+
+---
+
+**Last updated**: December 20, 2024
+

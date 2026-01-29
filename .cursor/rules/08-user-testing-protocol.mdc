@@ -1,0 +1,322 @@
+# 08 - User Testing Protocol
+
+**How to Validate with Neurodivergent Users**
+
+This document outlines the user testing methodology for validating the meal planning app with neurodivergent users.
+
+---
+
+## 🎯 Testing Goals
+
+### Primary Objectives
+1. **Validate completion rate** - Achieve 95% completion
+2. **Measure time to value** - Confirm 30-second average
+3. **Assess anxiety reduction** - Measure before/after anxiety
+4. **Test accessibility** - Verify WCAG AAA compliance
+5. **Gather qualitative feedback** - Understand user experience
+
+### Success Metrics
+- ✅ 95% of users complete meal plan generation
+- ✅ Average time < 30 seconds
+- ✅ Anxiety reduced from 8/10 → 2/10
+- ✅ All users can complete task with screen reader
+- ✅ Positive qualitative feedback
+
+---
+
+## 👥 Participant Recruitment
+
+### Target Participants
+- **Number**: 6-8 users
+- **Demographics**: 
+  - Age: 25-45
+  - Diagnosis: ADHD, Autism, or both
+  - Experience: Previous meal planning app users (or attempted)
+- **Diversity**: Mix of genders, backgrounds, tech comfort levels
+
+### Recruitment Methods
+- Post in neurodivergent communities (Reddit, Discord, Facebook groups)
+- Reach out to local support groups
+- Use personal networks
+- Offer compensation ($25-50 gift card)
+
+### Screening Questions
+1. Do you have ADHD, Autism, or both? (Yes/No)
+2. Have you tried meal planning apps before? (Yes/No)
+3. What's your biggest frustration with meal planning? (Open-ended)
+4. Are you comfortable with screen recording? (Yes/No)
+
+---
+
+## 📋 Test Scenarios
+
+### Scenario 1: Happy Path (Primary)
+**Goal**: Test the ideal user flow
+
+**Task**: "Generate a 7-day meal plan and print the grocery list"
+
+**Steps**:
+1. Open app
+2. Select 7 days
+3. Wait for AI to generate plan
+4. Review grocery list
+5. Print grocery list
+
+**Success Criteria**:
+- ✅ Completes in < 30 seconds
+- ✅ No confusion or hesitation
+- ✅ Successfully prints list
+- ✅ Feels accomplished
+
+### Scenario 2: Voice Input
+**Goal**: Test accessibility feature
+
+**Task**: "Use voice input to generate a 5-day meal plan"
+
+**Steps**:
+1. Open app
+2. Click voice input button
+3. Say "five days"
+4. Wait for generation
+5. Review results
+
+**Success Criteria**:
+- ✅ Voice input works correctly
+- ✅ Recognizes "five days" → 5
+- ✅ No frustration with voice
+
+### Scenario 3: Regeneration
+**Goal**: Test user control
+
+**Task**: "Generate a plan, then generate a different one"
+
+**Steps**:
+1. Generate initial plan
+2. Click "Generate New Plan"
+3. Compare plans
+4. Choose preferred plan
+
+**Success Criteria**:
+- ✅ Can regenerate easily
+- ✅ Plans are different
+- ✅ Feels in control
+
+### Scenario 4: Keyboard Only
+**Goal**: Test keyboard accessibility
+
+**Task**: "Complete the entire flow using only keyboard (no mouse)"
+
+**Steps**:
+1. Tab through interface
+2. Select days with keyboard
+3. Generate plan
+4. Navigate grocery list
+5. Print (keyboard shortcut)
+
+**Success Criteria**:
+- ✅ Can complete without mouse
+- ✅ Focus indicators visible
+- ✅ No keyboard traps
+
+### Scenario 5: Screen Reader
+**Goal**: Test screen reader compatibility
+
+**Task**: "Complete the flow using a screen reader (NVDA/JAWS/VoiceOver)"
+
+**Steps**:
+1. Turn on screen reader
+2. Navigate interface
+3. Generate plan
+4. Review grocery list
+
+**Success Criteria**:
+- ✅ All elements announced correctly
+- ✅ Can complete task
+- ✅ No confusion
+
+---
+
+## 📊 Data Collection
+
+### Quantitative Metrics
+
+#### Time Measurements
+- Time to first interaction
+- Time to complete task
+- Time spent reviewing plan
+- Total session time
+
+#### Completion Rates
+- Task completion (yes/no)
+- Steps completed
+- Errors encountered
+- Abandonment points
+
+#### Anxiety Measurement
+- Before: Rate anxiety 1-10
+- After: Rate anxiety 1-10
+- Change: Calculate difference
+
+### Qualitative Data
+
+#### Observations
+- Facial expressions
+- Body language
+- Hesitation points
+- Confusion indicators
+- Positive reactions
+
+#### Interview Questions
+1. **Before Task**: "What's your experience with meal planning apps?"
+2. **During Task**: "What are you thinking right now?"
+3. **After Task**: 
+   - "How did that feel?"
+   - "What was the best part?"
+   - "What was frustrating?"
+   - "Would you use this weekly?"
+
+#### Post-Task Survey
+- Likert scales (1-5):
+  - Ease of use
+  - Clarity of interface
+  - Trust in AI decisions
+  - Likelihood to use again
+- Open-ended:
+  - What surprised you?
+  - What would you change?
+  - Would you recommend this?
+
+---
+
+## 🎬 Test Execution
+
+### Pre-Test Setup
+1. **Environment**: Quiet, comfortable space
+2. **Equipment**: 
+   - Computer/tablet with app
+   - Screen recording software
+   - Note-taking materials
+3. **Consent**: Get written consent for recording
+4. **Introduction**: Explain purpose, process, compensation
+
+### During Test
+1. **Warm-up**: 5-minute casual conversation
+2. **Pre-task Survey**: Measure baseline anxiety
+3. **Task Execution**: 
+   - Give scenario
+   - Observe silently
+   - Ask "what are you thinking?" if stuck
+   - Don't help unless critical
+4. **Post-task Interview**: Ask questions
+5. **Post-task Survey**: Collect ratings
+
+### Post-Test
+1. **Thank participant**: Provide compensation
+2. **Debrief**: Answer questions
+3. **Transcribe**: Convert recording to notes
+4. **Analyze**: Identify patterns, issues
+
+---
+
+## 📈 Analysis Framework
+
+### Quantitative Analysis
+- Calculate averages (time, completion rate)
+- Compare before/after anxiety
+- Identify common error points
+- Measure success criteria
+
+### Qualitative Analysis
+- Code themes from interviews
+- Identify pain points
+- Note positive reactions
+- Extract quotes
+
+### Synthesis
+- Combine quantitative + qualitative
+- Identify top 3 issues
+- Prioritize fixes
+- Create action items
+
+---
+
+## 🔄 Iteration Process
+
+### After Each Test Session
+1. **Quick Notes**: Jot down immediate observations
+2. **Pattern Recognition**: Look for recurring issues
+3. **Quick Fixes**: Fix obvious bugs immediately
+
+### After All Tests
+1. **Compile Data**: Aggregate all metrics
+2. **Identify Themes**: Common issues across users
+3. **Prioritize**: What to fix first
+4. **Plan Iteration**: Create fix list
+
+### Re-Testing
+- Test fixes with 2-3 users
+- Verify improvements
+- Measure new metrics
+- Iterate if needed
+
+---
+
+## 📝 Test Report Template
+
+### Executive Summary
+- Number of participants
+- Overall completion rate
+- Average time
+- Key findings
+
+### Quantitative Results
+- Time measurements
+- Completion rates
+- Anxiety scores
+- Success criteria status
+
+### Qualitative Findings
+- Common themes
+- User quotes
+- Pain points
+- Positive feedback
+
+### Recommendations
+- Top 3 fixes
+- Priority order
+- Implementation plan
+
+---
+
+## ⚠️ Ethical Considerations
+
+### Informed Consent
+- Explain purpose clearly
+- Disclose recording
+- Explain compensation
+- Allow withdrawal
+
+### Privacy
+- Anonymize data
+- Secure storage
+- Delete recordings after analysis
+- Respect participant wishes
+
+### Respect
+- Use person-first language
+- Don't assume capabilities
+- Be patient
+- Value all feedback
+
+---
+
+## 📚 Related Documents
+
+- [04-journey-mapping-after.mdc](./04-journey-mapping-after.mdc) - Target experience
+- [05-accessibility-requirements.mdc](./05-accessibility-requirements.mdc) - Accessibility checklist
+- [07-implementation-roadmap.mdc](./07-implementation-roadmap.mdc) - Testing phase details
+
+---
+
+**Last updated**: December 20, 2024
+

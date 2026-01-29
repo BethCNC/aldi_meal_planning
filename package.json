@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Automated weekly meal planning with Aldi-only ingredients - Full-stack React app with backend automation",
   "type": "module",
-  "main": "backend/index.js",
+  "main": "server/index.js",
   "scripts": {
     "dev": "vite",
     "dev:server": "node server/index.js",
@@ -37,7 +37,8 @@
     "test:rpc": "node scripts/test-rpc-function.js",
     "cron:plans": "node backend/scheduled/weeklyPlanGenerator.js",
     "cron:prices": "node backend/scheduled/priceUpdater.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "verify:deploy": "node scripts/verify-build.js"
   },
   "keywords": [
     "aldi",
@@ -53,9 +54,6 @@
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
-    "@langchain/community": "^1.1.1",
-    "@langchain/core": "^1.1.7",
-    "@langchain/google-genai": "^2.1.2",
     "@notionhq/client": "^2.2.15",
     "@react-pdf/renderer": "^4.3.1",
     "@supabase/supabase-js": "^2.79.0",
@@ -67,7 +65,9 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
+    "firebase-admin": "^13.6.0",
     "langchain": "^1.2.2",
+    "lucide-react": "^0.562.0",
     "openai": "^6.8.0",
     "puppeteer": "^22.0.0",
     "react": "^19.1.1",
@@ -77,6 +77,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/node": "^25.0.3",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^4.7.0",
@@ -86,9 +87,12 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
+    "jest": "^30.2.0",
     "postcss": "^8.4.35",
     "rollup": "^4.53.3",
+    "supertest": "^7.1.4",
     "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.3",
     "vite": "^5.4.21"
   }
 }

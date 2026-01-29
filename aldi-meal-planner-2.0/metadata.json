@@ -1,0 +1,7 @@
+{
+  "name": "Aldi Meal Planner 2.0",
+  "description": "An automation-first meal planning app designed for neurodivergent users. It eliminates decision paralysis by generating a complete Aldi-optimized meal plan and grocery list with just one question.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

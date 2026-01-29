@@ -55,6 +55,9 @@ COPY --from=builder /app/dist ./dist
 # Copy server code
 COPY server ./server
 
+# Copy backend code (needed by server routes)
+COPY backend ./backend
+
 # Expose port
 EXPOSE 3000
 

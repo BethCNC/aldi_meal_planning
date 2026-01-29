@@ -1,291 +1,103 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { StructuredOutputParser } from "langchain/output_parsers";
-import { PromptTemplate } from "@langchain/core/prompts";
-import { z } from "zod";
-
-// Define strict output schema with Zod
-const mealSchema = z.object({
-  day: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]),
-  recipe_id: z.string().describe("UUID of the recipe from the available recipes list"),
-  recipe_name: z.string(),
-  estimated_cost: z.number().positive(),
-  category: z.string(),
-  reasoning: z.string().min(20).describe("Detailed explanation for why this recipe was chosen")
-});
-
-const mealPlanSchema = z.object({
-  meals: z.array(mealSchema).length(7).describe("Exactly 7 meals, one per day"),
-  total_cost: z.number().positive().describe("Sum of all meal costs"),
-  budget_remaining: z.number().describe("Budget minus total cost"),
-  variety_analysis: z.string().min(50).describe("Summary of protein/category distribution across the week")
-});
-
-// Create output parser
-const outputParser = StructuredOutputParser.fromZodSchema(mealPlanSchema);
-
-// Define prompt template
-const MEAL_PLANNING_PROMPT = `You are an expert meal planner specializing in budget-friendly, healthy dinners using Aldi ingredients.
-
-MISSION: Create a 7-day meal plan that maximizes variety, nutrition, and value while staying within budget.
-
-HARD CONSTRAINTS (MUST FOLLOW):
-- Weekly budget: {budget} USD (ABSOLUTELY MUST NOT EXCEED)
-- Must select exactly 7 recipes (one per day: Monday-Sunday)
-- Avoid repeating the same protein category 2 days in a row
-- DO NOT use ANY of these recipe IDs from the past 4 weeks: {recent_recipe_ids}
-- Each recipe MUST have a recipe_id that exists in the available recipes list below
-
-USER PREFERENCES:
-{preferences}
-
-AVAILABLE RECIPES (you MUST choose from this list):
-{recipes}
-
-PANTRY ITEMS EXPIRING SOON (prioritize if possible):
-{must_use_items}
-
-THINKING PROCESS - Follow these steps:
-
-1. ANALYZE available recipes:
-   - Group by cost (cheap: <$8, moderate: $8-$12, expensive: >$12)
-   - Group by category (Chicken, Beef, Pork, Vegetarian, Seafood, Other)
-   - Identify which recipes use must-use pantry items
-
-2. BUDGET ALLOCATION:
-   - Total budget: ${"{budget}"}
-   - Target per meal: ~${"{budget}"}/7 = ${"{budget_per_meal}"}
-   - Allow 1-2 slightly expensive meals if balanced by cheaper ones
-
-3. VARIETY REQUIREMENTS:
-   - Don't repeat same category 2 days in a row
-   - Aim for at least 4 different categories across the week
-   - Mix preparation styles (quick, slow-cook, etc.)
-
-4. SELECTION STRATEGY:
-   - Start with Monday, select a recipe that fits budget and preferences
-   - For each subsequent day, select a recipe that:
-     * Has a different category than the previous day
-     * Fits within remaining budget
-     * Matches user preferences
-     * Uses must-use items if available
-   - Explain your reasoning for EACH choice
-
-5. VALIDATION:
-   - Sum total cost - MUST be <= ${"{budget}"}
-   - Count categories - should have variety
-   - Check no recent recipes are included
-
-CRITICAL RULES:
-- Every recipe_id MUST exist in the available recipes list
-- Total cost MUST NOT exceed {budget}
-- Do NOT make up recipe names or IDs
-- If you can't find 7 recipes under budget, choose the best 7 and explain why budget can't be met
-
-{format_instructions}
-
-Generate the meal plan now:`;
-
-const promptTemplate = PromptTemplate.fromTemplate(MEAL_PLANNING_PROMPT);
+import { getModel } from '../geminiClient.js';
+import { getRecipes } from '../../supabase/recipeClient.js';
+import { getRecentRecipeIds } from '../../supabase/userHistoryClient.js';
 
 /**
- * Generate an AI-powered weekly meal plan using LangChain and Gemini
- *
+ * Generate a meal plan by selecting recipe IDs from the catalog
  * @param {Object} params
- * @param {string} params.userId - User ID for personalization
- * @param {string} params.weekStart - ISO date string for week start (e.g., "2025-01-06")
- * @param {number} params.budget - Weekly budget in USD
- * @returns {Promise<Object>} Generated meal plan with AI analysis
+ * @param {string} params.userId
+ * @param {number} params.dayCount
+ * @param {number} params.budget - Optional budget for meal plan
+ * @param {Object} params.preferences - User preferences for meal selection
+ * @param {Array<Object>} params.allRecipes - Full catalog of all available recipe objects.
+ * @returns {Promise<Array<string>>} Array of recipe UUIDs
  */
-export async function generateMealPlan({ userId, weekStart, budget }) {
-  console.log(`\n🤖 [AI Meal Planner] Starting generation for user ${userId}`);
-  console.log(`   Week: ${weekStart}, Budget: $${budget}`);
+export async function selectRecipes({ userId, dayCount = 7, budget, preferences = {}, allRecipes }) {
+  console.log(`\n🤖 [AI Agent] Selecting ${dayCount} recipes for user ${userId}`);
 
-  // Import database clients dynamically
-  const { getRecipes } = await import('../../supabase/recipeClient.js');
-  const { getMealPlan, createMealPlan } = await import('../../supabase/mealPlanClient.js');
+  // 1. Fetch Context (allRecipes now passed as param)
+  // const allRecipes = await getRecipes(); // Removed this line
+  const exclusionList = await getRecentRecipeIds(userId);
 
+  // Minify recipes for context window
+  const catalog = allRecipes.map(r => ({
+    id: r.id,
+    t: r.name, // title
+    p: r.proteinCategory || 'other', // protein
+    x: r.textureProfile || 'mixed', // texture
+    c: Math.ceil(r.costPerServing || 0), // cost (rounded)
+    r: r.rating || 3, // rating
+    tag: r.tags || ''
+  }));
+
+  console.log(`   📊 Catalog size: ${catalog.length} recipes`);
+  console.log(`   🚫 Excluded IDs: ${exclusionList.length}`);
+
+  // 2. Construct Prompt
+  const prompt = `
+Role: You are an expert meal planner for neurodivergent individuals.
+Task: Select exactly ${dayCount} distinct recipes from the provided 'Available Catalog'.
+${budget ? `IMPORTANT: The TOTAL combined cost ('c' field) of the ${dayCount} selected recipes MUST NOT exceed $${budget}. Focus on lower-cost options.` : ''}
+
+Constraints & Preferences:
+1. Variety: Never select the same 'p' (protein) two days in a row.
+2. Preference: Prefer recipes with a higher 'r' (rating) value.
+3. Sensory Balance: Ensure a mix of 'x' (texture).
+4. History: DO NOT select any recipes listed in the 'Exclusion List'.
+5. Output: Return ONLY a JSON array of ${dayCount} UUID strings.
+
+Available Catalog (JSON):
+${JSON.stringify(catalog)}
+
+Exclusion List (IDs):
+${JSON.stringify(exclusionList)}
+
+User Preferences:
+${JSON.stringify(preferences)}
+
+Output Requirement:
+Return ONLY a valid JSON array of UUID strings. 
+Example: ["uuid-1", "uuid-2", ...]
+`;
+
+  // 3. Call Gemini
   try {
-    // 1. Fetch available recipes (limit to reasonable cost range)
-    console.log(`\n📊 Fetching available recipes...`);
-    const allRecipes = await getRecipes({
-      maxCostPerServing: budget / 3  // Don't show recipes >1/3 of weekly budget
-    });
-
-    // Filter to recipes with complete data
-    const recipes = allRecipes.filter(r =>
-      r.id &&
-      r.name &&
-      r.category &&
-      r.cost_per_serving &&
-      r.cost_per_serving > 0
-    ).slice(0, 50); // Limit to top 50 to reduce token usage
-
-    console.log(`   ✅ Found ${recipes.length} suitable recipes`);
-
-    if (recipes.length < duration) {
-      throw new Error(`Not enough recipes available. Found ${recipes.length}, need at least ${duration}.`);
-    }
-
-    // 2. Get recent meal plans to avoid repetition
-    console.log(`\n📅 Checking recent meal plans...`);
-    const fourWeeksAgo = new Date(weekStart);
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-
-    const recentPlans = [];
-    for (let i = 0; i < 4; i++) {
-      const checkDate = new Date(fourWeeksAgo);
-      checkDate.setDate(checkDate.getDate() + (i * 7));
-      const dateStr = checkDate.toISOString().split('T')[0];
-
-      const plan = await getMealPlan(dateStr, userId);
-      if (plan && Array.isArray(plan)) {
-        recentPlans.push(...plan);
+    const model = getModel('gemini-2.5-pro', {
+      generationConfig: {
+        temperature: 0.4,
+        responseMimeType: "application/json"
       }
-    }
-
-    const recentRecipeIds = [...new Set(
-      recentPlans
-        .filter(meal => meal?.recipe_id)
-        .map(meal => meal.recipe_id)
-    )];
-
-    console.log(`   ℹ️  Found ${recentRecipeIds.length} recipes to avoid from past 4 weeks`);
-
-    // 3. Get user preferences (future enhancement - for now use defaults)
-    const preferences = {
-      likes: "Variety of meals, quick prep times",
-      dislikes: "None specified",
-      dietary_restrictions: "None"
-    };
-
-    // 4. Must-use pantry items (future enhancement - mock for now)
-    const mustUseItems = [
-      // Future: Query actual pantry items with expiration dates
-    ];
-
-    // 5. Format recipes for prompt
-    const recipesFormatted = recipes.map(r => ({
-      id: r.id,
-      name: r.name,
-      category: r.category,
-      cost: parseFloat(r.cost_per_serving || 0).toFixed(2),
-      servings: r.servings || 4,
-      tags: r.tags || ''
-    }));
-
-    // 6. Initialize Gemini LLM
-    console.log(`\n🚀 Initializing Gemini AI...`);
-    const model = new ChatGoogleGenerativeAI({
-      modelName: "gemini-1.5-pro",
-      temperature: 0.8, // Allow creativity while staying structured
-      maxOutputTokens: 4096,
-      apiKey: process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GOOGLE_API_KEY
     });
 
-    // 7. Format the prompt
-    const budgetPerMeal = (budget / duration).toFixed(2);
-    const formattedPrompt = await promptTemplate.format({
-      budget: budget,
-      duration: duration,
-      startDate: weekStart,
-      budget_per_meal: budgetPerMeal,
-      recipes: JSON.stringify(recipesFormatted, null, 2),
-      recent_recipe_ids: recentRecipeIds.length > 0 ? recentRecipeIds.join(", ") : "none",
-      preferences: JSON.stringify(preferences, null, 2),
-      must_use_items: mustUseItems.length > 0 ? JSON.stringify(mustUseItems, null, 2) : "none",
-      format_instructions: outputParser.getFormatInstructions()
-    });
+    console.log('   💭 Asking Gemini...');
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    console.log(`   📝 Prompt length: ${formattedPrompt.length} characters`);
-    console.log(`   💭 Calling Gemini API...`);
+    console.log('   ✅ Gemini responded');
 
-    // 8. Invoke the LLM
-    const response = await model.invoke(formattedPrompt);
+    // 4. Parse & Validate
+    const recipeIds = JSON.parse(text);
 
-    console.log(`   ✅ Gemini response received (${response.content.length} chars)`);
-
-    // 9. Parse structured output
-    let plan;
-    try {
-      plan = await outputParser.parse(response.content);
-    } catch (parseError) {
-      console.error(`   ❌ Failed to parse LLM output:`, parseError.message);
-      console.error(`   Raw output:`, response.content.substring(0, 500));
-      throw new Error(`AI produced invalid output format: ${parseError.message}`);
+    if (!Array.isArray(recipeIds)) {
+      throw new Error('AI did not return an array');
     }
 
-    console.log(`\n✨ Parsed meal plan:`);
-    console.log(`   - ${plan.meals.length} meals`);
-    console.log(`   - Total cost: $${plan.total_cost.toFixed(2)}`);
-    console.log(`   - Budget remaining: $${plan.budget_remaining.toFixed(2)}`);
-
-    // 10. Validate budget constraint (critical!)
-    if (plan.total_cost > budget * 1.05) { // Allow 5% buffer for rounding
-      console.warn(`\n⚠️  Plan exceeds budget: $${plan.total_cost} > $${budget}`);
-      throw new Error(`Generated plan exceeds budget: $${plan.total_cost.toFixed(2)} > $${budget}`);
+    if (recipeIds.length !== dayCount) {
+      console.warn(`   ⚠️ AI returned ${recipeIds.length} recipes, expected ${dayCount}`);
     }
 
-    // 11. Validate recipe IDs exist
-    const validRecipeIds = new Set(recipes.map(r => r.id));
-    const invalidMeals = plan.meals.filter(m => !validRecipeIds.has(m.recipe_id));
-
-    if (invalidMeals.length > 0) {
-      console.error(`\n❌ AI suggested invalid recipe IDs:`, invalidMeals.map(m => m.recipe_id));
-      throw new Error(`AI suggested recipes not in database: ${invalidMeals.map(m => m.recipe_name).join(', ')}`);
+    // Validate existence
+    const validIds = recipeIds.filter(id => allRecipes.find(r => r.id === id));
+    
+    if (validIds.length < recipeIds.length) {
+      console.warn(`   ⚠️ Filtered out ${recipeIds.length - validIds.length} invalid/hallucinated IDs`);
     }
 
-    // 12. Save to database
-    console.log(`\n💾 Saving meal plan to database...`);
-
-    const mealsToSave = plan.meals.map((meal, index) => ({
-      dayOfWeek: index, // 0 = start date, increment from there
-      recipeId: meal.recipe_id,
-      isLeftoverNight: false,
-      isOrderOutNight: false,
-      plannedDate: (() => {
-        const date = new Date(weekStart);
-        date.setDate(date.getDate() + index);
-        return date.toISOString().split('T')[0];
-      })()
-    }));
-    
-    // Note: createMealPlan currently assumes weekly structure. 
-    // For flexible dates, we might need to adjust how we save.
-    // For now, we'll try to map to the existing structure or enhance createMealPlan.
-    // Ideally, we should use a new function `createFlexibleMealPlan`.
-    
-    // Fallback: If duration is 7, use existing logic. If not, we might need to update the client.
-    // Assuming createMealPlan can handle array of meals.
-    // We will update createMealPlan to accept explicit dates if possible, or stick to offset.
-    
-    const savedPlan = await createMealPlan(weekStart, mealsToSave, userId);
-
-    console.log(`   ✅ Saved ${savedPlan.length} meals to database`);
-
-    // 13. Return structured response
-    return {
-      success: true,
-      plan: {
-        id: savedPlan[0]?.id || null,
-        weekStart,
-        meals: plan.meals,
-        totalCost: plan.total_cost,
-        budgetRemaining: plan.budget_remaining
-      },
-      aiAnalysis: {
-        variety_analysis: plan.variety_analysis,
-        model: 'gemini-1.5-pro',
-        generated_at: new Date().toISOString()
-      }
-    };
+    return validIds;
 
   } catch (error) {
-    console.error(`\n❌ [AI Meal Planner] Error:`, error.message);
-    console.error(error.stack);
-
-    throw new Error(`Failed to generate meal plan: ${error.message}`);
+    console.error('   ❌ AI Selection Failed:', error.message);
+    throw error; // Let controller switch to fallback
   }
 }
-
-// Export for testing
-export { mealPlanSchema, outputParser };

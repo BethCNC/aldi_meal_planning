@@ -92,7 +92,7 @@ router.post('/', verifyAuth, async (req, res) => {
       Keep replies concise and friendly.
     `;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
     const chat = model.startChat({
       history: [
         { role: 'user', parts: [{ text: systemPrompt }] },

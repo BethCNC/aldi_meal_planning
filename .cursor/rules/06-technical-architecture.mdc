@@ -1,0 +1,410 @@
+# 06 - Technical Architecture
+
+**System Design, Stack, and Implementation Details**
+
+This document outlines the complete technical architecture for Aldi Meal Planner 2.0.
+
+---
+
+## 🏗️ System Overview
+
+### Architecture Pattern
+**Frontend-Backend Separation** with API communication
+
+```
+┌─────────────────┐
+│   React Frontend │  (Vite + React 19)
+│   (User Interface)│
+└────────┬─────────┘
+         │ HTTP/WebSocket
+         │
+┌────────▼─────────┐
+│  Express Backend  │  (Node.js + Express)
+│  (API + AI Agent) │
+└────────┬─────────┘
+         │
+    ┌────┴────┐
+    │         │
+┌───▼───┐ ┌───▼────┐
+│Supabase│ │ Gemini │
+│(Postgres)│ │  AI   │
+└────────┘ └────────┘
+```
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: React 19.1.1
+- **Build Tool**: Vite 5.4.21
+- **Styling**: Tailwind CSS 3.4.17
+- **Routing**: React Router DOM 7.9.5
+- **UI Components**: Headless UI 2.2.9
+- **Icons**: Heroicons 2.2.0, Tabler Icons 3.35.0
+- **PDF Generation**: @react-pdf/renderer 4.3.1
+- **Animations**: Framer Motion (to be added)
+
+### Backend
+- **Runtime**: Node.js (ES Modules)
+- **Framework**: Express 4.18.2
+- **AI/LLM**: 
+  - @google/generative-ai 0.24.1
+  - LangChain 1.2.2
+  - @langchain/google-genai 2.1.2
+- **Database**: Supabase (PostgreSQL)
+- **Client**: @supabase/supabase-js 2.79.0
+
+### Development Tools
+- **Linting**: ESLint 9.36.0
+- **Testing**: Jest (with experimental VM modules)
+- **Type Checking**: (TypeScript to be added)
+
+---
+
+## 🗄️ Database Schema
+
+### Core Tables
+
+#### `recipes`
+```sql
+id TEXT PRIMARY KEY
+name TEXT NOT NULL
+servings INTEGER
+category TEXT
+total_cost REAL
+cost_per_serving REAL
+instructions TEXT
+source_url TEXT
+image_url TEXT
+tags TEXT
+is_verified BOOLEAN DEFAULT FALSE
+is_ai_generated BOOLEAN DEFAULT FALSE
+moderation_status TEXT DEFAULT 'pending'
+```
+
+#### `ingredients`
+```sql
+id TEXT PRIMARY KEY
+item TEXT NOT NULL
+price_per_package REAL
+package_size REAL
+package_unit TEXT
+base_unit TEXT NOT NULL
+price_per_base_unit REAL NOT NULL
+category TEXT
+```
+
+#### `recipe_ingredients` (Junction)
+```sql
+id SERIAL PRIMARY KEY
+recipe_id TEXT REFERENCES recipes(id)
+ingredient_id TEXT REFERENCES ingredients(id)
+quantity REAL NOT NULL
+unit TEXT
+calculated_cost REAL
+```
+
+#### `meal_plans`
+```sql
+id TEXT PRIMARY KEY
+user_id TEXT NOT NULL
+week_start DATE NOT NULL
+created_at TIMESTAMP
+```
+
+#### `meal_plan_meals`
+```sql
+id TEXT PRIMARY KEY
+meal_plan_id TEXT REFERENCES meal_plans(id)
+recipe_id TEXT REFERENCES recipes(id)
+day_of_week INTEGER
+planned_date DATE
+```
+
+### Additional Tables
+- `user_ratings` - Recipe ratings and feedback
+- `recipe_history` - Tracks recipe usage to prevent repeats
+- `moderation_queue` - AI-generated recipe review queue
+- `units` - Unit definitions
+- `unit_conversions` - Conversion factors
+
+**Full schema**: See `docs/DATABASE_SCHEMA_SUPABASE.md`
+
+---
+
+## 🔌 API Endpoints
+
+### Frontend → Backend
+
+#### Meal Planning
+```
+POST /api/meal-plan/generate
+Body: { days: number, userId: string }
+Response: { plan: MealPlan, groceryList: GroceryList }
+```
+
+#### Grocery List
+```
+GET /api/grocery-list/:planId
+Response: { items: GroceryItem[], totalCost: number }
+```
+
+#### Recipes
+```
+GET /api/recipes
+Query: { category?, maxCost?, limit? }
+Response: { recipes: Recipe[] }
+```
+
+### Backend → External Services
+
+#### Gemini AI
+```
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent
+Headers: { Authorization: "Bearer API_KEY" }
+Body: { contents: [...], generationConfig: {...} }
+```
+
+#### Supabase
+```
+POST https://[project].supabase.co/rest/v1/[table]
+Headers: { 
+  apikey: ANON_KEY,
+  Authorization: "Bearer ANON_KEY",
+  Content-Type: "application/json"
+}
+```
+
+---
+
+## 🤖 AI Agent Architecture
+
+### Agent Flow
+
+```
+User Input (days)
+    ↓
+DaysSelector Component
+    ↓
+API Call: POST /api/meal-plan/generate
+    ↓
+Backend: mealPlanningAgent.js
+    ↓
+1. Fetch Recipes from Supabase
+2. Get User Preferences
+3. Get Recent Meal Plans (avoid repeats)
+4. Build Prompt with Constraints
+    ↓
+Gemini 1.5 Pro API
+    ↓
+Structured Output (Zod Schema)
+    ↓
+Validate & Save to Supabase
+    ↓
+Generate Grocery List
+    ↓
+Return to Frontend
+```
+
+### Agent Components
+
+#### `backend/ai/agents/mealPlanningAgent.js`
+- Main agent orchestrator
+- Uses LangChain for structured output
+- Validates budget constraints
+- Ensures recipe variety
+
+#### `backend/ai/geminiClient.js`
+- Gemini API wrapper
+- Handles API key management
+- Error handling and retries
+
+#### `backend/ai/tools/supabaseTool.js`
+- LangChain tool for Supabase queries
+- Recipe fetching
+- Meal plan history
+
+#### `backend/ai/prompts/`
+- Prompt templates
+- System instructions
+- User preference formatting
+
+---
+
+## 📁 Project Structure
+
+```
+aldi_meal_planning/
+├── src/                    # Frontend React app
+│   ├── main.jsx           # React entry point
+│   ├── App.jsx            # Root component
+│   ├── index.css          # Global styles
+│   ├── components/        # React components
+│   │   ├── DaysSelector.jsx
+│   │   ├── GroceryList.jsx
+│   │   └── RecipeCard.jsx
+│   ├── lib/               # Frontend libraries
+│   │   └── supabase.js    # Supabase client
+│   └── utils/             # Frontend utilities
+│
+├── backend/                # Backend services
+│   ├── ai/                # AI agents
+│   │   ├── agents/
+│   │   │   └── mealPlanningAgent.js
+│   │   ├── tools/
+│   │   │   └── supabaseTool.js
+│   │   └── geminiClient.js
+│   ├── supabase/          # Database clients
+│   │   ├── recipeClient.js
+│   │   ├── mealPlanClient.js
+│   │   └── groceryListClient.js
+│   └── index.js           # Express server
+│
+├── server/                # Server entry point
+│   └── index.js          # Server startup
+│
+├── scripts/               # CLI automation
+│   └── generate-meal-plan.js
+│
+└── docs/                  # Documentation
+```
+
+---
+
+## 🔐 Environment Variables
+
+### Frontend (.env.local)
+```bash
+VITE_SUPABASE_URL=https://[project].supabase.co
+VITE_SUPABASE_ANON_KEY=[anon-key]
+VITE_GOOGLE_API_KEY=[gemini-api-key]  # Optional, for client-side
+```
+
+### Backend (.env)
+```bash
+# Supabase
+SUPABASE_URL=https://[project].supabase.co
+SUPABASE_SERVICE_ROLE_KEY=[service-role-key]
+
+# Gemini AI
+GEMINI_API_KEY=[api-key]
+GOOGLE_API_KEY=[api-key]  # Alternative name
+
+# Server
+PORT=3001
+NODE_ENV=development
+```
+
+---
+
+## 🚀 Deployment Architecture
+
+### Development
+```
+Frontend: Vite dev server (localhost:5173)
+Backend: Express server (localhost:3001)
+Database: Supabase (cloud)
+AI: Gemini API (cloud)
+```
+
+### Production (Vercel)
+```
+Frontend: Vercel (static build)
+Backend: Vercel Serverless Functions
+Database: Supabase (cloud)
+AI: Gemini API (cloud)
+```
+
+### Build Process
+```bash
+# Frontend build
+npm run build
+# Output: dist/ (static files)
+
+# Backend (serverless functions)
+# Vercel auto-detects /api routes
+```
+
+---
+
+## 🔄 Data Flow
+
+### Meal Plan Generation
+
+1. **User Input** → DaysSelector component
+2. **API Request** → POST /api/meal-plan/generate
+3. **Backend Processing**:
+   - Fetch recipes from Supabase
+   - Get user preferences
+   - Get recent meal plans
+   - Build AI prompt
+4. **AI Generation** → Gemini API call
+5. **Validation** → Check budget, recipe IDs
+6. **Database Save** → Save meal plan to Supabase
+7. **Grocery List** → Generate from meal plan
+8. **Response** → Return to frontend
+9. **UI Update** → Display grocery list
+
+### Grocery List Generation
+
+1. **Meal Plan** → Get recipes for each day
+2. **Ingredients** → Aggregate all recipe ingredients
+3. **Quantities** → Sum quantities by ingredient
+4. **Cost Calculation** → Calculate total cost
+5. **Organization** → Group by category
+6. **Display** → Show to user, enable print
+
+---
+
+## 🧪 Testing Strategy
+
+### Unit Tests
+- Component rendering
+- API endpoint handlers
+- Utility functions
+- Cost calculations
+
+### Integration Tests
+- Meal plan generation flow
+- Database operations
+- AI agent responses
+- Grocery list generation
+
+### E2E Tests (Future)
+- Complete user flow
+- Voice input
+- Print functionality
+
+---
+
+## 📊 Performance Targets
+
+- **Time to First Paint**: < 1 second
+- **Time to Interactive**: < 2 seconds
+- **Meal Plan Generation**: < 30 seconds
+- **API Response Time**: < 500ms (non-AI endpoints)
+- **Database Queries**: < 100ms
+
+---
+
+## 🔒 Security Considerations
+
+- **API Keys**: Server-side only (never expose in frontend)
+- **User Data**: Row-level security in Supabase
+- **Input Validation**: Zod schemas for all inputs
+- **Rate Limiting**: Implement on API endpoints
+- **CORS**: Configure for production domain
+
+---
+
+## 📚 Related Documents
+
+- [10-gemini-integration-guide.mdc](./10-gemini-integration-guide.mdc) - AI setup details
+- [11-component-library.mdc](./11-component-library.mdc) - Component specs
+- `docs/DATABASE_SCHEMA_SUPABASE.md` - Full database schema
+
+---
+
+**Last updated**: December 20, 2024
+

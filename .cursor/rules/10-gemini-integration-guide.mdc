@@ -1,0 +1,392 @@
+# 10 - Gemini Integration Guide
+
+**AI Agent Setup and Implementation**
+
+This document provides detailed instructions for integrating Google Gemini AI into the meal planning agent.
+
+---
+
+## 🎯 Overview
+
+### What We're Building
+A conversational AI agent that:
+- Takes user input (number of days)
+- Selects recipes automatically
+- Balances variety and budget
+- Generates meal plan
+- Explains decisions
+
+### Technology Stack
+- **LLM**: Google Gemini 1.5 Pro
+- **Framework**: LangChain (structured output)
+- **Validation**: Zod schemas
+- **Backend**: Node.js + Express
+
+---
+
+## 🔑 Setup
+
+### 1. Get API Key
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with Google account
+3. Click "Create API Key"
+4. Copy the key
+
+### 2. Environment Variables
+
+Add to `.env`:
+```bash
+GEMINI_API_KEY=your-api-key-here
+# Alternative name (some code uses this)
+GOOGLE_API_KEY=your-api-key-here
+```
+
+### 3. Install Dependencies
+
+```bash
+npm install @google/generative-ai @langchain/google-genai langchain zod
+```
+
+---
+
+## 📦 Project Structure
+
+```
+backend/
+├── ai/
+│   ├── agents/
+│   │   └── mealPlanningAgent.js  # Main agent
+│   ├── geminiClient.js            # API wrapper
+│   ├── tools/
+│   │   └── supabaseTool.js        # Database tool
+│   └── prompts/
+│       └── mealPlanningPrompt.js  # Prompt template
+```
+
+---
+
+## 🤖 Agent Implementation
+
+### Basic Setup
+
+```javascript
+// backend/ai/geminiClient.js
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+if (!apiKey) {
+  throw new Error('Missing GEMINI_API_KEY');
+}
+
+export const genAI = new GoogleGenerativeAI(apiKey);
+
+export function getModel(modelName = 'gemini-1.5-pro') {
+  return genAI.getGenerativeModel({ 
+    model: modelName,
+    generationConfig: {
+      temperature: 0.8,  // Balance creativity and structure
+      maxOutputTokens: 4096,
+    }
+  });
+}
+```
+
+### Structured Output with LangChain
+
+```javascript
+// backend/ai/agents/mealPlanningAgent.js
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { StructuredOutputParser } from "langchain/output_parsers";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { z } from "zod";
+
+// Define output schema
+const mealSchema = z.object({
+  day: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]),
+  recipe_id: z.string(),
+  recipe_name: z.string(),
+  estimated_cost: z.number().positive(),
+  category: z.string(),
+  reasoning: z.string().min(20)
+});
+
+const mealPlanSchema = z.object({
+  meals: z.array(mealSchema).length(7),
+  total_cost: z.number().positive(),
+  budget_remaining: z.number(),
+  variety_analysis: z.string().min(50)
+});
+
+// Create parser
+const outputParser = StructuredOutputParser.fromZodSchema(mealPlanSchema);
+
+// Initialize model
+const model = new ChatGoogleGenerativeAI({
+  modelName: "gemini-1.5-pro",
+  temperature: 0.8,
+  maxOutputTokens: 4096,
+  apiKey: process.env.GEMINI_API_KEY
+});
+```
+
+---
+
+## 💬 Prompt Engineering
+
+### Prompt Template
+
+```javascript
+const MEAL_PLANNING_PROMPT = `You are an expert meal planner specializing in budget-friendly, healthy dinners using Aldi ingredients.
+
+MISSION: Create a {days}-day meal plan that maximizes variety, nutrition, and value while staying within budget.
+
+HARD CONSTRAINTS (MUST FOLLOW):
+- Weekly budget: {budget} USD (ABSOLUTELY MUST NOT EXCEED)
+- Must select exactly {days} recipes (one per day)
+- Avoid repeating the same protein category 2 days in a row
+- DO NOT use ANY of these recipe IDs from the past 4 weeks: {recent_recipe_ids}
+- Each recipe MUST have a recipe_id that exists in the available recipes list
+
+USER PREFERENCES:
+{preferences}
+
+AVAILABLE RECIPES (you MUST choose from this list):
+{recipes}
+
+THINKING PROCESS:
+1. ANALYZE available recipes by cost and category
+2. BUDGET ALLOCATION: Target ~${budget}/{days} per meal
+3. VARIETY: Don't repeat categories 2 days in a row
+4. SELECTION: Choose recipes that fit budget and preferences
+5. VALIDATION: Ensure total cost <= {budget}
+
+{format_instructions}
+
+Generate the meal plan now:`;
+
+const promptTemplate = PromptTemplate.fromTemplate(MEAL_PLANNING_PROMPT);
+```
+
+### Prompt Best Practices
+
+1. **Clear Constraints**: State hard requirements explicitly
+2. **Structured Thinking**: Break down the process
+3. **Examples**: Include example format if needed
+4. **Validation Rules**: Specify what to check
+5. **Error Prevention**: Warn about common mistakes
+
+---
+
+## 🔄 Agent Flow
+
+### Complete Implementation
+
+```javascript
+export async function generateMealPlan({ userId, days, budget }) {
+  // 1. Fetch recipes from database
+  const recipes = await getRecipes({ maxCostPerServing: budget / 3 });
+  
+  // 2. Get recent meal plans (avoid repeats)
+  const recentPlans = await getRecentMealPlans(userId, 4); // Last 4 weeks
+  const recentRecipeIds = recentPlans.map(p => p.recipe_id);
+  
+  // 3. Get user preferences
+  const preferences = await getUserPreferences(userId);
+  
+  // 4. Format recipes for prompt
+  const recipesFormatted = recipes.map(r => ({
+    id: r.id,
+    name: r.name,
+    category: r.category,
+    cost: r.cost_per_serving,
+    servings: r.servings
+  }));
+  
+  // 5. Build prompt
+  const formattedPrompt = await promptTemplate.format({
+    days,
+    budget,
+    recent_recipe_ids: recentRecipeIds.join(", ") || "none",
+    preferences: JSON.stringify(preferences, null, 2),
+    recipes: JSON.stringify(recipesFormatted, null, 2),
+    format_instructions: outputParser.getFormatInstructions()
+  });
+  
+  // 6. Call Gemini
+  const response = await model.invoke(formattedPrompt);
+  
+  // 7. Parse structured output
+  let plan;
+  try {
+    plan = await outputParser.parse(response.content);
+  } catch (error) {
+    throw new Error(`AI produced invalid output: ${error.message}`);
+  }
+  
+  // 8. Validate
+  if (plan.total_cost > budget) {
+    throw new Error(`Plan exceeds budget: $${plan.total_cost} > $${budget}`);
+  }
+  
+  // 9. Validate recipe IDs exist
+  const validRecipeIds = new Set(recipes.map(r => r.id));
+  const invalidMeals = plan.meals.filter(m => !validRecipeIds.has(m.recipe_id));
+  
+  if (invalidMeals.length > 0) {
+    throw new Error(`AI suggested invalid recipes: ${invalidMeals.map(m => m.recipe_name).join(', ')}`);
+  }
+  
+  // 10. Save to database
+  const savedPlan = await saveMealPlan(userId, plan);
+  
+  return {
+    success: true,
+    plan: savedPlan,
+    aiAnalysis: {
+      variety_analysis: plan.variety_analysis,
+      model: 'gemini-1.5-pro',
+      generated_at: new Date().toISOString()
+    }
+  };
+}
+```
+
+---
+
+## 🛠️ Tools Integration
+
+### Supabase Tool (LangChain)
+
+```javascript
+// backend/ai/tools/supabaseTool.js
+import { DynamicStructuredTool } from "@langchain/core/tools";
+import { z } from "zod";
+import { getRecipes } from "../../supabase/recipeClient.js";
+
+export const supabaseRecipeTool = new DynamicStructuredTool({
+  name: "get_recipes",
+  description: "Fetch available recipes from the database",
+  schema: z.object({
+    category: z.string().optional(),
+    maxCost: z.number().optional(),
+    limit: z.number().optional()
+  }),
+  func: async ({ category, maxCost, limit }) => {
+    const recipes = await getRecipes({ category, maxCostPerServing: maxCost, limit });
+    return JSON.stringify(recipes);
+  }
+});
+```
+
+---
+
+## ⚠️ Error Handling
+
+### Common Errors
+
+#### 1. Invalid API Key
+```javascript
+if (!apiKey) {
+  throw new Error('Missing GEMINI_API_KEY. Check your .env file.');
+}
+```
+
+#### 2. Invalid Output Format
+```javascript
+try {
+  plan = await outputParser.parse(response.content);
+} catch (error) {
+  console.error('Failed to parse AI output:', error);
+  console.error('Raw output:', response.content.substring(0, 500));
+  throw new Error(`AI produced invalid output: ${error.message}`);
+}
+```
+
+#### 3. Budget Exceeded
+```javascript
+if (plan.total_cost > budget * 1.05) { // 5% buffer for rounding
+  throw new Error(`Generated plan exceeds budget: $${plan.total_cost.toFixed(2)} > $${budget}`);
+}
+```
+
+#### 4. Invalid Recipe IDs
+```javascript
+const validRecipeIds = new Set(recipes.map(r => r.id));
+const invalidMeals = plan.meals.filter(m => !validRecipeIds.has(m.recipe_id));
+
+if (invalidMeals.length > 0) {
+  throw new Error(`AI suggested recipes not in database: ${invalidMeals.map(m => m.recipe_name).join(', ')}`);
+}
+```
+
+### Fallback Strategy
+
+```javascript
+// If AI fails, use fallback algorithm
+if (aiGenerationFailed) {
+  console.warn('AI generation failed, using fallback algorithm');
+  return generateFallbackMealPlan({ days, budget, recipes });
+}
+```
+
+---
+
+## 🧪 Testing
+
+### Unit Tests
+
+```javascript
+// tests/unit/mealPlanningAgent.test.js
+import { generateMealPlan } from '../../backend/ai/agents/mealPlanningAgent.js';
+
+describe('Meal Planning Agent', () => {
+  it('should generate a 7-day meal plan', async () => {
+    const result = await generateMealPlan({
+      userId: 'test-user',
+      days: 7,
+      budget: 100
+    });
+    
+    expect(result.success).toBe(true);
+    expect(result.plan.meals).toHaveLength(7);
+    expect(result.plan.total_cost).toBeLessThanOrEqual(100);
+  });
+  
+  it('should respect budget constraints', async () => {
+    const result = await generateMealPlan({
+      userId: 'test-user',
+      days: 7,
+      budget: 50
+    });
+    
+    expect(result.plan.total_cost).toBeLessThanOrEqual(50);
+  });
+});
+```
+
+---
+
+## 📚 Resources
+
+- [Google Gemini API Docs](https://ai.google.dev/docs)
+- [LangChain Documentation](https://js.langchain.com/)
+- [Zod Schema Validation](https://zod.dev/)
+- [Structured Output Guide](https://js.langchain.com/docs/modules/model_io/output_parsers/structured)
+
+---
+
+## 📚 Related Documents
+
+- [06-technical-architecture.mdc](./06-technical-architecture.mdc) - System architecture
+- [07-implementation-roadmap.mdc](./07-implementation-roadmap.mdc) - Development timeline
+- `backend/ai/agents/mealPlanningAgent.js` - Reference implementation
+
+---
+
+**Last updated**: December 20, 2024
+

@@ -17,6 +17,8 @@ function mapToDbColumns(ingredient) {
     category: ingredient.category ?? null,
     notes: ingredient.notes ?? null,
     notion_url: ingredient.notionUrl ?? null,
+    aldi_price_cents: ingredient.aldiPriceCents ?? null,
+    unit_size: ingredient.unitSize ?? null
   };
 }
 
@@ -36,6 +38,8 @@ export function normalizeIngredientRow(row) {
     notionUrl: row.notion_url,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    aldiPriceCents: row.aldi_price_cents,
+    unitSize: row.unit_size
   };
 }
 

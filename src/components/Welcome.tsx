@@ -2,12 +2,24 @@
 import React from 'react';
 import { AppStage } from '../types';
 import { ArrowRight } from 'lucide-react'; // New import
+import { useSupabase } from '../SupabaseProvider';
 
 interface WelcomeProps {
   setStage: (stage: AppStage) => void;
 }
 
 const Welcome: React.FC<WelcomeProps> = ({ setStage }) => {
+  const { user } = useSupabase();
+
+  const handleGetStarted = () => {
+    // If user already exists (e.g., from single-user mode), skip Auth and go to INPUT
+    if (user) {
+      setStage(AppStage.INPUT);
+    } else {
+      setStage(AppStage.AUTH);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6 gap-8">
       <div className="max-w-md space-y-4">
@@ -20,7 +32,7 @@ const Welcome: React.FC<WelcomeProps> = ({ setStage }) => {
       </div>
 
       <button
-        onClick={() => setStage(AppStage.AUTH)}
+        onClick={handleGetStarted}
         className="px-10 py-5 bg-primary hover:bg-primary-dark text-stone-900 font-bold text-xl rounded-2xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 mt-8"
       >
         Get Started

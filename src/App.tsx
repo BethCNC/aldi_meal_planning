@@ -67,18 +67,26 @@ const App: React.FC = () => {
   const [stage, setStage] = useState<AppStage>(AppStage.WELCOME); // Initial stage to WELCOME
   const [days, setDays] = useState<number>(7);
   const [budget, setBudget] = useState<number | undefined>(undefined); // New state for budget
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    likes: '',
-    dislikes: '',
+  // Hard-coded default preferences for single-user mode
+  const DEFAULT_PREFERENCES: UserPreferences = {
+    likes: 'Chicken Breasts, Pork Chops, Steak, Sausage, Ground Beef, some seafood, simple',
+    dislikes: 'spicy, chicken thighs (dark meat), tofu, casseroles',
     exclusions: ''
-  });
+  };
+  const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
 
-  const handleDaysSelected = (selectedDays: number, selectedBudget: number | undefined) => {
+  const handleDaysSelected = async (selectedDays: number, selectedBudget: number | undefined) => {
+    // When using hard-coded preferences, skip the Preferences step and generate immediately
     setDays(selectedDays);
-    setBudget(selectedBudget); // Set budget
-    setStage(AppStage.PREFERENCES);
+    setBudget(selectedBudget);
+    setStage(AppStage.GENERATING);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const userId = user?.id || (import.meta.env.VITE_SINGLE_USER_ID as string) || undefined;
+    const plan = await generateMealPlan(selectedDays, selectedBudget, preferences, userId);
+    setMealPlan(plan);
+    setStage(AppStage.RESULT);
   };
 
   const handlePreferencesCompleted = async (selectedPrefs: UserPreferences) => {

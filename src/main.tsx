@@ -6,7 +6,7 @@ import { SupabaseProvider } from './SupabaseProvider' // Import SupabaseProvider
 
 createRoot(document.getElementById('root')!).render( // Added non-null assertion '!'
   <StrictMode>
-    <SupabaseProvider> // Wrap App with SupabaseProvider
+    <SupabaseProvider>
       <App />
     </SupabaseProvider>
   </StrictMode>,

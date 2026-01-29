@@ -18,10 +18,50 @@ const App: React.FC = () => {
   });
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
 
-  const handleDaysSelected = (selectedDays: number) => {
+  // Hard-code default preferences and skip Preferences step to keep selector hidden
+  const DEFAULT_PREFERENCES: UserPreferences = {
+    likes: 'Chicken Breasts, Pork Chops, Steak, Sausage, Ground Beef, some seafood, simple',
+    dislikes: 'spicy, chicken thighs (dark meat), tofu, casseroles',
+    exclusions: ''
+  };
+
+  useEffect(() => {
+    setPreferences(DEFAULT_PREFERENCES);
+  }, []);
+
+  const handleDaysSelected = async (selectedDays: number) => {
     setDays(selectedDays);
-    setStage(AppStage.PREFERENCES);
+    setStage(AppStage.GENERATING);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    try {
+      const plan = await generateMealPlan(selectedDays, DEFAULT_PREFERENCES);
+      if (!plan || !plan.meals || plan.meals.length === 0) {
+        throw new Error('Failed to generate meal plan');
+      }
+      setMealPlan(plan);
+      setStage(AppStage.REVIEW);
+    } catch (error) {
+      console.error('Error generating meal plan:', error);
+      // Fallback plan
+      const fallbackPlan = {
+        days: selectedDays,
+        meals: Array.from({ length: selectedDays }, (_, i) => ({
+          day: i + 1,
+          recipe: {
+            id: `fallback-${i}`,
+            name: `Meal ${i + 1}`,
+            costPerServing: 0,
+            category: 'Other',
+            ingredients: [],
+            instructions: ['Please check your GEMINI_API_KEY in .env file']
+          }
+        })),
+        totalCost: 0
+      };
+      setMealPlan(fallbackPlan);
+      setStage(AppStage.REVIEW);
+    }
   };
 
   const handlePreferencesCompleted = async (selectedPrefs: UserPreferences) => {

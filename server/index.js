@@ -10,6 +10,7 @@ import aiChatRouter from './aiChat.js';
 import planRoutes from '../backend/routes/planRoutes.js';
 import recipeRoutes from '../backend/routes/recipeRoutes.js';
 import imageRoutes from '../backend/routes/imageRoutes.js';
+import preferencesRoutes from '../backend/routes/preferencesRoutes.js';
 
 dotenv.config();
 
@@ -104,6 +105,7 @@ app.use('/api/ai/chat', aiChatRouter);
 app.use('/api/v1/plan', /* verifyAuth, */ planRoutes);
 app.use('/api/v1/recipes', verifyAuth, recipeRoutes); // New route
 app.use('/api/v1/images', verifyAuth, imageRoutes);
+app.use('/api/v1/preferences', preferencesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

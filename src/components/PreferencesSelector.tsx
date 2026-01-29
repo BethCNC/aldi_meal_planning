@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPreferences } from '../types';
 import { Heart, ThumbsDown, AlertTriangle, Sparkles } from 'lucide-react'; // New import
+import { useSupabase } from '../SupabaseProvider';
 
 interface PreferencesSelectorProps {
   onComplete: (prefs: UserPreferences) => void;
@@ -23,9 +24,56 @@ const EXCLUSION_OPTIONS = [
 ];
 
 const PreferencesSelector: React.FC<PreferencesSelectorProps> = ({ onComplete }) => {
-  const [selectedLikes, setSelectedLikes] = useState<Set<string>>(new Set());
-  const [selectedDislikes, setSelectedDislikes] = useState<Set<string>>(new Set());
-  const [selectedExclusions, setSelectedExclusions] = useState<Set<string>>(new Set());
+  // Load preferences from localStorage on mount
+  const [selectedLikes, setSelectedLikes] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('userPreferencesLikes');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [selectedDislikes, setSelectedDislikes] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('userPreferencesDislikes');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+  const [selectedExclusions, setSelectedExclusions] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('userPreferencesExclusions');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  // Save preferences to localStorage whenever they change
+  React.useEffect(() => {
+    localStorage.setItem('userPreferencesLikes', JSON.stringify(Array.from(selectedLikes)));
+  }, [selectedLikes]);
+
+  React.useEffect(() => {
+    localStorage.setItem('userPreferencesDislikes', JSON.stringify(Array.from(selectedDislikes)));
+  }, [selectedDislikes]);
+
+  React.useEffect(() => {
+    localStorage.setItem('userPreferencesExclusions', JSON.stringify(Array.from(selectedExclusions)));
+  }, [selectedExclusions]);
+
+  const { user } = useSupabase();
+
+  // Try to load server-side preferences for the current user (if available)
+  useEffect(() => {
+    const userId = user?.id || (import.meta.env.VITE_SINGLE_USER_ID as string) || null;
+    if (!userId) return;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/v1/preferences?user_id=${encodeURIComponent(userId)}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const prefs = json.preferences;
+        if (!prefs) return;
+
+        if (Array.isArray(prefs.liked_ingredients)) setSelectedLikes(new Set(prefs.liked_ingredients));
+        if (Array.isArray(prefs.disliked_ingredients)) setSelectedDislikes(new Set(prefs.disliked_ingredients));
+        if (Array.isArray(prefs.dietary_tags)) setSelectedExclusions(new Set(prefs.dietary_tags));
+      } catch (e) {
+        // ignore network errors; keep local values
+      }
+    })();
+  }, [user]);
 
   const toggleOption = (option: string, set: Set<string>, setter: React.Dispatch<React.SetStateAction<Set<string>>>) => {
     const next = new Set(set);
@@ -35,10 +83,24 @@ const PreferencesSelector: React.FC<PreferencesSelectorProps> = ({ onComplete })
   };
 
   const handleFinish = () => {
+    const likesArr = Array.from(selectedLikes);
+    const dislikesArr = Array.from(selectedDislikes);
+    const exclusionsArr = Array.from(selectedExclusions);
+
+    // Save to server (best-effort). Use user id from context or VITE_SINGLE_USER_ID fallback
+    const userId = (user && user.id) || (import.meta.env.VITE_SINGLE_USER_ID as string) || 'default';
+    fetch('/api/v1/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, likes: likesArr, dislikes: dislikesArr, exclusions: exclusionsArr })
+    }).catch(() => {
+      // ignore errors; preferences are still saved to localStorage
+    });
+
     onComplete({
-      likes: Array.from(selectedLikes).join(", "),
-      dislikes: Array.from(selectedDislikes).join(", "),
-      exclusions: Array.from(selectedExclusions).join(", ")
+      likes: likesArr.join(', '),
+      dislikes: dislikesArr.join(', '),
+      exclusions: exclusionsArr.join(', ')
     });
   };
 

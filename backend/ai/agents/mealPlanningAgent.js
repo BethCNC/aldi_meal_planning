@@ -1,5 +1,5 @@
 import { getModel } from '../geminiClient.js';
-import { getRecipes } from '../../supabase/recipeClient.js';
+import { getRecipes } from '../../firestore/recipeClient.js';
 import { getRecentRecipeIds } from '../../supabase/userHistoryClient.js';
 
 /**

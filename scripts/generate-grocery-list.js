@@ -12,7 +12,7 @@
 
 import {readFile, writeFile} from 'fs/promises';
 import notionClient, {queryMealPlanEntries} from '../backend/notion/notionClient.js';
-import { getUserPreferences } from '../backend/supabase/preferencesClient.js';
+import { getUserPreferences } from '../backend/firestore/preferencesClient.js';
 
 const CATEGORY_SECTIONS = [
   {key: 'produce', names: ['produce', 'vegetable', 'fruit'], icon: '🥦', name: 'Produce', location: 'Front Left', order: 1},

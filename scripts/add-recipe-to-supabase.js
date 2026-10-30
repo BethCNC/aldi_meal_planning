@@ -398,9 +398,9 @@ async function main() {
       return;
     }
 
-    const ingredientModule = await import('../backend/supabase/ingredientClient.js');
+    const ingredientModule = await import('../backend/firestore/ingredientClient.js');
     ({ searchIngredientsByName, upsertIngredient, normalizeIngredientRow } = ingredientModule);
-    const recipeModule = await import('../backend/supabase/recipeClient.js');
+    const recipeModule = await import('../backend/firestore/recipeClient.js');
     ({ findRecipeByName, upsertRecipe, replaceRecipeIngredients } = recipeModule);
 
     const existingRecipe = await findRecipeByName(recipeName);

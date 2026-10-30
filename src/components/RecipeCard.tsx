@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Recipe } from '../types';
-import { useSupabase } from '../SupabaseProvider';
+import { useFirestore } from '../FirestoreProvider';
 import { Wallet, ShoppingCart, ChevronUp, ChevronDown, ReceiptText, Flame, Check, Star } from 'lucide-react'; // New import
 
 interface RecipeCardProps {
@@ -9,7 +9,7 @@ interface RecipeCardProps {
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
-  const { session } = useSupabase(); // Get session for auth
+  const { auth } = useFirestore(); // Get Firebase Auth for token
   const [isExpanded, setIsExpanded] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [currentRating, setCurrentRating] = useState(recipe.rating || 3);
@@ -23,17 +23,18 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
   };
 
   const handleRating = async (rating: number) => {
-    if (!session || isSubmitting) return;
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     setCurrentRating(rating); // Optimistic UI update
 
     try {
+      const token = await auth.currentUser?.getIdToken();
       const response = await fetch(`/api/v1/recipes/${recipe.id}/rate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ rating }),
       });
@@ -41,7 +42,6 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, day }) => {
       if (!response.ok) {
         throw new Error('Failed to submit rating.');
       }
-      // Optionally handle success, e.g., show a 'Saved!' message
     } catch (error) {
       console.error(error);
       setCurrentRating(recipe.rating || 3); // Revert on error

@@ -16,7 +16,7 @@ import notionClient, {
   createMealPlanEntry,
   queryMealPlanEntries
 } from '../backend/notion/notionClient.js';
-import { getUserPreferences } from '../backend/supabase/preferencesClient.js';
+import { getUserPreferences } from '../backend/firestore/preferencesClient.js';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

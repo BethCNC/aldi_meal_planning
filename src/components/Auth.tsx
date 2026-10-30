@@ -1,7 +1,8 @@
 // src/components/Auth.tsx
 import React, { useState } from 'react';
 import { AppStage } from '../types';
-import { useSupabase } from '../SupabaseProvider';
+import { useFirestore } from '../FirestoreProvider';
+import { sendEmailSignInLink } from '../lib/firestore';
 import { Mail, User } from 'lucide-react'; // New import
 
 interface AuthProps {
@@ -9,7 +10,7 @@ interface AuthProps {
 }
 
 const Auth: React.FC<AuthProps> = ({ setStage }) => {
-  const { supabase } = useSupabase();
+  const { auth } = useFirestore();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -21,17 +22,11 @@ const Auth: React.FC<AuthProps> = ({ setStage }) => {
     setError('');
     setMessage('');
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin, // Redirects back to the app after clicking magic link
-      },
-    });
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setMessage('Check your email for a magic link to sign in!');
+    try {
+      await sendEmailSignInLink(email);
+      setMessage('Check your email for a sign-in link to complete login!');
+    } catch (e: any) {
+      setError(e.message || String(e));
     }
     setLoading(false);
   };

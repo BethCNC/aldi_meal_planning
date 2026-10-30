@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUserPreferences, upsertUserPreferences } from '../supabase/preferencesClient.js';
+import { getUserPreferences, upsertUserPreferences } from '../firestore/preferencesClient.js';
 
 const router = express.Router();
 

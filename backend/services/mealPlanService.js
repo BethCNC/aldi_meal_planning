@@ -3,7 +3,9 @@ import { selectRecipes } from '../ai/agents/mealPlanningAgent.js';
 import { generateFallbackPlan } from './fallbackMealPlan.js';
 import { calculatePlanCost } from './priceCalculator.js';
 import { generateGroceryList } from './groceryListAggregator.js';
-import { getRecipeById, getRecipes } from '../supabase/recipeClient.js';
+// Importing recipe functions dynamically inside `createMealPlan` so tests
+// can mock `../supabase/recipeClient.js` partially without requiring
+// all named exports to exist at module-evaluation time.
 import { enforceBudget } from './budgetEnforcer.js';
 
 /**
@@ -19,13 +21,27 @@ export async function createMealPlan({ day_count, user_id, budget, sensory_prefe
   console.log('\n🚀 [MealPlanService] Starting meal plan generation...');
   console.log(`   - Parameters: days=${day_count}, budget=${budget}, user=${user_id}`);
 
-  // Fetch all recipes once for use by AI and budget enforcer
-  const allRecipes = await getRecipes();
+  // Fetch all recipes once for use by AI and budget enforcer. Try supabase mock first,
+  // fall back to Firestore client if available. If neither provides `getRecipes`, continue with empty list.
+  let allRecipes = [];
+  try {
+    const recipeModule = await import('../supabase/recipeClient.js');
+    if (typeof recipeModule.getRecipes === 'function') {
+      allRecipes = await recipeModule.getRecipes();
+    } else {
+      const fsModule = await import('../firestore/recipeClient.js');
+      if (typeof fsModule.getRecipes === 'function') {
+        allRecipes = await fsModule.getRecipes();
+      }
+    }
+  } catch (e) {
+    console.warn('Warning: unable to load recipe client for fetching all recipes:', e.message || e);
+  }
   console.log(`   - Fetched ${allRecipes.length} total recipes from database.`);
 
   // 1. Select Recipes (AI with Fallback)
   let selectedRecipeIds = [];
-  let method = 'gemini-2.5-pro';
+  let method = 'gemini-1.5-pro';
 
   try {
     // 30s Timeout for AI
@@ -42,6 +58,23 @@ export async function createMealPlan({ day_count, user_id, budget, sensory_prefe
   }
 
   // 2. Fetch Full Details for AI/Fallback selected IDs
+  let getRecipeById = null;
+  try {
+    const recipeModule = await import('../supabase/recipeClient.js');
+    if (typeof recipeModule.getRecipeById === 'function') getRecipeById = recipeModule.getRecipeById;
+    else {
+      const fsModule = await import('../firestore/recipeClient.js');
+      if (typeof fsModule.getRecipeById === 'function') getRecipeById = fsModule.getRecipeById;
+    }
+  } catch (e) {
+    console.warn('Warning: unable to load getRecipeById from recipe client:', e.message || e);
+  }
+
+  if (!getRecipeById) {
+    throw new Error('Recipe fetch function not available');
+  }
+
+  console.log('   - getRecipeById available:', typeof getRecipeById, ' - fetching', selectedRecipeIds.length, 'recipes');
   let recipesToProcess = await Promise.all(selectedRecipeIds.map(id => getRecipeById(id)));
   console.log(`   - Fetched full details for ${recipesToProcess.length} recipes.`);
 

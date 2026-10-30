@@ -12,12 +12,12 @@ import {
   searchIngredientsByName,
   upsertIngredient,
   normalizeIngredientRow
-} from '../backend/supabase/ingredientClient.js';
+} from '../backend/firestore/ingredientClient.js';
 import {
   findRecipeByName,
   upsertRecipe,
   replaceRecipeIngredients
-} from '../backend/supabase/recipeClient.js';
+} from '../backend/firestore/recipeClient.js';
 import {
   calculateIngredientCost,
   calculatePricePerUnit,

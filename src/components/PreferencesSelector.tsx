@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserPreferences } from '../types';
 import { Heart, ThumbsDown, AlertTriangle, Sparkles } from 'lucide-react'; // New import
-import { useSupabase } from '../SupabaseProvider';
+import { useFirestore } from '../FirestoreProvider';
 
 interface PreferencesSelectorProps {
   onComplete: (prefs: UserPreferences) => void;
@@ -51,11 +51,11 @@ const PreferencesSelector: React.FC<PreferencesSelectorProps> = ({ onComplete })
     localStorage.setItem('userPreferencesExclusions', JSON.stringify(Array.from(selectedExclusions)));
   }, [selectedExclusions]);
 
-  const { user } = useSupabase();
+  const { user } = useFirestore();
 
   // Try to load server-side preferences for the current user (if available)
   useEffect(() => {
-    const userId = user?.id || (import.meta.env.VITE_SINGLE_USER_ID as string) || null;
+    const userId = user?.uid || (import.meta.env.VITE_SINGLE_USER_ID as string) || null;
     if (!userId) return;
 
     (async () => {

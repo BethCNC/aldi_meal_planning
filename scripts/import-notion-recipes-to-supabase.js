@@ -16,7 +16,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { upsertRecipe, findRecipeByName } = await import('../backend/supabase/recipeClient.js');
+const { upsertRecipe, findRecipeByName } = await import('../backend/firestore/recipeClient.js');
 
 const SNAPSHOT_PATH = path.join(process.cwd(), 'data', 'notion-recipes.json');
 

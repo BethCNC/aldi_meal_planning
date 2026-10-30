@@ -1,6 +1,6 @@
 // backend/controllers/recipeController.js
 import { z } from 'zod';
-import { updateRecipeRating } from '../supabase/recipeClient.js';
+import { updateRecipeRating } from '../firestore/recipeClient.js';
 
 // Schema for validating the rating request
 const ratingSchema = z.object({

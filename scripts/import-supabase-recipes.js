@@ -13,7 +13,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { upsertRecipe, findRecipeByName } = await import('../backend/supabase/recipeClient.js');
+const { upsertRecipe, findRecipeByName } = await import('../backend/firestore/recipeClient.js');
 
 const recipes = [
   {

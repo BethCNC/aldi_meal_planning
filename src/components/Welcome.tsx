@@ -2,14 +2,14 @@
 import React from 'react';
 import { AppStage } from '../types';
 import { ArrowRight } from 'lucide-react'; // New import
-import { useSupabase } from '../SupabaseProvider';
+import { useFirestore } from '../FirestoreProvider';
 
 interface WelcomeProps {
   setStage: (stage: AppStage) => void;
 }
 
 const Welcome: React.FC<WelcomeProps> = ({ setStage }) => {
-  const { user } = useSupabase();
+  const { user } = useFirestore();
 
   const handleGetStarted = () => {
     // If user already exists (e.g., from single-user mode), skip Auth and go to INPUT

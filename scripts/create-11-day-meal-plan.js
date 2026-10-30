@@ -5,7 +5,7 @@ import { addDays, format, parseISO } from 'date-fns';
 import puppeteer from 'puppeteer';
 import dotenv from 'dotenv';
 
-import { getRecipes } from '../backend/supabase/recipeClient.js';
+import { getRecipes } from '../backend/firestore/recipeClient.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
